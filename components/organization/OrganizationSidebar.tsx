@@ -1,6 +1,7 @@
 import {
   Trophy,
   HandCoins,
+  Landmark,
   Settings,
   Plus,
   Sparkles,
@@ -215,6 +216,12 @@ export default function OrganizationSidebar({
       href: derivedOrgId ? `/organizations/${derivedOrgId}/grants` : '#',
       description: 'Fund amazing projects',
       disabled: true,
+    },
+    {
+      icon: Landmark,
+      label: 'Treasury',
+      href: derivedOrgId ? `/organizations/${derivedOrgId}/treasury` : '#',
+      description: 'Wallets and funding',
     },
     {
       icon: Settings,

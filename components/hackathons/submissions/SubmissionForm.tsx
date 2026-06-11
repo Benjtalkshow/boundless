@@ -39,8 +39,11 @@ import Stepper from '@/components/stepper/Stepper';
 import { uploadService } from '@/lib/api/upload';
 import {
   useSubmission,
+  useSubmissionAnchor,
   type SubmissionFormData,
-} from '@/hooks/hackathon/use-submission';
+} from '@/features/hackathons';
+import { useWalletContext } from '@/components/providers/wallet-provider';
+import SubmissionAnchorProgress from './SubmissionAnchorProgress';
 import { useHackathonData } from '@/lib/providers/hackathonProvider';
 import { listTracks, type HackathonTrack } from '@/lib/api/hackathons/tracks';
 import { toast } from 'sonner';
@@ -354,6 +357,65 @@ const SubmissionFormContent: React.FC<SubmissionFormContentProps> = ({
     organizationId,
     autoFetch: false,
   });
+
+  // ── On-chain anchoring (MANAGED) ──────────────────────────────────────
+  // A NEW submission must be anchored on the events contract via the
+  // participant's Boundless-managed wallet to be prize-eligible. We run it
+  // with visible progress (never a silent skip) after the row is created.
+  // Editing an existing submission never re-anchors — the anchor is
+  // deterministic and already landed at create.
+  const { walletAddress, refreshWallet } = useWalletContext();
+  const anchor = useSubmissionAnchor(hackathonSlugOrId);
+  const [pendingAnchorId, setPendingAnchorId] = useState<string | null>(null);
+  const [anchorModalOpen, setAnchorModalOpen] = useState(false);
+  const anchorStartedRef = useRef(false);
+  const walletRefreshedRef = useRef(false);
+
+  const finishSubmit = useCallback(() => {
+    if (onSuccess) onSuccess();
+    else if (onClose) onClose();
+    else collapse();
+  }, [onSuccess, onClose, collapse]);
+
+  // Drive the anchor once the managed wallet address is available. If it isn't
+  // loaded yet (rare race — it's provisioned at onboarding), kick a one-shot
+  // refresh; the modal shows a "preparing your wallet" step meanwhile.
+  useEffect(() => {
+    if (!pendingAnchorId) return;
+    if (!walletAddress) {
+      if (!walletRefreshedRef.current) {
+        walletRefreshedRef.current = true;
+        void refreshWallet();
+      }
+      return;
+    }
+    if (anchorStartedRef.current) return;
+    anchorStartedRef.current = true;
+    void anchor.anchor({
+      submissionId: pendingAnchorId,
+      applicantAddress: walletAddress,
+    });
+    // anchor + refreshWallet are stable enough; re-run only when the pending id
+    // or the resolved wallet address changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pendingAnchorId, walletAddress]);
+
+  const handleAnchorClose = useCallback(() => {
+    // The submission row exists regardless of the anchor outcome, so closing
+    // always proceeds (a failed anchor can be retried later).
+    setAnchorModalOpen(false);
+    finishSubmit();
+  }, [finishSubmit]);
+
+  const handleAnchorRetry = useCallback(() => {
+    if (!pendingAnchorId || !walletAddress) return;
+    anchor.reset();
+    anchorStartedRef.current = true;
+    void anchor.anchor({
+      submissionId: pendingAnchorId,
+      applicantAddress: walletAddress,
+    });
+  }, [anchor, pendingAnchorId, walletAddress]);
 
   const {
     myTeam,
@@ -1120,16 +1182,21 @@ const SubmissionFormContent: React.FC<SubmissionFormContentProps> = ({
       };
 
       if (submissionId) {
+        // Editing existing submission metadata only — never re-anchors.
         await update(submissionId, submissionData);
-      } else {
-        await create(submissionData);
+        finishSubmit();
+        return;
       }
-      if (onSuccess) {
-        onSuccess();
-      } else if (onClose) {
-        onClose();
+
+      // New submission: persist the row, then anchor it on-chain (MANAGED)
+      // with visible progress. The anchor effect fires once the managed
+      // wallet address is ready.
+      const created = await create(submissionData);
+      if (created?.id) {
+        setPendingAnchorId(created.id);
+        setAnchorModalOpen(true);
       } else {
-        collapse();
+        finishSubmit();
       }
     } catch {
       // Error handled in hook
@@ -2577,6 +2644,20 @@ const SubmissionFormContent: React.FC<SubmissionFormContentProps> = ({
         hackathonSlugOrId={hackathonSlugOrId}
         teamMax={currentHackathon?.teamMax}
         organizationId={organizationId}
+      />
+      <SubmissionAnchorProgress
+        open={anchorModalOpen}
+        phase={anchor.phase}
+        txHash={anchor.txHash}
+        error={anchor.error}
+        isCompleted={anchor.isAnchored}
+        isFailed={anchor.isFailed}
+        walletPreparing={
+          !!pendingAnchorId && !walletAddress && !anchor.isFailed
+        }
+        onClose={handleAnchorClose}
+        onRetry={handleAnchorRetry}
+        onViewSubmission={handleAnchorClose}
       />
     </div>
   );

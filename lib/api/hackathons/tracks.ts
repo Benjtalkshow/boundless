@@ -1,5 +1,6 @@
 import api from '../api';
 import { ApiResponse } from '../types';
+import type { Schemas } from '../openapi';
 
 // ── Types ───────────────────────────────────────────────────────────────
 
@@ -10,69 +11,15 @@ export type HackathonPrizeStructure =
   | 'OVERALL_AND_TRACKS'
   | 'TRACKS_ONLY';
 
-export interface TrackCustomQuestion {
-  id: string;
-  label: string;
-  type: 'short' | 'long' | 'url';
-  maxLength?: number;
-  required?: boolean;
-}
+export type TrackCustomQuestion = Schemas['TrackCustomQuestionDto'];
 
-export interface TrackRequiredArtifact {
-  id: string;
-  label: string;
-  type: 'figma' | 'github' | 'video' | 'pdf' | 'url';
-  required?: boolean;
-}
+export type TrackRequiredArtifact = Schemas['TrackRequiredArtifactDto'];
 
-export interface HackathonTrack {
-  id: string;
-  hackathonId: string;
-  slug: string;
-  name: string;
-  description?: string;
-  /** Free-form classifier: 'skill' | 'technology' | 'theme' | 'special'. */
-  type?: string;
-  eligibility: TrackEligibility;
-  displayOrder: number;
-  isArchived: boolean;
-  /** Number of submissions opted into this track. */
-  entryCount: number;
-  /** Single open-ended prompt rendered on the submission form. */
-  prompt?: string;
-  /** Organizer-defined custom questions. Phase B. */
-  customQuestions?: TrackCustomQuestion[];
-  /** Required artifact slots (e.g. Figma file URL). Phase B. */
-  requiredArtifacts?: TrackRequiredArtifact[];
-  createdAt: string;
-  updatedAt: string;
-}
+export type HackathonTrack = Schemas['TrackResponseDto'];
 
-export interface CreateTrackRequest {
-  name: string;
-  /** Optional. Auto-generated from name if omitted. */
-  slug?: string;
-  description?: string;
-  type?: string;
-  eligibility?: TrackEligibility;
-  displayOrder?: number;
-  prompt?: string;
-  customQuestions?: TrackCustomQuestion[];
-  requiredArtifacts?: TrackRequiredArtifact[];
-}
+export type CreateTrackRequest = Schemas['CreateTrackDto'];
 
-export interface UpdateTrackRequest {
-  name?: string;
-  slug?: string;
-  description?: string;
-  type?: string;
-  eligibility?: TrackEligibility;
-  displayOrder?: number;
-  isArchived?: boolean;
-  prompt?: string;
-  customQuestions?: TrackCustomQuestion[];
-  requiredArtifacts?: TrackRequiredArtifact[];
-}
+export type UpdateTrackRequest = Schemas['UpdateTrackDto'];
 
 /** Submitter responses to a single track's customization. */
 export interface TrackAnswer {

@@ -1,4 +1,7 @@
-import { useState, useCallback } from 'react';
+'use client';
+
+import { useCallback, useState } from 'react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import type {
   StepKey,
   StepData,
@@ -23,10 +26,25 @@ interface UseHackathonStepsReturn {
   ) => void;
 }
 
+function isStepKey(value: string | null | undefined): value is StepKey {
+  return !!value && (STEP_ORDER as readonly string[]).includes(value);
+}
+
+/**
+ * Wizard step state. The active step is URL-driven via the `?step=` query param,
+ * so refresh, browser back/forward, and bookmarking all resume the right step.
+ * The per-step status map (active/completed/pending) stays local UI state.
+ */
 export const useHackathonSteps = (
   initialActiveTab: StepKey = 'information'
 ): UseHackathonStepsReturn => {
-  const [activeTab, setActiveTab] = useState<StepKey>(initialActiveTab);
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  const urlStep = searchParams.get('step');
+  const activeTab: StepKey = isStepKey(urlStep) ? urlStep : initialActiveTab;
+
   const [steps, setSteps] = useState<Record<StepKey, StepData>>({
     information: { status: 'active', isCompleted: false },
     timeline: { status: 'pending', isCompleted: false },
@@ -38,9 +56,28 @@ export const useHackathonSteps = (
     review: { status: 'pending', isCompleted: false },
   });
 
-  const getCurrentStepIndex = useCallback(() => {
-    return STEP_ORDER.indexOf(activeTab);
-  }, [activeTab]);
+  // Write the active step to the URL. `push` for explicit navigation (so the
+  // back button steps through), `replace` for programmatic syncs (auto-resume).
+  const writeStep = useCallback(
+    (stepKey: StepKey, mode: 'push' | 'replace' = 'push') => {
+      const params = new URLSearchParams(searchParams.toString());
+      params.set('step', stepKey);
+      const url = `${pathname}?${params.toString()}`;
+      if (mode === 'replace') router.replace(url, { scroll: false });
+      else router.push(url, { scroll: false });
+    },
+    [searchParams, pathname, router]
+  );
+
+  const setActiveTab = useCallback(
+    (tab: StepKey) => writeStep(tab, 'push'),
+    [writeStep]
+  );
+
+  const getCurrentStepIndex = useCallback(
+    () => STEP_ORDER.indexOf(activeTab),
+    [activeTab]
+  );
 
   const canAccessStep = useCallback(
     (stepKey: StepKey) => {
@@ -89,18 +126,23 @@ export const useHackathonSteps = (
           }));
         }
 
-        setActiveTab(stepKey);
+        writeStep(stepKey, 'push');
       }
     },
-    [canAccessStep, getCurrentStepIndex]
+    [canAccessStep, getCurrentStepIndex, writeStep]
   );
 
   const setStepsFromDraft = useCallback(
     (stepsState: Record<StepKey, StepData>, activeStep: StepKey) => {
       setSteps(stepsState);
-      setActiveTab(activeStep);
+      // Respect an explicit ?step= in the URL (a refresh / bookmark). Only fall
+      // back to the computed first-incomplete step when the URL has none, and
+      // do it as a replace so auto-resume doesn't add a history entry.
+      if (!isStepKey(searchParams.get('step'))) {
+        writeStep(activeStep, 'replace');
+      }
     },
-    []
+    [searchParams, writeStep]
   );
 
   const updateStepCompletion = useCallback(
@@ -126,10 +168,10 @@ export const useHackathonSteps = (
       });
 
       if (nextStep) {
-        setActiveTab(nextStep);
+        writeStep(nextStep, 'push');
       }
     },
-    []
+    [writeStep]
   );
 
   return {

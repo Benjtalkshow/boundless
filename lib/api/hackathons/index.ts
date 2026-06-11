@@ -55,9 +55,6 @@ export type {
   // Rewards types
   AssignRanksRequest,
   AssignRanksResponse,
-  HackathonEscrowData,
-  CreateWinnerMilestonesRequest,
-  CreateWinnerMilestonesResponse,
   // Team types
   AcceptTeamInvitationRequest,
 } from '@/types/hackathon';
@@ -79,3 +76,4 @@ export * from './resources';
 export * from './announcements';
 export * from './partners';
 export * from './tracks';
+// Hackathon escrow now lives in features/hackathons (typed openapi-fetch client).

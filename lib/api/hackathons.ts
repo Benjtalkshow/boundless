@@ -1,5 +1,6 @@
 import api from './api';
 import { ApiResponse, ErrorResponse, PaginatedResponse } from './types';
+import type { Schemas } from './openapi';
 // Discussion type removed - using generic Comment type from @/types/comment
 
 // Enums matching backend models
@@ -299,7 +300,9 @@ export interface HackathonDraftData {
 // Draft Types
 export interface HackathonDraft {
   id: string;
-  status: 'draft';
+  // Real Hackathon status. Normally DRAFT; a hackathon mid-publish stays in the
+  // drafts list as DRAFT_AWAITING_FUNDING until its escrow op settles.
+  status: 'DRAFT' | 'DRAFT_AWAITING_FUNDING';
   currentStep: number;
   completedSteps: string[];
   data: HackathonDraftData;
@@ -336,6 +339,8 @@ export type Hackathon = {
 
   status:
     | 'DRAFT'
+    // Between escrow publish-request and on-chain create_event settling.
+    | 'DRAFT_AWAITING_FUNDING'
     | 'UPCOMING'
     | 'ACTIVE'
     | 'JUDGING'
@@ -876,12 +881,6 @@ export interface GetParticipantsResponse extends ApiResponse<ParticipantsData> {
 //   teamMembers?: string[];
 // }
 
-export interface RegisterForHackathonResponse extends ApiResponse<Participant> {
-  success: true;
-  data: Participant;
-  message: string;
-}
-
 export interface CheckRegistrationStatusResponse extends ApiResponse<Participant | null> {
   success: true;
   data: Participant | null;
@@ -1168,52 +1167,6 @@ export interface AssignRanksResponse {
   };
 }
 
-export interface HackathonEscrowData {
-  contractId: string;
-  escrowAddress: string;
-  balance: number;
-  milestones: Array<{
-    description: string;
-    amount: number;
-    receiver: string;
-    status: string;
-    evidence: string;
-    flags?: {
-      approved: boolean;
-      disputed: boolean;
-      released: boolean;
-      resolved: boolean;
-    };
-  }>;
-  isFunded: boolean;
-  canUpdate: boolean;
-}
-
-export interface GetHackathonEscrowResponse extends ApiResponse<HackathonEscrowData> {
-  success: true;
-  data: HackathonEscrowData;
-  message: string;
-}
-
-export interface CreateWinnerMilestonesRequest {
-  winners: Array<{
-    participantId: string;
-    rank: number;
-    walletAddress: string;
-    amount?: number;
-    currency?: string;
-  }>;
-}
-
-export interface CreateWinnerMilestonesResponse {
-  success: boolean;
-  message: string;
-  data: {
-    transactionHash?: string;
-    milestonesCreated: number;
-  };
-}
-
 // Public Hackathons List API Types
 
 export interface PublicHackathonsListData {
@@ -1305,19 +1258,21 @@ export const updateDraftStep = async (
 };
 
 /**
- * Publish a hackathon draft (new API)
+ * Update several draft steps in one transactional PATCH (new API). Replaces
+ * firing one request per step when saving/finishing the wizard.
  */
-export const publishDraft = async (
-  draftId: string,
+export const updateDraftSteps = async (
   organizationId: string,
-  options?: { skipAnnouncement?: boolean; announcementSubject?: string }
-): Promise<PublishHackathonResponse> => {
-  const res = await api.put<ApiResponse<PublishHackathonResponse>>(
-    `/organizations/${organizationId}/hackathons/draft/${draftId}/publish`,
-    options ?? {}
+  draftId: string,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  steps: { step: string; data: any }[]
+) => {
+  const res = await api.patch<UpdateDraftResponse>(
+    `/organizations/${organizationId}/hackathons/draft/${draftId}/batch`,
+    { steps }
   );
 
-  return res.data as unknown as PublishHackathonResponse;
+  return res.data;
 };
 
 /**
@@ -1605,112 +1560,6 @@ export const assignRanks = async (
   return res.data;
 };
 
-// ─── Reward Distribution Status Types ─────────────────────────────────────────
-
-export type RewardDistributionStatusEnum =
-  | 'NOT_TRIGGERED'
-  | 'PENDING_ADMIN_REVIEW'
-  | 'APPROVED'
-  | 'REJECTED'
-  | 'EXECUTING'
-  | 'COMPLETED'
-  | 'FAILED'
-  | 'PARTIAL_SUCCESS';
-
-export interface WinnerSnapshot {
-  submissionId: string;
-  rank: number;
-  submissionTitle: string;
-  prizeTierName: string;
-  prizeAmount: number;
-  walletAddresses: string;
-}
-
-export interface RewardDistributionSnapshot {
-  idempotencyKey: string;
-  winners: WinnerSnapshot[];
-  totalPrizePool: number;
-  platformFee: number;
-  totalRequired: number;
-  currency: string;
-  escrowAddress: string;
-  winnersChecksum: string;
-  snapshotAt: string;
-  organizerNote: string | null;
-}
-
-export interface RewardDistributionStatusResponse {
-  distributionId: string | null;
-  status: RewardDistributionStatusEnum;
-  snapshot: RewardDistributionSnapshot;
-  triggeredAt: string;
-  adminDecisionAt: string | null;
-  adminNote: string | null;
-  adminUserId: string | null;
-  rejectionReason: string | null;
-  updatedAt: string;
-}
-
-/**
- * Get reward distribution status (organizer)
- * Returns the latest distribution status: PENDING_ADMIN_REVIEW, APPROVED, REJECTED, EXECUTING, etc.
- */
-export const getRewardDistributionStatus = async (
-  organizationId: string,
-  hackathonId: string
-): Promise<RewardDistributionStatusResponse> => {
-  const res = await api.get(
-    `/organizations/${organizationId}/hackathons/${hackathonId}/rewards/status`
-  );
-  return res.data?.data ?? res.data;
-};
-
-export interface TriggerRewardDistributionRequest {
-  idempotencyKey: string;
-  organizerNote?: string;
-}
-
-/**
- * Trigger a new reward distribution for a hackathon.
- * Moves the snapshot into PENDING_ADMIN_REVIEW. Requires published results, funds in escrow.
- */
-export const triggerRewardDistribution = async (
-  organizationId: string,
-  hackathonId: string,
-  data: TriggerRewardDistributionRequest
-): Promise<RewardDistributionStatusResponse> => {
-  const res = await api.post(
-    `/organizations/${organizationId}/hackathons/${hackathonId}/rewards/trigger`,
-    data
-  );
-  return res.data?.data ?? res.data;
-};
-
-export const getHackathonEscrow = async (
-  organizationId: string,
-  hackathonId: string
-): Promise<GetHackathonEscrowResponse> => {
-  const res = await api.get(
-    `/organizations/${organizationId}/hackathons/${hackathonId}/rewards/escrow`
-  );
-  return res.data;
-};
-
-/**
- * Create winner milestones in escrow
- */
-export const createWinnerMilestones = async (
-  organizationId: string,
-  hackathonId: string,
-  data: CreateWinnerMilestonesRequest
-): Promise<CreateWinnerMilestonesResponse> => {
-  const res = await api.post(
-    `/organizations/${organizationId}/hackathons/${hackathonId}/rewards/milestones`,
-    data
-  );
-  return res.data;
-};
-
 /**
  * Get participants for a hackathon
  */
@@ -1847,28 +1696,6 @@ export const getExploreSubmissions = async (
     `/hackathons/${hackathonId}/submissions/explore${params.toString() ? `?${params.toString()}` : ''}`
   );
 
-  return res.data;
-};
-
-/**
- * Register for a hackathon
- * Supports both slug-based (public) and organization/hackathon ID (authenticated) endpoints
- */
-export const registerForHackathon = async (
-  hackathonSlugOrId: string,
-  organizationId?: string
-): Promise<RegisterForHackathonResponse> => {
-  let url: string;
-
-  // If organizationId is provided, use authenticated endpoint
-  if (organizationId) {
-    url = `/organizations/${organizationId}/hackathons/${hackathonSlugOrId}/join`;
-  } else {
-    // Otherwise, use public slug-based endpoint
-    url = `/hackathons/${hackathonSlugOrId}/join`;
-  }
-
-  const res = await api.post(url);
   return res.data;
 };
 
@@ -2197,14 +2024,19 @@ export const isHackathon = (obj: unknown): obj is Hackathon => {
 };
 
 export const isHackathonDraft = (obj: unknown): obj is HackathonDraft => {
-  return (
-    typeof obj === 'object' &&
-    obj !== null &&
-    'id' in obj &&
-    'organizationId' in obj &&
-    'status' in obj &&
-    (obj as unknown as HackathonDraft).status === 'draft'
-  );
+  if (
+    typeof obj !== 'object' ||
+    obj === null ||
+    !('id' in obj) ||
+    !('organizationId' in obj) ||
+    !('status' in obj)
+  ) {
+    return false;
+  }
+  const status = String(
+    (obj as { status?: unknown }).status ?? ''
+  ).toUpperCase();
+  return status === 'DRAFT' || status === 'DRAFT_AWAITING_FUNDING';
 };
 
 export const isCreateDraftRequest = (

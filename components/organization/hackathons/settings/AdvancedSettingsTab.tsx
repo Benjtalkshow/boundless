@@ -29,8 +29,9 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
-import { Trash2, Sparkles } from 'lucide-react';
+import { Trash2, Sparkles, Ban } from 'lucide-react';
 import { deleteHackathon } from '@/lib/api/hackathons';
+import { useCancelHackathon } from '@/hooks/hackathon/use-cancel-hackathon';
 import { toast } from 'sonner';
 import { api } from '@/lib/api/api';
 
@@ -65,6 +66,17 @@ export default function AdvancedSettingsTab({
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [showCancelDialog, setShowCancelDialog] = useState(false);
+  const { cancel, isCancelling } = useCancelHackathon(
+    organizationId,
+    hackathonId,
+    {
+      onSuccess: () => {
+        setShowCancelDialog(false);
+        void onSaveSuccess?.();
+      },
+    }
+  );
 
   const form = useForm<AdvancedSettingsFormData>({
     resolver: zodResolver(advancedSettingsSchema),
@@ -436,6 +448,48 @@ export default function AdvancedSettingsTab({
             Irreversible and destructive actions
           </p>
         </div>
+
+        <AlertDialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
+          <AlertDialogTrigger asChild>
+            <Button
+              variant='outline'
+              className='mb-4 gap-2 border-amber-700/60 text-amber-400 hover:bg-amber-950/30'
+            >
+              <Ban className='h-4 w-4' />
+              Cancel Hackathon & Refund Escrow
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent className='bg-background-card border-gray-800'>
+            <AlertDialogHeader>
+              <AlertDialogTitle className='text-white'>
+                Cancel Hackathon
+              </AlertDialogTitle>
+              <AlertDialogDescription className='text-gray-400'>
+                This cancels the hackathon on-chain and refunds all contributors
+                and the remaining escrow balance to the owner. Refunds are
+                processed on-chain and may take a few moments to settle. This
+                cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel className='border-gray-800 text-white hover:bg-gray-800'>
+                Keep Hackathon
+              </AlertDialogCancel>
+              <AlertDialogAction
+                onClick={e => {
+                  // Keep the dialog open while the op runs; close on success
+                  // via the hook's onSuccess.
+                  e.preventDefault();
+                  void cancel();
+                }}
+                disabled={isCancelling}
+                className='bg-amber-600 text-white hover:bg-amber-700 disabled:cursor-not-allowed disabled:opacity-50'
+              >
+                {isCancelling ? 'Cancelling…' : 'Cancel Hackathon'}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
 
         <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
           <AlertDialogTrigger asChild>

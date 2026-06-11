@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import {
   Clock,
@@ -9,17 +9,22 @@ import {
   ChevronRight,
   Flower,
   AlertCircle,
+  UserPlus,
 } from 'lucide-react';
 import { useHackathonData } from '@/lib/providers/hackathonProvider';
-import { useHackathonTracks } from '@/hooks/hackathon/use-hackathon-queries';
+import {
+  useHackathonTracks,
+  useJoinHackathon,
+} from '@/hooks/hackathon/use-hackathon-queries';
 import { useOptionalAuth } from '@/hooks/use-auth';
 import { useRequireAuthForAction } from '@/hooks/use-require-auth-for-action';
-import { useSubmission } from '@/hooks/hackathon/use-submission';
+import { useSubmission } from '@/features/hackathons';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import Image from 'next/image';
 import { BoundlessButton } from '@/components/buttons';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 import { ExtendedBadge } from '@/components/hackathons/ExtendedBadge';
 import { Participant } from '@/lib/api/hackathons';
 
@@ -59,7 +64,6 @@ function useCountdown(deadline?: string) {
 
 export default function PoolAndAction() {
   const params = useParams();
-  const router = useRouter();
   const { user, isAuthenticated } = useOptionalAuth();
   const slug = params.slug as string;
 
@@ -77,6 +81,7 @@ export default function PoolAndAction() {
     submissions,
     error,
     loading,
+    refreshCurrentHackathon,
   } = useHackathonData();
   const hackathonError = error;
   const isDataLoading = loading || !hackathon;
@@ -134,22 +139,25 @@ export default function PoolAndAction() {
   //
   // `redirectTo` is still set so Google sign-in (a full provider redirect
   // that bypasses onAuthSuccess) lands somewhere sensible.
-  const submitUrl = `/hackathons/${slug}/submit`;
-  const handleSubmit = withAuth(
-    () => {
-      if (isButtonDisabled) return;
-      router.push(submitUrl);
-    },
-    {
-      redirectTo: submitUrl,
-      onAuthSuccess: () => {
-        const popup = window.open(submitUrl, '_blank', 'noopener,noreferrer');
-        if (!popup) {
-          router.push(submitUrl);
-        }
-      },
+  // A non-participant who wants to submit is routed through JOIN first (the
+  // header JOIN does the same). A hackathon has no on-chain "join" — it's a DB
+  // registration — so this is a plain mutation; on success the participation
+  // refresh flips the CTA to "Submit Now". withAuth opens the auth modal when
+  // the viewer is signed out.
+  const joinMutation = useJoinHackathon(slug);
+  const handleJoinToSubmit = withAuth(async () => {
+    try {
+      await joinMutation.mutateAsync();
+      await refreshCurrentHackathon();
+      toast.success(
+        'You joined the hackathon — you can now submit your project.'
+      );
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : 'Failed to join hackathon'
+      );
     }
-  );
+  });
 
   if (isDataLoading) {
     return (
@@ -191,14 +199,16 @@ export default function PoolAndAction() {
     if (hackathon?.status === 'CANCELLED') return 'Hackathon Cancelled';
     if (isEnded) return 'Submissions Closed';
     if (isNotStarted) return 'Hackathon Not Started';
-    if (!isParticipant) return 'Register to Submit';
+    if (!isParticipant) return 'Join to Submit';
     return 'Submit Now';
   };
 
-  const isButtonDisabled =
+  // "Closed" = the hackathon itself can't take submissions (ended / not yet
+  // started / archived / cancelled). NOT being a participant is NOT closed —
+  // that's an actionable "join first" state, handled separately below.
+  const isClosed =
     isEnded ||
     isNotStarted ||
-    !isParticipant ||
     ['ARCHIVED', 'CANCELLED'].includes(hackathon?.status || '');
 
   return (
@@ -362,27 +372,29 @@ export default function PoolAndAction() {
             users still get the button so the auth modal can intercept
             in place. */}
         {!hasSubmitted &&
-          (isButtonDisabled || !isAuthenticated ? (
+          (isClosed ? (
+            // Non-actionable status (ended / not started / archived / cancelled).
             <BoundlessButton
-              className={cn(
-                'group h-12 w-full rounded-xl text-sm font-bold transition-all',
-                isButtonDisabled
-                  ? 'cursor-not-allowed bg-gray-800 text-gray-500'
-                  : 'bg-primary hover:bg-primary/90 text-black'
-              )}
-              onClick={handleSubmit}
-              disabled={isButtonDisabled}
+              className='h-12 w-full cursor-not-allowed rounded-xl bg-gray-800 text-sm font-bold text-gray-500'
+              disabled
+              fullWidth
+            >
+              {getButtonText()}
+            </BoundlessButton>
+          ) : !isParticipant ? (
+            // Open, but the viewer hasn't joined — JOIN first (auth-gated).
+            <BoundlessButton
+              className='group bg-primary hover:bg-primary/90 h-12 w-full rounded-xl text-sm font-bold text-black transition-all'
+              onClick={handleJoinToSubmit}
+              loading={joinMutation.isPending}
               iconPosition='right'
               fullWidth
-              icon={
-                !isButtonDisabled && (
-                  <ChevronRight className='h-4 w-4 transition-transform group-hover:translate-x-0.5' />
-                )
-              }
+              icon={<UserPlus className='h-4 w-4' />}
             >
               {getButtonText()}
             </BoundlessButton>
           ) : (
+            // Participant + open — go to the submit form.
             <Link
               href={`/hackathons/${slug}/submit`}
               target='_blank'

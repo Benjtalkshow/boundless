@@ -1,29 +1,10 @@
 import { api } from '../api';
 import { ApiResponse } from '../types';
+import type { Schemas } from '../openapi';
 
-export interface EarningActivity {
-  id: string;
-  source: 'hackathons' | 'grants' | 'crowdfunding' | 'bounties';
-  title: string;
-  amount: number;
-  currency: string;
-  occurredAt: string;
-}
+export type EarningActivity = Schemas['EarningActivityDto'];
 
-export interface EarningsData {
-  summary: {
-    totalEarned: number;
-    pendingWithdrawal: number;
-    completedWithdrawal: number;
-  };
-  breakdown: {
-    hackathons: number;
-    grants: number;
-    crowdfunding: number;
-    bounties: number;
-  };
-  activities: EarningActivity[];
-}
+export type EarningsData = Schemas['EarningsResponseDto'];
 
 export type GetEarningsResponse =
   | { success: true; data: EarningsData; message?: string }

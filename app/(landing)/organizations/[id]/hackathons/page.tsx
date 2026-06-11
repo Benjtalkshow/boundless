@@ -576,29 +576,43 @@ export default function HackathonsPage() {
                         (sum: number, tier: any) => sum + (tier.amount || 0),
                         0
                       ) || 0;
+                    // A hackathon mid-publish stays in the drafts list but is
+                    // no longer editable — route it to the management page where
+                    // the publish-status banner resumes/finishes it.
+                    const isPublishing =
+                      draft.status === 'DRAFT_AWAITING_FUNDING';
+                    const targetHref = isPublishing
+                      ? `/organizations/${organizationId}/hackathons/${draft.id}`
+                      : `/organizations/${organizationId}/hackathons/drafts/${draft.id}`;
                     return (
                       <div
                         key={draft.id}
                         className='group hover:border-primary/60 hover:shadow-primary/10 relative flex cursor-pointer flex-col overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900/30 shadow-lg transition-all'
-                        onClick={() =>
-                          router.push(
-                            `/organizations/${organizationId}/hackathons/drafts/${draft.id}`
-                          )
-                        }
+                        onClick={() => router.push(targetHref)}
                         tabIndex={0}
                         role='button'
-                        aria-label={`Edit draft ${title}`}
+                        aria-label={
+                          isPublishing
+                            ? `View publishing hackathon ${title}`
+                            : `Edit draft ${title}`
+                        }
                       >
                         <div className='flex flex-1 flex-col gap-2 p-5'>
                           <div className='mb-1 flex items-center gap-2'>
                             <Badge
                               variant='outline'
-                              className='rounded-full bg-zinc-500 px-3 py-1 text-xs font-medium text-zinc-100'
+                              className={
+                                isPublishing
+                                  ? 'rounded-full bg-amber-600/80 px-3 py-1 text-xs font-medium text-amber-50'
+                                  : 'rounded-full bg-zinc-500 px-3 py-1 text-xs font-medium text-zinc-100'
+                              }
                             >
-                              Draft
+                              {isPublishing ? 'Publishing' : 'Draft'}
                             </Badge>
                             <span className='text-sm text-white'>
-                              {completion}% complete
+                              {isPublishing
+                                ? 'Finalizing on-chain…'
+                                : `${completion}% complete`}
                             </span>
                             {endDate && (
                               <span className='flex items-center gap-1.5 text-xs text-zinc-500'>
@@ -643,29 +657,29 @@ export default function HackathonsPage() {
                           >
                             <Eye className='h-4 w-4' />
                           </button>
-                          <button
-                            onClick={e => {
-                              e.stopPropagation();
-                              handleDeleteClick(draft.id, 'draft');
-                            }}
-                            className='flex h-9 w-9 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-900/70 text-zinc-400 hover:border-red-600 hover:text-red-500'
-                            title='Delete Draft'
-                            disabled={isDeleting}
-                          >
-                            <Trash2 className='h-4 w-4' />
-                          </button>
+                          {!isPublishing && (
+                            <button
+                              onClick={e => {
+                                e.stopPropagation();
+                                handleDeleteClick(draft.id, 'draft');
+                              }}
+                              className='flex h-9 w-9 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-900/70 text-zinc-400 hover:border-red-600 hover:text-red-500'
+                              title='Delete Draft'
+                              disabled={isDeleting}
+                            >
+                              <Trash2 className='h-4 w-4' />
+                            </button>
+                          )}
                           <BoundlessButton
                             size='sm'
                             variant='outline'
                             className='opacity-0 transition-opacity group-hover:opacity-100'
                             onClick={e => {
                               e.stopPropagation();
-                              router.push(
-                                `/organizations/${organizationId}/hackathons/drafts/${draft.id}`
-                              );
+                              router.push(targetHref);
                             }}
                           >
-                            Continue
+                            {isPublishing ? 'View' : 'Continue'}
                           </BoundlessButton>
                         </div>
                       </div>

@@ -257,12 +257,17 @@ export default function HackathonSidebar({
           ? title.trim() || 'Untitled Hackathon'
           : 'Untitled Hackathon';
 
+      // A hackathon mid-publish stays in the drafts list but can't be edited;
+      // route it to the management page where the publish banner resumes it.
+      const isPublishing = draft.status === 'DRAFT_AWAITING_FUNDING';
       items.push({
         id: `draft-${draft.id}`,
         name: title,
         status: 'draft',
         href: derivedOrgId
-          ? `/organizations/${derivedOrgId}/hackathons/drafts/${draft.id}`
+          ? isPublishing
+            ? `/organizations/${derivedOrgId}/hackathons/${draft.id}`
+            : `/organizations/${derivedOrgId}/hackathons/drafts/${draft.id}`
           : '#',
       });
     });

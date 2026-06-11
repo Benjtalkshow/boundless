@@ -1,5 +1,6 @@
 import api from '../api';
 import type { ApiResponse } from '../types';
+import type { Schemas } from '../openapi';
 
 export type PartnerContributionStatus =
   | 'PENDING'
@@ -88,16 +89,9 @@ export interface ContributionAllocationDetail {
   allocations: AllocationRecord[];
 }
 
-export interface AllocationTarget {
-  tierId?: string;
-  newTierLabel?: string;
-  newTierDescription?: string;
-  amount: number;
-}
+export type AllocationTarget = Schemas['AllocationTargetDto'];
 
-export interface AllocateContributionRequest {
-  targets: AllocationTarget[];
-}
+export type AllocateContributionRequest = Schemas['AllocateContributionDto'];
 
 export interface PrizeTierShape {
   id?: string;

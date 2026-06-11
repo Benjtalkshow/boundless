@@ -207,6 +207,8 @@ export type Hackathon = {
 
   status:
     | 'DRAFT'
+    // Between escrow publish-request and on-chain create_event settling.
+    | 'DRAFT_AWAITING_FUNDING'
     | 'UPCOMING'
     | 'ACTIVE'
     | 'JUDGING'

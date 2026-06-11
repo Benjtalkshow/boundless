@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   createSubmission,
   updateSubmission,
@@ -118,39 +119,55 @@ export function useSubmission({
   autoFetch = true,
 }: UseSubmissionOptions) {
   const { isAuthenticated } = useAuthStatus();
-  const [submission, setSubmission] = useState<ParticipantSubmission | null>(
-    null
-  );
+  const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isFetching, setIsFetching] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchMySubmission = useCallback(async () => {
-    if (!isAuthenticated || !hackathonSlugOrId) {
-      setSubmission(null);
-      return;
-    }
-
-    setIsFetching(true);
-    setError(null);
-
-    try {
-      const response = await getMySubmission(hackathonSlugOrId);
-
-      if (response.success && response.data) {
-        setSubmission(response.data);
-      } else {
-        setSubmission(null);
+  // Single shared, cached "my submission" query — replaces the manual
+  // useEffect+fetch that re-fired on every render / StrictMode pass and once per
+  // component using this hook, hammering /my-submission into 429s. A 404 means
+  // "no submission yet": map it to empty data so React Query caches it rather
+  // than re-requesting (the global config also doesn't retry 4xx).
+  const myQuery = useQuery({
+    queryKey: ['hackathon', hackathonSlugOrId, 'my-submission'],
+    queryFn: async () => {
+      try {
+        return await getMySubmission(hackathonSlugOrId);
+      } catch (err) {
+        const status =
+          (err as { status?: number })?.status ??
+          (err as { response?: { status?: number } })?.response?.status;
+        if (status === 404) {
+          return { success: true, data: null } as Awaited<
+            ReturnType<typeof getMySubmission>
+          >;
+        }
+        throw err;
       }
-    } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : 'Failed to fetch submission';
-      setError(errorMessage);
-      setSubmission(null);
-    } finally {
-      setIsFetching(false);
-    }
-  }, [hackathonSlugOrId, isAuthenticated]);
+    },
+    enabled: autoFetch && isAuthenticated && !!hackathonSlugOrId,
+    staleTime: 60_000,
+  });
+
+  const submission: ParticipantSubmission | null =
+    myQuery.data?.success && myQuery.data.data ? myQuery.data.data : null;
+  const isFetching = myQuery.isFetching;
+
+  const setSubmissionCache = useCallback(
+    (next: ParticipantSubmission | null) => {
+      queryClient.setQueryData(
+        ['hackathon', hackathonSlugOrId, 'my-submission'],
+        { success: true, data: next }
+      );
+    },
+    [queryClient, hackathonSlugOrId]
+  );
+
+  const fetchMySubmission = useCallback(() => {
+    void queryClient.invalidateQueries({
+      queryKey: ['hackathon', hackathonSlugOrId, 'my-submission'],
+    });
+  }, [queryClient, hackathonSlugOrId]);
 
   const create = useCallback(
     async (data: SubmissionFormData) => {
@@ -179,7 +196,7 @@ export function useSubmission({
         );
 
         if (response?.success && response?.data) {
-          setSubmission(response.data);
+          setSubmissionCache(response.data);
           toast.success(response.message || 'Submission created successfully!');
           return response.data;
         }
@@ -206,7 +223,7 @@ export function useSubmission({
         setIsSubmitting(false);
       }
     },
-    [hackathonSlugOrId, isAuthenticated, organizationId]
+    [hackathonSlugOrId, isAuthenticated, organizationId, setSubmissionCache]
   );
 
   const update = useCallback(
@@ -232,7 +249,7 @@ export function useSubmission({
         const response = await updateSubmission(submissionId, payload);
 
         if (response?.success && response?.data) {
-          setSubmission(response.data);
+          setSubmissionCache(response.data);
           toast.success(response.message || 'Submission updated successfully!');
           return response.data;
         }
@@ -259,7 +276,7 @@ export function useSubmission({
         setIsSubmitting(false);
       }
     },
-    [hackathonSlugOrId, isAuthenticated]
+    [hackathonSlugOrId, isAuthenticated, setSubmissionCache]
   );
 
   const remove = useCallback(
@@ -274,7 +291,7 @@ export function useSubmission({
 
       try {
         await deleteSubmission(submissionId);
-        setSubmission(null);
+        setSubmissionCache(null);
         toast.success('Submission deleted successfully');
         return true;
       } catch (err) {
@@ -292,17 +309,8 @@ export function useSubmission({
         setIsSubmitting(false);
       }
     },
-    [hackathonSlugOrId, isAuthenticated]
+    [hackathonSlugOrId, isAuthenticated, setSubmissionCache]
   );
-
-  // Auto-fetch submission on mount and when dependencies change
-  useEffect(() => {
-    if (autoFetch && isAuthenticated && hackathonSlugOrId) {
-      fetchMySubmission();
-    } else if (!isAuthenticated) {
-      setSubmission(null);
-    }
-  }, [autoFetch, isAuthenticated, hackathonSlugOrId, fetchMySubmission]);
 
   return {
     submission,
