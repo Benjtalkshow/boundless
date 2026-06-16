@@ -5,8 +5,10 @@ import {
   archiveTreasuryWallet,
   createManagedTreasuryWallet,
   getWalletBalance,
+  listArchivedTreasuryWallets,
   listTreasuryWallets,
   registerConnectedWallet,
+  restoreTreasuryWallet,
   updateTreasuryWallet,
 } from './api';
 import { treasuryKeys } from './keys';
@@ -64,12 +66,32 @@ export function useUpdateWallet(organizationId: string) {
   });
 }
 
-/** Archive a wallet. */
+/** Archive a wallet (reversible; see useRestoreWallet). */
 export function useArchiveWallet(organizationId: string) {
   const invalidate = useWalletInvalidation(organizationId);
   return useMutation({
     mutationFn: (walletId: string) =>
       archiveTreasuryWallet(organizationId, walletId),
+    onSuccess: () => void invalidate(),
+  });
+}
+
+/** List an organization's archived wallets (wallets are never deleted). */
+export function useArchivedTreasuryWallets(organizationId?: string) {
+  return useQuery({
+    queryKey: treasuryKeys.archivedWallets(organizationId ?? ''),
+    queryFn: () => listArchivedTreasuryWallets(organizationId as string),
+    enabled: !!organizationId,
+    staleTime: 30_000,
+  });
+}
+
+/** Restore an archived wallet back to the active set. */
+export function useRestoreWallet(organizationId: string) {
+  const invalidate = useWalletInvalidation(organizationId);
+  return useMutation({
+    mutationFn: (walletId: string) =>
+      restoreTreasuryWallet(organizationId, walletId),
     onSuccess: () => void invalidate(),
   });
 }

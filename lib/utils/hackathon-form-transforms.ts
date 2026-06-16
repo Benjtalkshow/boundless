@@ -23,6 +23,7 @@ export const transformFromApiFormat = (draft: HackathonDraft) => {
   const info = draft.data?.information;
   const timeline = draft.data?.timeline;
   const participation = draft.data?.participation;
+  const tracks = draft.data?.tracks;
   const rewards = draft.data?.rewards;
   const resources = draft.data?.resources;
   const judging = draft.data?.judging;
@@ -85,6 +86,11 @@ export const transformFromApiFormat = (draft: HackathonDraft) => {
       joinATeamTab: participation?.joinATeamTab ?? true,
       rulesTab: participation?.rulesTab ?? true,
     } as ParticipantFormData,
+    tracks: {
+      // Always present (DB default 3) so the Tracks section round-trips the cap
+      // independent of whether any prize has been set yet.
+      tracksMaxPerSubmission: tracks?.tracksMaxPerSubmission ?? 3,
+    },
     rewards: {
       prizeTiers:
         rewards?.prizeTiers?.map((tier, index) => {

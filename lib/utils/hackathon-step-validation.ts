@@ -24,6 +24,11 @@ export const isStepDataValid = (
   stepKey: StepKey,
   formData: StepData
 ): boolean => {
+  // Tracks (a default "All Submissions" track always exists) and custom
+  // questions are optional, so neither section blocks navigation or publish.
+  // Treat them as always valid.
+  if (stepKey === 'tracks' || stepKey === 'custom-questions') return true;
+
   const stepData = formData[stepKey as keyof StepData];
   if (!stepData) return false;
 

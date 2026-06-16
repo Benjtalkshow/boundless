@@ -42,14 +42,14 @@ interface Step {
 
 const MANAGED_STEPS: Step[] = [
   { phase: 'starting', label: 'Preparing transaction' },
-  { phase: 'polling', label: 'Funding escrow on-chain' },
+  { phase: 'polling', label: 'Setting up the prize pool' },
 ];
 
 const EXTERNAL_STEPS: Step[] = [
   { phase: 'starting', label: 'Preparing transaction' },
   { phase: 'signing', label: 'Awaiting your signature' },
   { phase: 'submitting', label: 'Submitting transaction' },
-  { phase: 'polling', label: 'Funding escrow on-chain' },
+  { phase: 'polling', label: 'Setting up the prize pool' },
 ];
 
 /**
@@ -110,10 +110,10 @@ export default function FundingProgressModal({
           </DialogTitle>
           <DialogDescription className='text-gray-400'>
             {isCompleted
-              ? 'Your prize pool is locked in escrow and the hackathon is live.'
+              ? 'Your prize pool is secured and the hackathon is live.'
               : isFailed
                 ? 'No funds moved. You can retry or move it back to draft.'
-                : 'Keep this open while the escrow is funded on-chain.'}
+                : 'Keep this open while we set up your prize pool.'}
           </DialogDescription>
         </DialogHeader>
 

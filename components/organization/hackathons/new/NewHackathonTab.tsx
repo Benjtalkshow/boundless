@@ -7,11 +7,12 @@ import { useHackathonSteps } from '@/hooks/use-hackathon-steps';
 import { useHackathonDraft } from '@/hooks/use-hackathon-draft';
 import { useHackathonPublish } from '@/hooks/use-hackathon-publish';
 import { useHackathonStepSave } from '@/hooks/use-hackathon-step-save';
-import { HackathonTabsNavigation } from './HackathonTabsNavigation';
 import InfoTab from './tabs/InfoTab';
 import TimelineTab from './tabs/TimelineTab';
 import ParticipantTab from './tabs/ParticipantTab';
+import TracksTab from './tabs/TracksTab';
 import RewardsTab from './tabs/RewardsTab';
+import CustomQuestionsTab from './tabs/CustomQuestionsTab';
 import ResourcesTab from './tabs/ResourcesTab';
 import JudgingTab from './tabs/JudgingTab';
 import CollaborationTab from './tabs/CollaborationTab';
@@ -33,6 +34,9 @@ import { useQuery } from '@tanstack/react-query';
 import { getWalletBalanceByAddress } from '@/lib/api/wallet';
 import { formatAddress } from '@/lib/wallet-utils';
 import { toast } from 'sonner';
+import { Sparkles } from 'lucide-react';
+import { BoundlessButton } from '@/components/buttons';
+import GenerateWithAiDialog from './GenerateWithAiDialog';
 
 /** Surface the backend's specific funding-OTP message (expired / wrong / rate
  * limited) instead of a generic axios error string. */
@@ -68,6 +72,7 @@ export default function NewHackathonTab({
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const [aiDialogOpen, setAiDialogOpen] = useState(false);
 
   // draftId can arrive via the route path (/drafts/[draftId]) or, on the /new
   // flow, via a ?draftId= query we add after the first save. Either resumes the
@@ -79,7 +84,6 @@ export default function NewHackathonTab({
     activeTab,
     steps,
     navigateToStep,
-    canAccessStep,
     setStepsFromDraft,
     setActiveTab,
     updateStepCompletion,
@@ -132,7 +136,9 @@ export default function NewHackathonTab({
         'information',
         'timeline',
         'participation',
+        'tracks',
         'rewards',
+        'custom-questions',
         'resources',
         'judging',
         'collaboration',
@@ -302,7 +308,7 @@ export default function NewHackathonTab({
       : escrowPhase === 'submitting'
         ? 'Submitting transaction…'
         : escrowPhase === 'polling'
-          ? 'Funding escrow on-chain…'
+          ? 'Setting up the prize pool…'
           : 'Publishing…';
 
   const {
@@ -330,7 +336,9 @@ export default function NewHackathonTab({
       information: 'information',
       timeline: 'timeline',
       participation: 'participation',
+      tracks: 'tracks',
       rewards: 'rewards',
+      'custom-questions': 'custom-questions',
       resources: 'resources',
       judging: 'judging',
       collaboration: 'collaboration',
@@ -480,18 +488,36 @@ export default function NewHackathonTab({
       className='bg-background-main-bg mx-auto max-w-6xl flex-1 overflow-hidden px-6 py-8 text-white'
       id={organizationId}
     >
-      <Tabs
-        value={activeTab}
-        onValueChange={value => navigateToStep(value as StepKey)}
-        className='w-full'
-      >
-        <HackathonTabsNavigation
-          activeTab={activeTab}
-          steps={steps}
-          canAccessStep={canAccessStep}
-          navigateToStep={navigateToStep}
-        />
+      {!draftId && !stepData.information && derivedOrgId && (
+        <div className='border-primary/30 bg-primary/5 mb-6 flex flex-col items-start gap-3 rounded-xl border p-4 sm:flex-row sm:items-center sm:justify-between'>
+          <div className='flex items-start gap-3'>
+            <Sparkles className='text-primary mt-0.5 h-5 w-5' />
+            <div>
+              <p className='text-sm font-medium text-white'>
+                Start faster with AI
+              </p>
+              <p className='text-xs text-gray-400'>
+                Describe your hackathon and we&apos;ll draft the tracks, prizes,
+                judging, and timeline for you to review and edit.
+              </p>
+            </div>
+          </div>
+          <BoundlessButton
+            type='button'
+            variant='outline'
+            size='sm'
+            className='gap-2'
+            onClick={() => setAiDialogOpen(true)}
+          >
+            <Sparkles className='h-4 w-4' />
+            Generate with AI
+          </BoundlessButton>
+        </div>
+      )}
 
+      {/* Section nav lives in the unified HackathonSidebar (Setup group); the
+          wizard just renders the active section, switched via the ?step= param. */}
+      <Tabs value={activeTab} className='w-full'>
         <div className='px-6 py-6 md:px-20'>
           <TabsContent value='information' className='mt-0'>
             <InfoTab
@@ -513,21 +539,46 @@ export default function NewHackathonTab({
 
           <TabsContent value='participation' className='mt-0'>
             <ParticipantTab
-              onContinue={() => navigateToStep('rewards')}
+              onContinue={() => navigateToStep('tracks')}
               onSave={saveParticipationStep}
               initialData={stepData.participation}
               isLoading={loadingStates.participation}
             />
           </TabsContent>
 
+          <TabsContent value='tracks' className='mt-0'>
+            <TracksTab
+              organizationId={derivedOrgId}
+              hackathonId={draftId ?? undefined}
+              initialMaxPerSubmission={stepData.tracks?.tracksMaxPerSubmission}
+              onGoToInformation={() => navigateToStep('information')}
+              onContinue={() => navigateToStep('rewards')}
+              onConfigSaved={maxPerSubmission =>
+                setStepData(prev => ({
+                  ...prev,
+                  tracks: { tracksMaxPerSubmission: maxPerSubmission },
+                }))
+              }
+            />
+          </TabsContent>
+
           <TabsContent value='rewards' className='mt-0'>
             <RewardsTab
-              onContinue={() => navigateToStep('resources')}
+              onContinue={() => navigateToStep('custom-questions')}
               onSave={saveRewardsStep}
               initialData={stepData.rewards}
               isLoading={loadingStates.rewards}
               organizationId={derivedOrgId}
               hackathonId={draftId ?? undefined}
+            />
+          </TabsContent>
+
+          <TabsContent value='custom-questions' className='mt-0'>
+            <CustomQuestionsTab
+              organizationId={derivedOrgId}
+              hackathonId={draftId ?? undefined}
+              onGoToInformation={() => navigateToStep('information')}
+              onContinue={() => navigateToStep('resources')}
             />
           </TabsContent>
 
@@ -573,6 +624,12 @@ export default function NewHackathonTab({
           </TabsContent>
         </div>
       </Tabs>
+
+      <GenerateWithAiDialog
+        organizationId={derivedOrgId ?? ''}
+        open={aiDialogOpen}
+        onOpenChange={setAiDialogOpen}
+      />
 
       {draftId && derivedOrgId && (
         <>

@@ -3,12 +3,33 @@
 import { useState } from 'react';
 import { Download, Loader2 } from 'lucide-react';
 import { BoundlessButton } from '@/components/buttons';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuditLog, type TreasuryAuditEntry } from '@/features/treasury';
+
+// Plain-language labels so the activity reads for a non-technical organizer.
+const ACTION_LABELS: Record<string, string> = {
+  wallet_created: 'Created a wallet',
+  wallet_connected: 'Connected a wallet',
+  wallet_archived: 'Archived a wallet',
+  wallet_restored: 'Restored a wallet',
+  wallet_updated: 'Updated a wallet',
+  policy_updated: 'Updated spend rules',
+  spend_initiated: 'Requested a payment',
+  spend_approved: 'Approved a payment',
+  spend_rejected: 'Rejected a payment',
+  spend_cancelled: 'Cancelled a payment',
+  spend_submitted: 'Submitted a payment',
+  spend_completed: 'Sent funds',
+  spend_failed: 'Payment failed',
+  signer_set_changed: 'Updated wallet signers',
+};
+const actionLabel = (a: string) => ACTION_LABELS[a] ?? a.replace(/_/g, ' ');
 
 function toCsv(rows: TreasuryAuditEntry[]): string {
   const header = [
     'created_at',
     'action',
+    'actor_name',
     'actor_user_id',
     'actor_kind',
     'wallet_id',
@@ -28,6 +49,7 @@ function toCsv(rows: TreasuryAuditEntry[]): string {
     [
       r.createdAt,
       r.action,
+      r.actor?.name ?? '',
       r.actorUserId,
       r.actorKind,
       r.walletId,
@@ -110,12 +132,33 @@ export default function AuditLog({
                     {new Date(r.createdAt).toLocaleString()}
                   </td>
                   <td className='px-3 py-2 text-gray-200'>
-                    {r.action.replace(/_/g, ' ')}
+                    {actionLabel(r.action)}
                   </td>
-                  <td className='px-3 py-2 font-mono text-xs text-gray-500'>
-                    {r.actorUserId
-                      ? `${r.actorUserId.slice(0, 8)}…`
-                      : r.actorKind}
+                  <td className='px-3 py-2'>
+                    {r.actor ? (
+                      <span className='flex items-center gap-2'>
+                        <Avatar className='h-6 w-6'>
+                          <AvatarImage
+                            src={r.actor.image ?? undefined}
+                            alt={r.actor.name ?? ''}
+                          />
+                          <AvatarFallback className='bg-gray-800 text-[10px] text-gray-300'>
+                            {(r.actor.name ?? 'U').charAt(0).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span className='text-gray-200'>
+                          {r.actor.name ?? 'Unknown user'}
+                        </span>
+                      </span>
+                    ) : (
+                      <span className='text-gray-500'>
+                        {r.actorKind === 'system'
+                          ? 'System'
+                          : r.actorKind === 'platform_staff'
+                            ? 'Platform staff'
+                            : 'Unknown user'}
+                      </span>
+                    )}
                   </td>
                 </tr>
               ))}

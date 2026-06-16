@@ -25,6 +25,7 @@ interface StepData {
   information?: InfoFormData;
   timeline?: TimelineFormData;
   participation?: ParticipantFormData;
+  tracks?: { tracksMaxPerSubmission?: number };
   rewards?: RewardsFormData;
   resources?: ResourcesFormData;
   judging?: JudgingFormData;

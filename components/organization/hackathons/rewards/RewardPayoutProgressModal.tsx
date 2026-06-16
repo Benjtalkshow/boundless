@@ -45,14 +45,14 @@ interface Step {
 
 const MANAGED_STEPS: Step[] = [
   { phase: 'starting', label: 'Preparing payout' },
-  { phase: 'polling', label: 'Paying winners on-chain' },
+  { phase: 'polling', label: 'Paying the winners' },
 ];
 
 const EXTERNAL_STEPS: Step[] = [
   { phase: 'starting', label: 'Preparing payout' },
   { phase: 'signing', label: 'Awaiting your signature' },
   { phase: 'submitting', label: 'Submitting transaction' },
-  { phase: 'polling', label: 'Paying winners on-chain' },
+  { phase: 'polling', label: 'Paying the winners' },
 ];
 
 /**
@@ -111,10 +111,10 @@ export default function RewardPayoutProgressModal({
           </DialogTitle>
           <DialogDescription className='text-gray-400'>
             {isCompleted
-              ? 'Prizes have been paid out to the winners on-chain.'
+              ? 'Prizes have been paid out to the winners.'
               : isFailed
                 ? 'No funds moved. You can retry the payout.'
-                : 'Keep this open while winners are paid on-chain.'}
+                : 'Keep this open while the winners are paid.'}
           </DialogDescription>
         </DialogHeader>
 

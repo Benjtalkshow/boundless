@@ -3,6 +3,7 @@
 import * as React from 'react';
 import { useInfiniteQuery, keepPreviousData } from '@tanstack/react-query';
 import { getPublicHackathonsList, type Hackathon } from '@/lib/api/hackathons';
+import { effectivePrizeTiers } from '@/lib/utils/effective-prize-tiers';
 import type { HackathonFilters } from './use-hackathon-filters';
 import { mapSortToAPI, mapStatusToAPI } from './use-hackathon-filters';
 
@@ -47,14 +48,12 @@ function getHackathonDeadline(hackathon: Hackathon): number {
 }
 
 function getPrizePoolTotal(hackathon: Hackathon): number {
-  if (hackathon?.prizeTiers && hackathon.prizeTiers.length > 0) {
-    return hackathon.prizeTiers.reduce((sum, tier) => {
-      const raw = tier.prizeAmount ?? (tier as { amount?: string }).amount;
-      const parsed = Number(raw);
-      return sum + (Number.isFinite(parsed) ? parsed : 0);
-    }, 0);
-  }
-  return 0;
+  const tiers = effectivePrizeTiers(hackathon);
+  return tiers.reduce((sum, tier) => {
+    const raw = tier.prizeAmount ?? (tier as { amount?: string }).amount;
+    const parsed = Number(raw);
+    return sum + (Number.isFinite(parsed) ? parsed : 0);
+  }, 0);
 }
 
 /** Reverse-sort options the API can't do server-side (others are API-sorted). */

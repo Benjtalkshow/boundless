@@ -1,195 +1,223 @@
 'use client';
 
 import React from 'react';
-import { Megaphone, CheckCircle2, Trophy, Loader2 } from 'lucide-react';
+import {
+  Megaphone,
+  CheckCircle2,
+  Trophy,
+  Loader2,
+  AlertTriangle,
+  Check,
+} from 'lucide-react';
 import { BoundlessButton } from '@/components/buttons';
 import PodiumSection from '@/components/organization/hackathons/rewards/PodiumSection';
 import { TrackWinnersSection } from '@/components/organization/hackathons/rewards/TrackWinnersSection';
-import SubmissionsList from '@/components/organization/hackathons/rewards/SubmissionsList';
+import { WinnersBoard } from '@/components/organization/hackathons/rewards/WinnersBoard';
 import { Submission } from '@/components/organization/hackathons/rewards/types';
 import type { HackathonTrackWinner } from '@/lib/api/hackathons';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertCircle } from 'lucide-react';
+import type { WinnersBoard as WinnersBoardData } from '@/lib/api/hackathons/winners';
+import { cn } from '@/lib/utils';
 
 interface RewardsPageContentProps {
+  organizationId: string;
+  hackathonId: string;
   submissions: Submission[];
   isLoadingSubmissions: boolean;
   maxRank: number;
   hasWinners: boolean;
-  /** Opens the Step 2 payout wizard. */
+  /** Opens the pay-winners wizard. */
   onPublishClick: () => void;
-  onRankChange: (submissionId: string, newRank: number | null) => Promise<void>;
-  /** Step 1: makes the winners public (publishes judging results). */
+  /** Opens the confirm-winners dialog (publishes judging results). */
   onPublishResults: () => void;
-  /** True while the Step 1 publish request is in flight. */
   isPublishingResults?: boolean;
-  /** Whether judging results have been published (gates Step 2). */
   resultsPublished?: boolean;
-  /**
-   * Whether the hackathon is funded on-chain (events contract published).
-   * Required, alongside `resultsPublished`, before winners can be paid.
-   */
+  /** Funded on-chain — required before winners can be paid. */
   canReward?: boolean;
-  /**
-   * Per-track winners stamped by publishResults. Rendered in a
-   * dedicated section below the rank-based podium. Empty pre-publish
-   * and on OVERALL_ONLY hackathons.
-   */
   trackWinners?: HackathonTrackWinner[];
+  /** Reports the live board snapshot up to the page (for gating Confirm). */
+  onBoardLoaded?: (board: WinnersBoardData) => void;
+  winnersChosen?: number;
+  totalPlacements?: number;
+  eligiblePlacements?: number;
+}
+
+const STEPS = ['Pick winners', 'Confirm', 'Pay'] as const;
+
+function StageIndicator({ current }: { current: 0 | 1 | 2 }) {
+  return (
+    <div className='flex flex-wrap items-center gap-2 text-xs'>
+      {STEPS.map((label, i) => (
+        <React.Fragment key={label}>
+          <span
+            className={cn(
+              'flex items-center gap-1.5',
+              i <= current ? 'text-white' : 'text-gray-500'
+            )}
+          >
+            <span
+              className={cn(
+                'flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-semibold',
+                i < current
+                  ? 'bg-primary text-primary-foreground'
+                  : i === current
+                    ? 'border-primary text-primary border'
+                    : 'border border-gray-700 text-gray-500'
+              )}
+            >
+              {i < current ? <Check className='h-3 w-3' /> : i + 1}
+            </span>
+            {label}
+          </span>
+          {i < STEPS.length - 1 && <span className='h-px w-6 bg-gray-700' />}
+        </React.Fragment>
+      ))}
+    </div>
+  );
 }
 
 export const RewardsPageContent: React.FC<RewardsPageContentProps> = ({
+  organizationId,
+  hackathonId,
   submissions,
-  isLoadingSubmissions,
   maxRank,
   onPublishClick,
-  onRankChange,
   onPublishResults,
   isPublishingResults = false,
   resultsPublished = false,
   canReward = false,
   trackWinners = [],
+  onBoardLoaded,
+  winnersChosen = 0,
+  totalPlacements = 0,
+  eligiblePlacements = 0,
 }) => {
-  // Step 2 is unlocked only once results are public AND the hackathon is
-  // funded on-chain. Surface the precise blocker so the organizer knows
-  // which prerequisite is missing.
-  const canRewardWinners = resultsPublished && canReward;
-  const rewardDisabledHelper = !resultsPublished
-    ? 'Publish results first.'
-    : !canReward
-      ? 'Hackathon is not funded on-chain yet.'
-      : null;
+  // ── Published: show the winners, then pay them out. ──
+  if (resultsPublished) {
+    return (
+      <div className='space-y-8'>
+        <StageIndicator current={2} />
+
+        <div className='flex items-center gap-3 rounded-lg border border-green-500/20 bg-green-500/10 p-4'>
+          <CheckCircle2 className='h-6 w-6 shrink-0 text-green-500' />
+          <div>
+            <h3 className='text-sm font-semibold text-green-400'>
+              Winners confirmed
+            </h3>
+            <p className='text-xs text-gray-400'>
+              The winners are locked in and announced. Pay out their prizes
+              below.
+            </p>
+          </div>
+        </div>
+
+        {submissions.length > 0 && (
+          <section className='space-y-6'>
+            <PodiumSection submissions={submissions} maxRank={maxRank} />
+            <TrackWinnersSection trackWinners={trackWinners} />
+          </section>
+        )}
+
+        <section className='bg-background-card rounded-xl border border-gray-900 p-5'>
+          <h3 className='text-sm font-semibold text-white'>Pay winners</h3>
+          <p className='mt-1 text-xs text-gray-400'>
+            Send each winner their prize from the prize pool.
+          </p>
+          <div className='mt-3 flex flex-col gap-1.5'>
+            <BoundlessButton
+              variant='default'
+              size='default'
+              onClick={onPublishClick}
+              disabled={!canReward}
+              className='w-fit gap-2'
+            >
+              <Megaphone className='h-4 w-4' />
+              Pay winners
+            </BoundlessButton>
+            {!canReward && (
+              <p className='text-xs text-amber-400/80'>
+                The prize pool is still being set up. This usually takes a
+                moment.
+              </p>
+            )}
+          </div>
+        </section>
+      </div>
+    );
+  }
+
+  // ── Selection stage: pick winners, then confirm. ──
+  // Prizes with no winner: fewer scored/eligible projects than prize slots, or
+  // a track with no opted-in projects. Either way they won't be awarded.
+  const unfilled = Math.max(0, totalPlacements - winnersChosen);
 
   return (
     <div className='space-y-8'>
-      {/* Two-step organizer flow: publish results, then reward winners. */}
+      <StageIndicator current={0} />
+
       <section className='space-y-4'>
         <div>
-          <h2 className='text-xl font-semibold text-white'>Finalize Rewards</h2>
+          <h2 className='text-xl font-semibold text-white'>1. Pick winners</h2>
           <p className='mt-1 text-sm text-gray-400'>
-            Make the winners public, then reward them on-chain.
+            The highest-scored project is pre-filled for each prize. Change any
+            winner you like.
           </p>
         </div>
-
-        <div className='grid gap-4 md:grid-cols-2'>
-          {/* Step 1 — Publish Results */}
-          <div className='bg-background-card flex flex-col gap-3 rounded-xl border border-gray-900 p-5'>
-            <div className='flex items-center gap-2'>
-              <span className='flex h-6 w-6 items-center justify-center rounded-full bg-white/5 text-xs font-semibold text-gray-300'>
-                1
-              </span>
-              <h3 className='text-sm font-semibold text-white'>
-                Publish Results
-              </h3>
-            </div>
-            {resultsPublished ? (
-              <div className='flex items-center gap-2 text-sm text-green-400'>
-                <CheckCircle2 className='h-4 w-4' />
-                Results published
-              </div>
-            ) : (
-              <>
-                <p className='text-xs text-gray-400'>
-                  Make the winners public, then reward them on-chain.
-                </p>
-                <BoundlessButton
-                  variant='outline'
-                  size='default'
-                  onClick={onPublishResults}
-                  disabled={isPublishingResults}
-                  className='mt-auto w-fit gap-2 border-gray-700'
-                >
-                  {isPublishingResults ? (
-                    <Loader2 className='h-4 w-4 animate-spin' />
-                  ) : (
-                    <Trophy className='h-4 w-4' />
-                  )}
-                  {isPublishingResults ? 'Publishing...' : 'Publish Results'}
-                </BoundlessButton>
-              </>
-            )}
-          </div>
-
-          {/* Step 2 — Reward Winners */}
-          <div className='bg-background-card flex flex-col gap-3 rounded-xl border border-gray-900 p-5'>
-            <div className='flex items-center gap-2'>
-              <span className='flex h-6 w-6 items-center justify-center rounded-full bg-white/5 text-xs font-semibold text-gray-300'>
-                2
-              </span>
-              <h3 className='text-sm font-semibold text-white'>
-                Reward Winners
-              </h3>
-            </div>
-            <p className='text-xs text-gray-400'>
-              Pay the winners their prizes on-chain.
-            </p>
-            <div className='mt-auto flex flex-col gap-1.5'>
-              <BoundlessButton
-                variant='default'
-                size='default'
-                onClick={onPublishClick}
-                disabled={!canRewardWinners}
-                className='w-fit gap-2'
-              >
-                <Megaphone className='h-4 w-4' />
-                Reward Winners
-              </BoundlessButton>
-              {!canRewardWinners && rewardDisabledHelper && (
-                <p className='text-xs text-amber-400/80'>
-                  {rewardDisabledHelper}
-                </p>
-              )}
-            </div>
-          </div>
-        </div>
+        <WinnersBoard
+          organizationId={organizationId}
+          hackathonId={hackathonId}
+          onBoardLoaded={onBoardLoaded}
+        />
       </section>
 
-      {submissions.length > 0 && (
-        <section>
-          <div className='mb-6'>
-            <h2 className='text-xl font-semibold text-white'>
-              Winners & Rankings
-            </h2>
-            <p className='mt-1 text-sm text-gray-400'>
-              Assign ranks to submissions and view the winners podium
+      {totalPlacements > 0 && (
+        <div className='rounded-lg border border-gray-800 bg-gray-900/40 p-4'>
+          <p className='text-sm text-white'>
+            <span className='font-semibold'>{winnersChosen}</span> of{' '}
+            {totalPlacements} prize{totalPlacements === 1 ? '' : 's'} have a
+            winner.
+          </p>
+          {winnersChosen > 0 && unfilled > 0 && (
+            <p className='mt-1 flex items-start gap-1.5 text-xs text-amber-400'>
+              <AlertTriangle className='mt-0.5 h-3.5 w-3.5 shrink-0' />
+              {unfilled} prize{unfilled === 1 ? '' : 's'} don&apos;t have a
+              winner yet and won&apos;t be awarded. Pick a winner above, or
+              score more projects.
             </p>
-          </div>
-          <div className='space-y-6'>
-            <PodiumSection submissions={submissions} maxRank={maxRank} />
-            <TrackWinnersSection trackWinners={trackWinners} />
-            <div>
-              <h3 className='mb-4 text-lg font-medium text-white'>
-                All Submissions
-              </h3>
-              <SubmissionsList
-                submissions={submissions}
-                onRankChange={onRankChange}
-                maxRank={maxRank}
-              />
-            </div>
-          </div>
-        </section>
+          )}
+        </div>
       )}
 
-      {submissions.length === 0 && !isLoadingSubmissions && (
-        <section>
-          <Alert className='border-gray-800 bg-gray-900/50'>
-            <AlertCircle className='h-5 w-5 text-gray-400' />
-            <AlertTitle className='text-white'>
-              No Submissions Available
-            </AlertTitle>
-            <AlertDescription className='text-gray-300'>
-              <p className='mb-2'>
-                No judged submissions found. To assign winners and distribute
-                prizes:
+      {totalPlacements > 0 && (
+        <section className='bg-background-card rounded-xl border border-gray-900 p-5'>
+          <h3 className='text-sm font-semibold text-white'>
+            2. Confirm winners
+          </h3>
+          <p className='mt-1 text-xs text-gray-400'>
+            Locks in the winners you picked and announces them to participants.
+            You&apos;ll pay out prizes next.
+          </p>
+          <div className='mt-3 flex flex-col gap-1.5'>
+            <BoundlessButton
+              variant='default'
+              size='default'
+              onClick={onPublishResults}
+              disabled={isPublishingResults || winnersChosen === 0}
+              className='w-fit gap-2'
+            >
+              {isPublishingResults ? (
+                <Loader2 className='h-4 w-4 animate-spin' />
+              ) : (
+                <Trophy className='h-4 w-4' />
+              )}
+              {isPublishingResults ? 'Confirming...' : 'Confirm winners'}
+            </BoundlessButton>
+            {winnersChosen === 0 && (
+              <p className='text-xs text-amber-400/80'>
+                No projects have a winning score yet. Finish judging, then pick
+                at least one winner before confirming.
               </p>
-              <ol className='ml-4 list-decimal space-y-1 text-sm'>
-                <li>Ensure submissions have been shortlisted</li>
-                <li>Complete the judging process</li>
-                <li>Return here to assign ranks and publish winners</li>
-              </ol>
-            </AlertDescription>
-          </Alert>
+            )}
+          </div>
         </section>
       )}
     </div>

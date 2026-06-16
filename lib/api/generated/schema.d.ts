@@ -2330,6 +2330,26 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/hackathons/{idOrSlug}/access/verify': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Verify a private hackathon access password
+     * @description Checks the access password for a private hackathon and returns a short-lived token that unlocks the public page.
+     */
+    post: operations['HackathonsController_verifyHackathonAccess'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/hackathons/{slug}/contributors': {
     parameters: {
       query?: never;
@@ -3010,6 +3030,46 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/organizations/{organizationId}/hackathons/draft/from-brief': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Generate a hackathon draft from a brief (Organizer Assist)
+     * @description Calls the AI service to turn a brief into a structured draft, persists a new hackathon draft pre-filled with the timeline, prizes, and judging criteria, and returns it together with the full AI suggestion for review. The organizer reviews, completes (banner, venue), and publishes.
+     */
+    post: operations['OrganizationHackathonsAiController_generateFromBrief'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/organizations/{organizationId}/hackathons/draft/{id}/regenerate-section': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Regenerate one section of a draft (Organizer Assist)
+     * @description Calls the AI service to regenerate a single section (criteria, prizes, tracks, timeline, or description) from the current draft and returns the new section for the organizer to accept or discard.
+     */
+    post: operations['OrganizationHackathonsAiController_regenerateSection'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/organizations/{organizationId}/hackathons/{id}/visibility': {
     parameters: {
       query?: never;
@@ -3478,6 +3538,26 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/organizations/{organizationId}/hackathons/{idOrSlug}/judging/allocation-parity': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Phase 4 gate: new allocator vs legacy parity (compute-only)
+     * @description Runs the new WinnerAssignment allocator and compares its (winner -> payout) map against the legacy rank/wonRank result. Persists nothing and never touches the on-chain path. match=true is the prerequisite for switching select_winners over to WinnerAssignment.
+     */
+    get: operations['OrganizationHackathonsJudgingController_allocationParity'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/organizations/{organizationId}/hackathons/{idOrSlug}/judging/completeness': {
     parameters: {
       query?: never;
@@ -3539,6 +3619,26 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/organizations/{organizationId}/hackathons/{idOrSlug}/judging/invitations/bulk': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Bulk-invite judges (e.g. from a CSV import)
+     * @description Invites up to 25 judges in one request. Each row is processed independently, so one bad row (duplicate, already accepted, rejected email) does not abort the rest. Returns a per-row result.
+     */
+    post: operations['OrganizationHackathonsJudgingController_bulkInviteJudges'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/organizations/{organizationId}/hackathons/{idOrSlug}/judging/invitations/{invitationId}': {
     parameters: {
       query?: never;
@@ -3570,6 +3670,141 @@ export interface paths {
      * @description Rotates the invitation token so any previously-leaked link is invalidated, then re-emails the recipient.
      */
     post: operations['OrganizationHackathonsJudgingController_resendInvitation'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/organizations/{organizationId}/hackathons/{idOrSlug}/judging/recommendation-thresholds': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List recommendation thresholds */
+    get: operations['OrganizationHackathonsJudgingController_listRecommendationThresholds'];
+    /**
+     * Set a recommendation threshold (overall or per-track)
+     * @description Creates or updates the top-X% threshold for a scope. Omit trackId for the overall cut.
+     */
+    put: operations['OrganizationHackathonsJudgingController_setRecommendationThreshold'];
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/organizations/{organizationId}/hackathons/{idOrSlug}/judging/recommendation-thresholds/{thresholdId}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    /** Delete a recommendation threshold */
+    delete: operations['OrganizationHackathonsJudgingController_deleteRecommendationThreshold'];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/organizations/{organizationId}/hackathons/{idOrSlug}/judging/recommendation-thresholds/compute': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Recompute recommended flags from the configured thresholds
+     * @description Stamps recommendedOverall on submissions and recommended on track entries by the current aggregated scores. Advisory only.
+     */
+    post: operations['OrganizationHackathonsJudgingController_computeRecommendations'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/organizations/{organizationId}/hackathons/{idOrSlug}/judging/submissions/{submissionId}/ai-score': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Run AI Judging Assist on a submission (advisory)
+     * @description Generates an advisory scorecard against the rubric (per-prize criteria override the hackathon criteria via ?prizeId=). Stored as an AI_ASSIST score, excluded from ranking until promoted.
+     */
+    post: operations['OrganizationHackathonsJudgingController_aiScoreSubmission'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/organizations/{organizationId}/hackathons/{idOrSlug}/judging/ai-scorecards': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * List AI Judging Assist scorecards (advisory)
+     * @description Returns the stored advisory AI scorecards for this hackathon. These do not count toward ranking until promoted.
+     */
+    get: operations['OrganizationHackathonsJudgingController_aiScorecards'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/organizations/{organizationId}/hackathons/{idOrSlug}/judging/submissions/{submissionId}/ai-score/promote': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Promote an AI scorecard into a counting score
+     * @description Rosters the AI as a judge and flips the scorecard off AI_ASSIST so it counts toward ranking. Reversible. The AI judge is excluded from the expected-judge count.
+     */
+    post: operations['OrganizationHackathonsJudgingController_promoteAiScore'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/organizations/{organizationId}/hackathons/{idOrSlug}/judging/submissions/{submissionId}/ai-score/unpromote': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Reverse a promotion (back to advisory-only) */
+    post: operations['OrganizationHackathonsJudgingController_unpromoteAiScore'];
     delete?: never;
     options?: never;
     head?: never;
@@ -3810,6 +4045,30 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/judge/hackathons/{hackathonId}/submissions/{submissionId}/ai-score': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * AI advisory scorecard for a submission (judge view)
+     * @description Returns the AI scorecard for the submission if one has been generated, else null. Advisory only; it never replaces the judge’s own score.
+     */
+    get: operations['JudgeController_aiScorecard'];
+    put?: never;
+    /**
+     * Run AI scoring for a submission (judge assist)
+     * @description Generates (or regenerates) the advisory AI scorecard against the rubric. Advisory only; the judge still enters and submits their own score.
+     */
+    post: operations['JudgeController_runAiScore'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/organizations/{organizationId}/hackathons/{id}/statistics': {
     parameters: {
       query?: never;
@@ -3937,6 +4196,26 @@ export interface paths {
     patch: operations['OrganizationHackathonsUpdatesController_updatePublishedAdvancedSettings'];
     trace?: never;
   };
+  '/api/organizations/{organizationId}/hackathons/{id}/access': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    /**
+     * Set hackathon visibility + access password (owner/admin)
+     * @description PUBLIC lists the hackathon and opens the page to everyone. PRIVATE hides it from listings and gates the page behind a password.
+     */
+    patch: operations['OrganizationHackathonsUpdatesController_setHackathonAccess'];
+    trace?: never;
+  };
   '/api/organizations/{organizationId}/hackathons/{id}/export': {
     parameters: {
       query?: never;
@@ -4027,7 +4306,7 @@ export interface paths {
     };
     /**
      * Get allocation summary for a contribution
-     * @description Returns the pledged amount, allocatable (after Trustless Work fee), already allocated, remaining unallocated, and the list of individual allocations.
+     * @description Returns the pledged amount, allocatable (after platform fee), already allocated, remaining unallocated, and the list of individual allocations.
      */
     get: operations['OrganizationHackathonsPartnersController_getAllocations'];
     put?: never;
@@ -4052,6 +4331,26 @@ export interface paths {
      * @description Distributes the contribution amount into one or more prize tiers — either inflating existing tiers or creating new ones. The sum of allocations cannot exceed the remaining allocatable amount.
      */
     post: operations['OrganizationHackathonsPartnersController_allocate'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/organizations/{organizationId}/hackathons/{hackathonId}/partners/prizes': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * List prizes + placements available for allocation
+     * @description Returns the hackathon prizes with their placements (the fundable slots) so partner money can be allocated to a specific placement.
+     */
+    get: operations['OrganizationHackathonsPartnersController_prizes'];
+    put?: never;
+    post?: never;
     delete?: never;
     options?: never;
     head?: never;
@@ -4105,8 +4404,8 @@ export interface paths {
     get?: never;
     put?: never;
     /**
-     * Build an unsigned Trustless Work fund-escrow transaction
-     * @description Validates the contribution window, calls Trustless Work, and returns an unsigned XDR for the partner wallet to sign locally. The Trustless Work API key never leaves the backend.
+     * Build an unsigned ADD_FUNDS escrow transaction
+     * @description Validates the contribution window and on-chain readiness, begins an ADD_FUNDS op on the boundless-events contract, links it to the contribution, and returns the unsigned XDR (plus the op row id) for the partner wallet to sign locally.
      */
     post: operations['PartnersContributeController_prepareFundTx'];
     delete?: never;
@@ -4125,8 +4424,8 @@ export interface paths {
     get?: never;
     put?: never;
     /**
-     * Submit a partner-signed transaction and confirm the contribution
-     * @description Forwards the signed XDR to Trustless Work, then marks the contribution confirmed using the Stellar transaction hash returned.
+     * Submit a partner-signed ADD_FUNDS transaction
+     * @description Submits the signed XDR through the escrow orchestrator. The op settles asynchronously; the contribution is confirmed by the hackathon escrow subscriber once ADD_FUNDS settles on-chain.
      */
     post: operations['PartnersContributeController_submitTx'];
     delete?: never;
@@ -4155,6 +4454,26 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/hackathons/{idOrSlug}/custom-questions': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * List public custom questions
+     * @description Returns a hackathon's custom questions for the public forms. Filter with ?scope=SUBMISSION|REGISTRATION (the submission form passes SUBMISSION).
+     */
+    get: operations['HackathonsCustomQuestionsController_list'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/organizations/{organizationId}/hackathons/{id}/tracks': {
     parameters: {
       query?: never;
@@ -4174,6 +4493,26 @@ export interface paths {
     options?: never;
     head?: never;
     patch?: never;
+    trace?: never;
+  };
+  '/api/organizations/{organizationId}/hackathons/{id}/tracks/config': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    /**
+     * Update hackathon-level track config
+     * @description Sets track settings stored on the hackathon (e.g. max tracks per submission), distinct from per-track CRUD. Declared before :trackId so the static path wins.
+     */
+    patch: operations['OrganizationHackathonsTracksController_updateConfig'];
     trace?: never;
   };
   '/api/organizations/{organizationId}/hackathons/{id}/tracks/{trackId}': {
@@ -4211,6 +4550,30 @@ export interface paths {
      * @description Retrofit tool for hackathons where tracks were added after submissions exist. Inserts a SubmissionTrackEntry for every non-disqualified submission. Idempotent. Auto-bumps `tracksMaxPerSubmission` if needed so submitters can still edit their submissions afterwards.
      */
     post: operations['OrganizationHackathonsTracksController_bulkOptIn'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/organizations/{organizationId}/hackathons/{id}/custom-questions': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * List custom questions (organizer view)
+     * @description Returns the full question set for this hackathon. Filter to one scope with ?scope=REGISTRATION|SUBMISSION.
+     */
+    get: operations['OrganizationHackathonsCustomQuestionsController_list'];
+    /**
+     * Replace the full custom-question set
+     * @description Delete-and-recreate: the submitted array becomes the complete question set across both scopes.
+     */
+    put: operations['OrganizationHackathonsCustomQuestionsController_replace'];
+    post?: never;
     delete?: never;
     options?: never;
     head?: never;
@@ -4573,6 +4936,41 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/organizations/{id}/permissions': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Get the org role-permission matrix */
+    get: operations['OrganizationsController_getOrganizationPermissions'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    /** Update the org role-permission matrix (owner only) */
+    patch: operations['OrganizationsController_updateOrganizationPermissions'];
+    trace?: never;
+  };
+  '/api/organizations/{id}/permissions/reset': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Reset the org role-permission matrix (owner only) */
+    post: operations['OrganizationsController_resetOrganizationPermissions'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/organizations/{id}/stats': {
     parameters: {
       query?: never;
@@ -4750,6 +5148,26 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/organizations/{organizationId}/treasury/wallets/archived': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * List archived treasury wallets
+     * @description Wallets are never deleted, only archived. This returns the archived set so they can be reviewed and restored.
+     */
+    get: operations['OrganizationTreasuryController_listArchivedWallets'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/organizations/{organizationId}/treasury/default-wallet': {
     parameters: {
       query?: never;
@@ -4861,6 +5279,26 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/organizations/{organizationId}/treasury/wallets/{walletId}/restore': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Restore an archived treasury wallet
+     * @description Wallets are never deleted; archiving is always reversible.
+     */
+    post: operations['OrganizationTreasuryController_restoreWallet'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/organizations/{organizationId}/treasury/wallets/{walletId}/balance': {
     parameters: {
       query?: never;
@@ -4908,6 +5346,80 @@ export interface paths {
     put?: never;
     /** Initiate a spend request */
     post: operations['OrganizationTreasuryController_initiateSpend'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/organizations/{organizationId}/treasury/spend/funding-otp/request': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Request an email verification code before sending funds */
+    post: operations['OrganizationTreasuryController_requestSendOtp'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/organizations/{organizationId}/treasury/spend/funding-otp/verify': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Verify the email code to authorize sending funds */
+    post: operations['OrganizationTreasuryController_verifySendOtp'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/organizations/{organizationId}/treasury/spend/send': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Send funds from a managed treasury wallet
+     * @description Owner/admin only. When email step-up is enabled, requires a recent verification (see spend/funding-otp/request + verify). Creates, authorizes, and executes the payment in a single call.
+     */
+    post: operations['OrganizationTreasuryController_sendFunds'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/organizations/{organizationId}/treasury/spend/destination-readiness': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Check whether a destination can receive USDC
+     * @description Returns whether the recipient account exists on-chain and has a USDC trustline, so the UI can warn before a send instead of failing on-chain.
+     */
+    get: operations['OrganizationTreasuryController_checkSendDestination'];
+    put?: never;
+    post?: never;
     delete?: never;
     options?: never;
     head?: never;
@@ -5050,6 +5562,74 @@ export interface paths {
     get: operations['OrganizationTreasuryController_auditLog'];
     put?: never;
     post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/organizations/{organizationId}/receipts': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List money receipts (newest first) */
+    get: operations['OrganizationReceiptsController_list'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/organizations/{organizationId}/receipts/{receiptId}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Get a single receipt */
+    get: operations['OrganizationReceiptsController_getOne'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/organizations/{organizationId}/receipts/{receiptId}/send': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Email a copy of the receipt */
+    post: operations['OrganizationReceiptsController_send'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/organizations/{organizationId}/receipts/{receiptId}/void': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Void a receipt (owner/admin). Never deleted. */
+    post: operations['OrganizationReceiptsController_void'];
     delete?: never;
     options?: never;
     head?: never;
@@ -7011,7 +7591,7 @@ export interface paths {
     };
     get?: never;
     put?: never;
-    /** Submit an application for a LIGHT/HEAVY bounty */
+    /** Submit an application for a application bounty */
     post: operations['BountyApplicationController_create'];
     delete?: never;
     options?: never;
@@ -7080,8 +7660,8 @@ export interface paths {
     };
     get?: never;
     put?: never;
-    /** Select a single application (Curated Pick / Pitched Pick) */
-    post: operations['OrganizationBountyShortlistController_selectForPick'];
+    /** Select a single application (application (light) single claim / application (full) single claim) */
+    post: operations['OrganizationBountyShortlistController_selectForSingleClaim'];
     delete?: never;
     options?: never;
     head?: never;
@@ -7097,7 +7677,7 @@ export interface paths {
     };
     get?: never;
     put?: never;
-    /** Approve a shortlist (Curated Showdown / Pitched Showdown) */
+    /** Approve a shortlist (application (light) competition / application (full) competition) */
     post: operations['OrganizationBountyShortlistController_createShortlist'];
     delete?: never;
     options?: never;
@@ -7122,7 +7702,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/api/bounties/{bountyId}/v2/showdown/join': {
+  '/api/bounties/{bountyId}/v2/competition/join': {
     parameters: {
       query?: never;
       header?: never;
@@ -7131,10 +7711,10 @@ export interface paths {
     };
     get?: never;
     put?: never;
-    /** Join an Open Showdown bounty */
-    post: operations['BountyShowdownJoinController_join'];
-    /** Leave an Open Showdown before submitting */
-    delete: operations['BountyShowdownJoinController_leave'];
+    /** Join an open competition bounty */
+    post: operations['BountyCompetitionJoinController_join'];
+    /** Leave an open competition before submitting */
+    delete: operations['BountyCompetitionJoinController_leave'];
     options?: never;
     head?: never;
     patch?: never;
@@ -14466,6 +15046,22 @@ export interface components {
       createdBy: components['schemas']['CreatorRelationDto'];
       organization?: components['schemas']['OrganizationRelationDto'];
     };
+    VerifyHackathonAccessDto: {
+      /** @description The access password for a private hackathon */
+      password: string;
+    };
+    HackathonAccessTokenResponseDto: {
+      accessToken: string;
+    };
+    JoinHackathonDto: {
+      /**
+       * @description Answers to REGISTRATION-scope custom questions. Keyed by question id; each value is a string (or string[] for multi-select).
+       * @example {
+       *       "cq_role": "Backend developer"
+       *     }
+       */
+      customAnswers?: Record<string, never>;
+    };
     ParticipationResponseDto: Record<string, never>;
     ParticipantResponseDto: Record<string, never>;
     HackathonParticipantsResponseDto: {
@@ -14674,8 +15270,19 @@ export interface components {
        */
       trackAnswers?: Record<string, never>;
       /**
+       * @description Answers to hackathon-level SUBMISSION-scope custom questions. Keyed by question id; each value is a string (or string[] for multi-select). Validated against the question set.
+       * @example {
+       *       "cq_audience": "Freelancers",
+       *       "cq_stack": [
+       *         "Web",
+       *         "AI"
+       *       ]
+       *     }
+       */
+      customAnswers?: Record<string, never>;
+      /**
        * @description Short elevator pitch shown on cards / sidebars / judge queue. Max ~160 chars.
-       * @example Trustless escrow for one-time freelance gigs on Stellar.
+       * @example Milestone-based escrow for one-time freelance gigs on Stellar.
        */
       tagline?: string;
       /**
@@ -14684,7 +15291,7 @@ export interface components {
        *       "Soroban",
        *       "Stellar SDK",
        *       "Next.js",
-       *       "TrustlessWork SDK"
+       *       "Rust"
        *     ]
        */
       builtWith?: string[];
@@ -14750,6 +15357,17 @@ export interface components {
       trackIds?: string[];
       /** @description Per-track answers, same shape as on create. Phase B. */
       trackAnswers?: Record<string, never>;
+      /**
+       * @description Answers to hackathon-level SUBMISSION-scope custom questions. Keyed by question id; each value is a string (or string[] for multi-select). Replaces the stored answers when provided.
+       * @example {
+       *       "cq_audience": "Freelancers",
+       *       "cq_stack": [
+       *         "Web",
+       *         "AI"
+       *       ]
+       *     }
+       */
+      customAnswers?: Record<string, never>;
       tagline?: string;
       builtWith?: string[];
       screenshots?: string[];
@@ -15029,16 +15647,48 @@ export interface components {
       /** @description One or more hackathon categories */
       categories: (
         | 'DeFi'
+        | 'Payments'
+        | 'Stablecoins'
+        | 'Lending & Borrowing'
+        | 'Trading & DEXs'
+        | 'Derivatives'
+        | 'Prediction Markets'
         | 'NFTs'
+        | 'Creator Economy'
+        | 'Social'
+        | 'Social Tokens'
         | 'DAOs'
+        | 'Governance'
+        | 'Web3 Gaming'
+        | 'Metaverse'
+        | 'Layer 1'
         | 'Layer 2'
         | 'Cross-chain'
-        | 'Web3 Gaming'
-        | 'Social Tokens'
+        | 'Interoperability'
         | 'Infrastructure'
+        | 'Developer Tooling'
+        | 'Wallets'
+        | 'Account Abstraction'
+        | 'Oracles'
+        | 'Data & Indexing'
+        | 'Analytics'
+        | 'AI'
+        | 'AI Agents'
+        | 'DePIN'
+        | 'DeSci'
         | 'Privacy'
-        | 'Sustainability'
+        | 'Zero-Knowledge'
+        | 'Security'
+        | 'Identity'
         | 'Real World Assets'
+        | 'Tokenization'
+        | 'Supply Chain'
+        | 'Sustainability'
+        | 'Climate'
+        | 'Education'
+        | 'Healthcare'
+        | 'Consumer Apps'
+        | 'Mobile'
         | 'Other'
       )[];
       /**
@@ -15116,6 +15766,10 @@ export interface components {
         | 'ACCEPTED_SHORTLISTED'
         | 'HIDDEN_UNTIL_RESULTS';
     };
+    HackathonDraftTracksDto: {
+      /** @description Max number of tracks a single submission may enter (1-20). */
+      tracksMaxPerSubmission?: number;
+    };
     PrizeTierDto: {
       /** @description Client-generated tier id */
       id: string;
@@ -15130,6 +15784,23 @@ export interface components {
       kind?: 'OVERALL' | 'TRACK';
       trackId?: string;
     };
+    PrizePlacementWriteDto: {
+      /** @description 1 = 1st place; unique within a prize */
+      position: number;
+      label?: string;
+      /** @description Prize amount as a decimal string */
+      amount: string;
+      currency?: string;
+      passMark?: number;
+    };
+    PrizeWriteDto: {
+      /** @description Prize name, e.g. "Grand Prize" or "Best UI/UX" */
+      name: string;
+      description?: string;
+      /** @description Linked HackathonTrack ids; empty = overall prize */
+      trackIds: string[];
+      placements: components['schemas']['PrizePlacementWriteDto'][];
+    };
     WinnerOverrideDto: {
       /** @description Submission id the override targets */
       submissionId: string;
@@ -15138,11 +15809,13 @@ export interface components {
       currency?: string;
     };
     RewardsFormData: {
-      prizeTiers: components['schemas']['PrizeTierDto'][];
+      prizeTiers?: components['schemas']['PrizeTierDto'][];
+      prizes?: components['schemas']['PrizeWriteDto'][];
       winnerOverrides?: components['schemas']['WinnerOverrideDto'][];
       /** @enum {string} */
       prizeStructure?: 'OVERALL_ONLY' | 'OVERALL_AND_TRACKS' | 'TRACKS_ONLY';
       tracksMaxPerSubmission?: number;
+      allowWinnerStacking?: boolean;
     };
     ResourceItemDto: {
       /** @description Client-generated resource id */
@@ -15188,10 +15861,35 @@ export interface components {
       information?: components['schemas']['InfoFormData'];
       timeline?: components['schemas']['TimelineFormData'];
       participation?: components['schemas']['ParticipantFormData'];
+      tracks?: components['schemas']['HackathonDraftTracksDto'];
       rewards?: components['schemas']['RewardsFormData'];
       resources?: components['schemas']['ResourcesFormData'];
       judging?: components['schemas']['JudgingFormData'];
       collaboration?: components['schemas']['CollaborationFormData'];
+    };
+    HackathonDraftAiGenerationDto: {
+      /** @description AI generationId that produced or last-updated this draft. */
+      generationId: string;
+    };
+    HackathonDraftPrizePlacementDto: {
+      id: string;
+      /** @description 1 = 1st place, unique within a prize */
+      position: number;
+      label?: string | null;
+      /** @description Decimal string in the prize currency */
+      amount: string;
+      currency: string;
+      /** @description Minimum score (0-100) to win this placement */
+      passMark: number;
+    };
+    HackathonDraftPrizeDto: {
+      id: string;
+      name: string;
+      description?: string | null;
+      displayOrder: number;
+      /** @description Linked track ids; empty = overall prize */
+      trackIds: string[];
+      placements: components['schemas']['HackathonDraftPrizePlacementDto'][];
     };
     HackathonDraftResponseDto: {
       id: string;
@@ -15215,6 +15913,10 @@ export interface components {
       createdAt: string;
       /** Format: date-time */
       updatedAt: string;
+      /** @description Present when the draft was generated with Organizer Assist; enables per-section AI regenerate in the wizard. */
+      aiGeneration?: components['schemas']['HackathonDraftAiGenerationDto'];
+      /** @description Prize entity (named prizes + linked tracks + placements). Additive read path alongside data.rewards.prizeTiers; becomes authoritative as readers cut over. */
+      prizes: components['schemas']['HackathonDraftPrizeDto'][];
     };
     UpdateHackathonDraftDto: {
       information?: components['schemas']['InfoFormData'];
@@ -15226,6 +15928,53 @@ export interface components {
       collaboration?: components['schemas']['CollaborationFormData'];
       /** @description Hint that this is an autosave (no completion side effects). */
       autoSave?: boolean;
+    };
+    GenerateDraftFromBriefDto: {
+      /**
+       * @description Free-text brief describing the hackathon to generate.
+       * @example A two-week hackathon for AI agent tooling on Stellar, aimed at indie builders.
+       */
+      brief: string;
+      /**
+       * @description Total budget cap in USDC, as a decimal string.
+       * @example 10000
+       */
+      budgetCapUsdc: string;
+      /**
+       * @description Earliest the hackathon may start (YYYY-MM-DD).
+       * @example 2026-07-01
+       */
+      earliestStart: string;
+      /** @description Up to 3 example briefs/drafts to steer style. */
+      examples?: string[];
+    };
+    AiGenerationMetaDto: {
+      generationId: string;
+      model: string;
+      promptVersion: string;
+      /** @description Cost in USD as a decimal string (never a float). */
+      costUsd: string;
+    };
+    GenerateDraftFromBriefResponseDto: {
+      /** @description Id of the created draft. */
+      draftId: string;
+      draft: components['schemas']['HackathonDraftResponseDto'];
+      generation: components['schemas']['AiGenerationMetaDto'];
+    };
+    RegenerateDraftSectionDto: {
+      /** @enum {string} */
+      section: 'criteria' | 'prizes' | 'tracks' | 'timeline' | 'description';
+      /** @description Optional steering instructions for the regeneration. */
+      instructions?: string;
+    };
+    RegenerateDraftSectionResponseDto: {
+      /** @enum {string} */
+      section: 'criteria' | 'prizes' | 'tracks' | 'timeline' | 'description';
+      /** @description Regenerated values in the wizard section shape. */
+      data: {
+        [key: string]: unknown;
+      };
+      generation: components['schemas']['AiGenerationMetaDto'];
     };
     UpdateVisibilitySettingsDto: {
       /**
@@ -15555,6 +16304,10 @@ export interface components {
       isPending: boolean;
       hasDisagreement: boolean;
       trackIds?: string[];
+      /** @description True when this submission is in the top X% overall per the recommendation threshold. */
+      recommendedOverall?: boolean;
+      /** @description Track ids where this submission is in the top X% per the per-track recommendation threshold. */
+      recommendedTrackIds?: string[];
     };
     JudgingResultsResponseDto: {
       hackathonId: string;
@@ -15578,10 +16331,83 @@ export interface components {
       email: string;
       /** @description Optional public display name for the judge */
       displayName?: string;
+      /** @description Optional title/role shown with the judge (e.g. "Time Traveler"). */
+      title?: string;
       /** @description Personal message included in the invitation email */
       message?: string;
       /** @description Override expiry in days (default 14). Maximum 60 to prevent indefinite invitations. */
       expiresInDays?: number;
+    };
+    BulkInviteJudgesDto: {
+      /** @description Up to 25 judges per request */
+      invites: components['schemas']['InviteJudgeDto'][];
+    };
+    BulkInviteRowResultDto: {
+      email: string;
+      /**
+       * @description 'invited' = sent; 'failed' = skipped with a reason.
+       * @enum {string}
+       */
+      status: 'invited' | 'failed';
+      /** @description Failure reason when status is failed. */
+      reason?: string;
+    };
+    BulkInviteResultDto: {
+      results: components['schemas']['BulkInviteRowResultDto'][];
+      /** @description Count of invitations sent. */
+      invited: number;
+      /** @description Count of rows that failed / were skipped. */
+      failed: number;
+    };
+    RecommendationThresholdDto: {
+      id: string;
+      hackathonId: string;
+      /** @description null = overall threshold; otherwise the scoped track id. */
+      trackId?: string | null;
+      /** @description Top percent (0-100). */
+      topPercent: number;
+    };
+    SetRecommendationThresholdDto: {
+      /** @description Track id to scope the threshold to; omit for the overall cut. */
+      trackId?: string;
+      /**
+       * @description Top percent (0-100) of submissions flagged as recommended.
+       * @example 10
+       */
+      topPercent: number;
+    };
+    RecommendationComputeDiagnosticsDto: {
+      /** @description Submissions currently SHORTLISTED. */
+      shortlistedSubmissions: number;
+      /** @description Shortlisted submissions with at least one counted score (active judge or promoted AI scorecard; advisory AI_ASSIST excluded). These are the only submissions a threshold can rank. */
+      scoredSubmissions: number;
+      /** @description Whether an overall (all-submissions) cut is set. */
+      overallThresholdConfigured: boolean;
+      /** @description Number of per-track cuts configured. */
+      trackThresholdsConfigured: number;
+      /**
+       * @description Human-readable reasons explaining the outcome (e.g. why nothing was flagged). Empty when the compute produced recommendations with nothing outstanding.
+       * @example [
+       *       "No recommendation thresholds are configured. Set a top-X% cut (overall or per track), then recompute."
+       *     ]
+       */
+      reasons: string[];
+    };
+    RecommendationComputeResultDto: {
+      /** @description Submissions flagged recommendedOverall. */
+      overallRecommended: number;
+      /**
+       * @description Per-track recommended counts.
+       * @example [
+       *       {
+       *         "trackId": "trk_1",
+       *         "recommended": 3
+       *       }
+       *     ]
+       */
+      tracks: string[];
+      /** @description Why the compute produced what it did, so an empty result is never silent. */
+      diagnostics: components['schemas']['RecommendationComputeDiagnosticsDto'];
     };
     AcceptJudgeInvitationDto: {
       /** @description Optional display name override. If omitted, the inviter-provided displayName (or the user’s account name) is used. */
@@ -15743,7 +16569,8 @@ export interface components {
       trackId?: string;
     };
     PublishedRewardsFormDataDto: {
-      prizeTiers: components['schemas']['PublishedPrizeTierDto'][];
+      prizeTiers?: components['schemas']['PublishedPrizeTierDto'][];
+      prizes?: components['schemas']['PrizeWriteDto'][];
       /**
        * @description Manual winner assignments override (submissionId -> rank)
        * @example {
@@ -15757,6 +16584,7 @@ export interface components {
       /** @enum {string} */
       prizeStructure?: 'OVERALL_ONLY' | 'OVERALL_AND_TRACKS' | 'TRACKS_ONLY';
       tracksMaxPerSubmission?: number;
+      allowWinnerStacking?: boolean;
     };
     UpdatePublishedHackathonFinancialDto: {
       rewards: components['schemas']['PublishedRewardsFormDataDto'];
@@ -15783,6 +16611,12 @@ export interface components {
     };
     UpdatePublishedHackathonAdvancedSettingsDto: {
       advancedSettings: components['schemas']['AdvancedSettingsFormDataDto'];
+    };
+    SetHackathonAccessDto: {
+      /** @enum {string} */
+      visibility: 'PUBLIC' | 'PRIVATE';
+      /** @description Access password. Required when first making a hackathon private; ignored (cleared) when visibility is PUBLIC. */
+      password?: string;
     };
     InvitePartnerDto: {
       /** @example sponsor@partner.io */
@@ -15812,16 +16646,9 @@ export interface components {
       showPublicly: boolean;
     };
     AllocationTargetDto: {
-      /** @description Existing prize tier id to inflate. Either tierId or newTier must be set. */
-      tierId?: string;
-      /**
-       * @description Create a new prize tier with this label. Either tierId or newTier must be set.
-       * @example Best AI Project
-       */
-      newTierLabel?: string;
-      /** @description Optional description for the new tier */
-      newTierDescription?: string;
-      /** @description Net amount (USDC) to add to the tier */
+      /** @description PrizePlacement id (the fundable slot) this allocation adds to. Placements are created in the Rewards step. */
+      placementId: string;
+      /** @description Net amount (USDC) to add to the placement */
       amount: number;
     };
     AllocateContributionDto: {
@@ -15886,6 +16713,30 @@ export interface components {
       /** Format: date-time */
       updatedAt: string;
     };
+    CustomQuestionResponseDto: {
+      id: string;
+      hackathonId: string;
+      /** @enum {string} */
+      scope: 'REGISTRATION' | 'SUBMISSION';
+      label: string;
+      helpText?: string | null;
+      /** @enum {string} */
+      type:
+        | 'SHORT'
+        | 'LONG'
+        | 'URL'
+        | 'SINGLE_SELECT'
+        | 'MULTI_SELECT'
+        | 'BOOLEAN';
+      required: boolean;
+      options?: string[] | null;
+      maxLength?: number | null;
+      displayOrder: number;
+    };
+    UpdateTracksConfigDto: {
+      /** @description Max number of tracks a single submission may enter (1-20). */
+      tracksMaxPerSubmission?: number;
+    };
     CreateTrackDto: {
       /**
        * @description Human-readable track name shown on the hackathon page.
@@ -15940,6 +16791,36 @@ export interface components {
       prompt?: string;
       customQuestions?: components['schemas']['TrackCustomQuestionDto'][];
       requiredArtifacts?: components['schemas']['TrackRequiredArtifactDto'][];
+    };
+    CustomQuestionWriteDto: {
+      /** @enum {string} */
+      scope: 'REGISTRATION' | 'SUBMISSION';
+      /** @description Question shown to the participant. */
+      label: string;
+      /** @description Optional helper text under the field. */
+      helpText?: string;
+      /**
+       * @default SHORT
+       * @enum {string}
+       */
+      type:
+        | 'SHORT'
+        | 'LONG'
+        | 'URL'
+        | 'SINGLE_SELECT'
+        | 'MULTI_SELECT'
+        | 'BOOLEAN';
+      /** @description Whether an answer is required. */
+      required?: boolean;
+      /** @description Choices for SINGLE_SELECT / MULTI_SELECT. */
+      options?: string[];
+      /** @description Optional length cap for SHORT / LONG answers. */
+      maxLength?: number;
+      /** @description Sort order; lower renders first. */
+      displayOrder?: number;
+    };
+    UpsertCustomQuestionsDto: {
+      questions: components['schemas']['CustomQuestionWriteDto'][];
     };
     RequestFundingOtpResponseDto: {
       /** @description Whether funding step-up is enforced for this action */
@@ -16376,6 +17257,31 @@ export interface components {
       createdAt: string;
       approvedAt: string | null;
     };
+    SendTreasuryFundsDto: {
+      /** @description Wallet to send from */
+      sourceWalletId: string;
+      /**
+       * @description Recipient Stellar address (starts with G)
+       * @example GA...
+       */
+      destination: string;
+      /**
+       * @description Amount in USDC
+       * @example 250.00
+       */
+      amount: string;
+      /**
+       * @description What this payment is for (shown in your activity log)
+       * @example Contributor payout
+       */
+      note?: string;
+    };
+    SendDestinationReadinessDto: {
+      /** @description Whether the recipient account exists on-chain */
+      exists: boolean;
+      /** @description Whether the recipient has a USDC trustline (so it can receive USDC) */
+      hasUsdcTrustline: boolean;
+    };
     SpendDecisionDto: {
       /** @description Optional note for the decision */
       note?: string;
@@ -16389,11 +17295,18 @@ export interface components {
       /** @description The browser-signed transaction XDR */
       signedXdr: string;
     };
+    TreasuryActorDto: {
+      id: string;
+      name: string | null;
+      image: string | null;
+    };
     TreasuryAuditEntryDto: {
       id: string;
       action: string;
       actorUserId: string | null;
       actorKind: string;
+      /** @description Resolved profile of the actor (name + avatar), if a user. */
+      actor: components['schemas']['TreasuryActorDto'] | null;
       walletId: string | null;
       spendRequestId: string | null;
       details: {
@@ -16406,6 +17319,49 @@ export interface components {
       total: number;
       page: number;
       limit: number;
+    };
+    ReceiptResponseDto: {
+      id: string;
+      /** @example RCPT-100001 */
+      receiptNumber: string;
+      organizationId: string;
+      /** @example TREASURY_SEND */
+      type: string;
+      /** @example Funds sent */
+      typeLabel: string;
+      /** @example ISSUED */
+      status: string;
+      /** @example OUTGOING */
+      direction: string;
+      /** @example 250.00 */
+      amount: string;
+      /** @example USDC */
+      currency: string;
+      fromLabel: Record<string, never> | null;
+      fromAddress: Record<string, never> | null;
+      toLabel: Record<string, never> | null;
+      toAddress: Record<string, never> | null;
+      description: Record<string, never> | null;
+      onChainTxHash: Record<string, never> | null;
+      explorerUrl: Record<string, never> | null;
+      network: Record<string, never> | null;
+      issuedByUserId: Record<string, never> | null;
+      issuedAt: string;
+      voidedAt: Record<string, never> | null;
+    };
+    ReceiptListResponseDto: {
+      data: components['schemas']['ReceiptResponseDto'][];
+      total: number;
+      page: number;
+      limit: number;
+    };
+    SendReceiptDto: {
+      /** @description Where to email the receipt. Defaults to your account email. */
+      email?: string;
+    };
+    VoidReceiptDto: {
+      /** @description Why the receipt is being voided */
+      reason?: string;
     };
     CreateVoteDto: {
       /** @description ID of the project being voted on */
@@ -17066,17 +18022,17 @@ export interface components {
        * @example GBXNQFDSBDPOIA3Q4LYIWBOJFFPCCV6IEDHBSJZEAYFKIKZVUO4QEDVS
        */
       applicantAddress: string;
-      /** @description Light proposal text (LIGHT vetting): 100 to 300 words. Required for LIGHT mode. */
+      /** @description Light proposal text (light application): 100 to 300 words. Required for APPLICATION_LIGHT mode. */
       proposalShort?: string;
-      /** @description Full proposal text (HEAVY vetting): 500 to 2000 words. Required for HEAVY mode. */
+      /** @description Full proposal text (full application): 500 to 2000 words. Required for APPLICATION_FULL mode. */
       proposalFull?: string;
-      /** @description Portfolio links. LIGHT: up to 3. HEAVY: up to 6. */
+      /** @description Portfolio links. APPLICATION_LIGHT: up to 3. APPLICATION_FULL: up to 6. */
       portfolioLinks?: string[];
-      /** @description Estimated days to complete (LIGHT). Required for LIGHT mode. */
+      /** @description Estimated days to complete (APPLICATION_LIGHT). Required for APPLICATION_LIGHT mode. */
       estimatedDays?: number;
-      /** @description Qualifications text (HEAVY). Required for HEAVY mode. */
+      /** @description Qualifications text (APPLICATION_FULL). Required for APPLICATION_FULL mode. */
       qualifications?: string;
-      /** @description Optional video intro URL (HEAVY). */
+      /** @description Optional video intro URL (APPLICATION_FULL). */
       videoIntroUrl?: string;
     };
     EditBountyApplicationDto: {
@@ -17089,7 +18045,7 @@ export interface components {
       qualifications?: string;
       videoIntroUrl?: string;
     };
-    SelectForPickDto: {
+    SelectForSingleClaimDto: {
       /** @description Application id to select as the single winner. */
       applicationId: string;
     };
@@ -17101,7 +18057,7 @@ export interface components {
       /** @description Reason for decline (surfaced to builder). */
       reason?: string;
     };
-    JoinShowdownDto: {
+    JoinCompetitionDto: {
       /**
        * @description G-address that will receive payout if winning
        * @example GBXNQFDSBDPOIA3Q4LYIWBOJFFPCCV6IEDHBSJZEAYFKIKZVUO4QEDVS
@@ -17131,9 +18087,9 @@ export interface components {
       rewardAmount: number;
       rewardCurrency: string;
       /** @enum {string} */
-      vettingLevel?: 'NONE' | 'LIGHT' | 'HEAVY';
+      entryType?: 'OPEN' | 'APPLICATION_LIGHT' | 'APPLICATION_FULL';
       /** @enum {string} */
-      selectionMode?: 'PICK' | 'SHOWDOWN';
+      claimType?: 'SINGLE_CLAIM' | 'COMPETITION';
       /** @enum {string} */
       submissionVisibility: 'ORGANIZER_ONLY' | 'HIDDEN_UNTIL_DEADLINE';
       /** Format: date-time */
@@ -21735,7 +22691,9 @@ export interface operations {
   };
   HackathonsController_getHackathon: {
     parameters: {
-      query?: never;
+      query: {
+        accessToken: string;
+      };
       header?: never;
       path: {
         /** @description Hackathon ID or slug */
@@ -21767,6 +22725,31 @@ export interface operations {
           [name: string]: unknown;
         };
         content?: never;
+      };
+    };
+  };
+  HackathonsController_verifyHackathonAccess: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        idOrSlug: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['VerifyHackathonAccessDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HackathonAccessTokenResponseDto'];
+        };
       };
     };
   };
@@ -21840,7 +22823,11 @@ export interface operations {
       };
       cookie?: never;
     };
-    requestBody?: never;
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['JoinHackathonDto'];
+      };
+    };
     responses: {
       /** @description Successfully joined hackathon */
       200: {
@@ -23435,6 +24422,90 @@ export interface operations {
       };
     };
   };
+  OrganizationHackathonsAiController_generateFromBrief: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description Organization ID */
+        organizationId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['GenerateDraftFromBriefDto'];
+      };
+    };
+    responses: {
+      /** @description Draft generated and pre-filled. */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['GenerateDraftFromBriefResponseDto'];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Resource not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  OrganizationHackathonsAiController_regenerateSection: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description Organization ID */
+        organizationId: string;
+        /** @description Hackathon draft ID */
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['RegenerateDraftSectionDto'];
+      };
+    };
+    responses: {
+      /** @description Regenerated section returned. */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['RegenerateDraftSectionResponseDto'];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Resource not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
   OrganizationHackathonsSubmissionsController_updateVisibilitySettings: {
     parameters: {
       query?: never;
@@ -24508,6 +25579,36 @@ export interface operations {
       };
     };
   };
+  OrganizationHackathonsJudgingController_allocationParity: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description Organization ID */
+        organizationId: string;
+        /** @description Hackathon ID or slug */
+        idOrSlug: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Resource not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
   OrganizationHackathonsJudgingController_judgingCompleteness: {
     parameters: {
       query?: never;
@@ -24639,6 +25740,48 @@ export interface operations {
       };
     };
   };
+  OrganizationHackathonsJudgingController_bulkInviteJudges: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description Organization ID */
+        organizationId: string;
+        /** @description Hackathon ID or slug */
+        idOrSlug: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['BulkInviteJudgesDto'];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['BulkInviteResultDto'];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Resource not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
   OrganizationHackathonsJudgingController_cancelInvitation: {
     parameters: {
       query?: never;
@@ -24682,6 +25825,284 @@ export interface operations {
         idOrSlug: string;
         /** @description Invitation ID */
         invitationId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Resource not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  OrganizationHackathonsJudgingController_listRecommendationThresholds: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description Hackathon ID or slug */
+        idOrSlug: string;
+        /** @description Organization ID */
+        organizationId: unknown;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['RecommendationThresholdDto'][];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Resource not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  OrganizationHackathonsJudgingController_setRecommendationThreshold: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description Hackathon ID or slug */
+        idOrSlug: string;
+        /** @description Organization ID */
+        organizationId: unknown;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['SetRecommendationThresholdDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['RecommendationThresholdDto'];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Resource not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  OrganizationHackathonsJudgingController_deleteRecommendationThreshold: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description Hackathon ID or slug */
+        idOrSlug: string;
+        /** @description Threshold ID */
+        thresholdId: string;
+        /** @description Organization ID */
+        organizationId: unknown;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Resource not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  OrganizationHackathonsJudgingController_computeRecommendations: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description Hackathon ID or slug */
+        idOrSlug: string;
+        /** @description Organization ID */
+        organizationId: unknown;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['RecommendationComputeResultDto'];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Resource not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  OrganizationHackathonsJudgingController_aiScoreSubmission: {
+    parameters: {
+      query?: {
+        prizeId?: unknown;
+      };
+      header?: never;
+      path: {
+        /** @description Hackathon ID or slug */
+        idOrSlug: string;
+        /** @description Submission ID */
+        submissionId: string;
+        /** @description Organization ID */
+        organizationId: unknown;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Resource not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  OrganizationHackathonsJudgingController_aiScorecards: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description Hackathon ID or slug */
+        idOrSlug: string;
+        /** @description Organization ID */
+        organizationId: unknown;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Resource not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  OrganizationHackathonsJudgingController_promoteAiScore: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description Hackathon ID or slug */
+        idOrSlug: string;
+        /** @description Submission ID */
+        submissionId: string;
+        /** @description Organization ID */
+        organizationId: unknown;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Resource not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  OrganizationHackathonsJudgingController_unpromoteAiScore: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description Hackathon ID or slug */
+        idOrSlug: string;
+        /** @description Submission ID */
+        submissionId: string;
+        /** @description Organization ID */
+        organizationId: unknown;
       };
       cookie?: never;
     };
@@ -25076,6 +26497,66 @@ export interface operations {
       };
     };
   };
+  JudgeController_aiScorecard: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description Hackathon ID or slug */
+        hackathonId: string;
+        /** @description Submission ID */
+        submissionId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Resource not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  JudgeController_runAiScore: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description Hackathon ID or slug */
+        hackathonId: string;
+        /** @description Submission ID */
+        submissionId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Resource not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
   OrganizationHackathonsUpdatesController_getHackathonStatistics: {
     parameters: {
       query?: never;
@@ -25306,8 +26787,6 @@ export interface operations {
             sufficient?: boolean;
             /** @example 0 */
             shortfall?: number;
-            /** @example funded */
-            escrowStatus?: string | null;
             breakdown?: {
               /** @example 1st Place */
               place?: string;
@@ -25366,6 +26845,49 @@ export interface operations {
         };
       };
       /** @description Invalid payload or unsupported hackathon state */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Resource not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  OrganizationHackathonsUpdatesController_setHackathonAccess: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description Organization ID */
+        organizationId: string;
+        id: string;
+        /** @description Hackathon ID or slug */
+        idOrSlug: unknown;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['SetHackathonAccessDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HackathonResponseDto'];
+        };
+      };
+      /** @description Missing password for private access */
       400: {
         headers: {
           [name: string]: unknown;
@@ -25567,6 +27089,27 @@ export interface operations {
       };
     };
   };
+  OrganizationHackathonsPartnersController_prizes: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        organizationId: string;
+        hackathonId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Prizes with placements */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
   OrganizationHackathonsPartnersController_undoAllocation: {
     parameters: {
       query?: never;
@@ -25699,6 +27242,44 @@ export interface operations {
       };
     };
   };
+  HackathonsCustomQuestionsController_list: {
+    parameters: {
+      query?: {
+        scope?: 'REGISTRATION' | 'SUBMISSION';
+      };
+      header?: never;
+      path: {
+        /** @description Hackathon ID or slug */
+        idOrSlug: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CustomQuestionResponseDto'][];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Resource not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
   OrganizationHackathonsTracksController_list: {
     parameters: {
       query?: {
@@ -25746,6 +27327,29 @@ export interface operations {
         content: {
           'application/json': components['schemas']['TrackResponseDto'];
         };
+      };
+    };
+  };
+  OrganizationHackathonsTracksController_updateConfig: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateTracksConfigDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
       };
     };
   };
@@ -25819,6 +27423,56 @@ export interface operations {
             totalSubmissions?: number;
             newCap?: number | null;
           };
+        };
+      };
+    };
+  };
+  OrganizationHackathonsCustomQuestionsController_list: {
+    parameters: {
+      query?: {
+        scope?: 'REGISTRATION' | 'SUBMISSION';
+      };
+      header?: never;
+      path: {
+        /** @description Hackathon ID or slug */
+        id: string;
+        organizationId: unknown;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CustomQuestionResponseDto'][];
+        };
+      };
+    };
+  };
+  OrganizationHackathonsCustomQuestionsController_replace: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpsertCustomQuestionsDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CustomQuestionResponseDto'][];
         };
       };
     };
@@ -26487,6 +28141,63 @@ export interface operations {
       };
     };
   };
+  OrganizationsController_getOrganizationPermissions: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  OrganizationsController_updateOrganizationPermissions: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  OrganizationsController_resetOrganizationPermissions: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
   OrganizationsController_getOrganizationStats: {
     parameters: {
       query?: never;
@@ -26746,6 +28457,27 @@ export interface operations {
       };
     };
   };
+  OrganizationTreasuryController_listArchivedWallets: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        organizationId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['TreasuryWalletResponseDto'][];
+        };
+      };
+    };
+  };
   OrganizationTreasuryController_getDefaultWallet: {
     parameters: {
       query?: never;
@@ -26887,6 +28619,28 @@ export interface operations {
       };
     };
   };
+  OrganizationTreasuryController_restoreWallet: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        organizationId: string;
+        walletId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['TreasuryWalletResponseDto'];
+        };
+      };
+    };
+  };
   OrganizationTreasuryController_walletBalance: {
     parameters: {
       query?: never;
@@ -26999,6 +28753,100 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['SpendRequestResponseDto'];
+        };
+      };
+    };
+  };
+  OrganizationTreasuryController_requestSendOtp: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        organizationId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['RequestFundingOtpResponseDto'];
+        };
+      };
+    };
+  };
+  OrganizationTreasuryController_verifySendOtp: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        organizationId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['VerifyFundingOtpDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['VerifyFundingOtpResponseDto'];
+        };
+      };
+    };
+  };
+  OrganizationTreasuryController_sendFunds: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        organizationId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['SendTreasuryFundsDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['SpendRequestResponseDto'];
+        };
+      };
+    };
+  };
+  OrganizationTreasuryController_checkSendDestination: {
+    parameters: {
+      query: {
+        address: string;
+      };
+      header?: never;
+      path: {
+        organizationId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['SendDestinationReadinessDto'];
         };
       };
     };
@@ -27189,6 +29037,105 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['TreasuryAuditLogResponseDto'];
+        };
+      };
+    };
+  };
+  OrganizationReceiptsController_list: {
+    parameters: {
+      query?: {
+        page?: string;
+        limit?: string;
+        type?: string;
+        referenceType?: string;
+        referenceId?: string;
+      };
+      header?: never;
+      path: {
+        organizationId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ReceiptListResponseDto'];
+        };
+      };
+    };
+  };
+  OrganizationReceiptsController_getOne: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        organizationId: string;
+        receiptId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ReceiptResponseDto'];
+        };
+      };
+    };
+  };
+  OrganizationReceiptsController_send: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        organizationId: string;
+        receiptId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: {
+      content: {
+        'application/json': components['schemas']['SendReceiptDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  OrganizationReceiptsController_void: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        organizationId: string;
+        receiptId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: {
+      content: {
+        'application/json': components['schemas']['VoidReceiptDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ReceiptResponseDto'];
         };
       };
     };
@@ -30564,7 +32511,7 @@ export interface operations {
       };
     };
   };
-  OrganizationBountyShortlistController_selectForPick: {
+  OrganizationBountyShortlistController_selectForSingleClaim: {
     parameters: {
       query?: never;
       header?: never;
@@ -30575,7 +32522,7 @@ export interface operations {
     };
     requestBody: {
       content: {
-        'application/json': components['schemas']['SelectForPickDto'];
+        'application/json': components['schemas']['SelectForSingleClaimDto'];
       };
     };
     responses: {
@@ -30633,7 +32580,7 @@ export interface operations {
       };
     };
   };
-  BountyShowdownJoinController_join: {
+  BountyCompetitionJoinController_join: {
     parameters: {
       query?: never;
       header?: never;
@@ -30644,7 +32591,7 @@ export interface operations {
     };
     requestBody: {
       content: {
-        'application/json': components['schemas']['JoinShowdownDto'];
+        'application/json': components['schemas']['JoinCompetitionDto'];
       };
     };
     responses: {
@@ -30656,7 +32603,7 @@ export interface operations {
       };
     };
   };
-  BountyShowdownJoinController_leave: {
+  BountyCompetitionJoinController_leave: {
     parameters: {
       query?: never;
       header?: never;
@@ -30667,7 +32614,7 @@ export interface operations {
     };
     requestBody: {
       content: {
-        'application/json': components['schemas']['JoinShowdownDto'];
+        'application/json': components['schemas']['JoinCompetitionDto'];
       };
     };
     responses: {

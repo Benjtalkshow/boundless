@@ -217,8 +217,8 @@ export default function FundingConfirmationModal({
               </DialogTitle>
               <DialogDescription className='text-gray-400'>
                 {otpSent
-                  ? 'Enter the 6-digit code we emailed you to authorize funding.'
-                  : 'Enter your funding code to continue.'}
+                  ? 'Enter the 6-digit code we emailed you to confirm.'
+                  : 'We are emailing you a 6-digit code. Enter it here to continue.'}
               </DialogDescription>
             </DialogHeader>
 
@@ -281,8 +281,8 @@ export default function FundingConfirmationModal({
                 Fund &amp; publish hackathon
               </DialogTitle>
               <DialogDescription className='text-gray-400'>
-                Publishing locks the prize pool in escrow on-chain. Review the
-                amount and source before confirming.
+                Publishing sets aside your prize pool so it is ready to pay
+                winners. Review the amount and source before confirming.
               </DialogDescription>
             </DialogHeader>
 
@@ -371,7 +371,7 @@ export default function FundingConfirmationModal({
                         ? 'Checking balance…'
                         : isExternal && !externalConnected
                           ? 'Connect a wallet that holds the prize pool in USDC.'
-                          : 'USDC is checked on-chain when you publish.'}
+                          : 'Your USDC balance is checked when you publish.'}
                     </p>
                     {isExternal && externalConnected && onConnectExternal && (
                       <button

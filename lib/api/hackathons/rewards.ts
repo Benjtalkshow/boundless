@@ -52,7 +52,6 @@ export interface FinancialPreviewData {
   walletBalance: number;
   sufficient: boolean;
   shortfall: number;
-  escrowStatus: string;
   breakdown: FinancialPreviewTier[];
 }
 
@@ -86,38 +85,6 @@ export const getFinancialPreview = async (
   );
   if (!res.data?.data) throw new Error('Invalid financial preview response');
   return res.data.data;
-};
-
-// ── Rewards: Assign Ranks ────────────────────────────────────────────────────
-
-export interface AssignRanksRequest {
-  ranks: Array<{
-    participantId: string;
-    rank: number;
-  }>;
-}
-
-export interface AssignRanksResponse {
-  success: boolean;
-  message: string;
-  data: {
-    updated: number;
-  };
-}
-
-/**
- * Assign ranks to submissions
- */
-export const assignRanks = async (
-  organizationId: string,
-  hackathonId: string,
-  data: AssignRanksRequest
-): Promise<AssignRanksResponse> => {
-  const res = await api.post(
-    `/organizations/${organizationId}/hackathons/${hackathonId}/rewards/ranks`,
-    data
-  );
-  return res.data;
 };
 
 /**

@@ -16,6 +16,12 @@ export type {
   JudgingSection,
   CollaborationSection,
   DraftSection,
+  GenerateDraftFromBriefBody,
+  GenerateDraftFromBriefResponse,
+  RegenerateDraftSectionBody,
+  RegenerateDraftSectionResponse,
+  AiGenerationMeta,
+  DraftRegenSection,
   EscrowOpResponse,
   EscrowOpStatus,
   EscrowOpKind,
@@ -48,6 +54,10 @@ export {
   useUpdateDraft,
   useDeleteDraft,
 } from './api/use-draft';
+
+// Organizer Assist (AI) hooks.
+export { useGenerateDraftFromBrief } from './api/use-generate-from-brief';
+export { useRegenerateDraftSection } from './api/use-regenerate-section';
 
 // Draft client (imperative helpers, legacy-compatible signatures).
 export { deleteDraft, previewAnnouncementAudience } from './api/draft-client';

@@ -17,6 +17,13 @@ export type HackathonDraftData = Schemas['HackathonDraftDataDto'];
 /** Flat draft-update body: send any subset of sections in one PATCH. */
 export type UpdateHackathonDraftBody = Schemas['UpdateHackathonDraftDto'];
 
+/** Prize entity exposed on the draft response (read path): named prizes with
+ * linked tracks + one-or-more placements. The wizard still writes via
+ * RewardsSection (prizeTiers); the backend syncs the entity from that. */
+export type HackathonDraftPrize = Schemas['HackathonDraftPrizeDto'];
+export type HackathonDraftPrizePlacement =
+  Schemas['HackathonDraftPrizePlacementDto'];
+
 // Section DTOs (the wire shape the backend persists + returns).
 export type InfoSection = Schemas['InfoFormData'];
 export type TimelineSection = Schemas['TimelineFormData'];
@@ -37,6 +44,23 @@ export const DRAFT_SECTIONS = [
   'collaboration',
 ] as const;
 export type DraftSection = (typeof DRAFT_SECTIONS)[number];
+
+// ── Organizer Assist (AI) ────────────────────────────────────────────────────
+
+/** Brief inputs for "generate draft from brief" (brief + budget + start). */
+export type GenerateDraftFromBriefBody = Schemas['GenerateDraftFromBriefDto'];
+/** Result: a created + pre-filled draft, plus generation metadata. */
+export type GenerateDraftFromBriefResponse =
+  Schemas['GenerateDraftFromBriefResponseDto'];
+/** Body to regenerate one section of an AI-generated draft (server owns the suggestion). */
+export type RegenerateDraftSectionBody = Schemas['RegenerateDraftSectionDto'];
+/** Result: the regenerated section in the wizard shape + generation metadata. */
+export type RegenerateDraftSectionResponse =
+  Schemas['RegenerateDraftSectionResponseDto'];
+/** Cost/trace metadata returned with every Organizer Assist response. */
+export type AiGenerationMeta = Schemas['AiGenerationMetaDto'];
+/** The sections the AI can regenerate (criteria | prizes | tracks | timeline | description). */
+export type DraftRegenSection = RegenerateDraftSectionBody['section'];
 
 // ── Escrow ─────────────────────────────────────────────────────────────────
 

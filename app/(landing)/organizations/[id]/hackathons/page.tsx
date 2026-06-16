@@ -12,6 +12,7 @@ import {
   Settings,
   Eye,
   Trash2,
+  Sparkles,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import {
@@ -24,6 +25,7 @@ import {
 import Link from 'next/link';
 import Image from 'next/image';
 import { BoundlessButton } from '@/components/buttons';
+import GenerateWithAiDialog from '@/components/organization/hackathons/new/GenerateWithAiDialog';
 import { useHackathons } from '@/hooks/use-hackathons';
 import { useDeleteHackathon } from '@/hooks/hackathon/use-delete-hackathon';
 import type { Hackathon, HackathonDraft } from '@/lib/api/hackathons';
@@ -134,6 +136,7 @@ export default function HackathonsPage() {
   const [tab, setTab] = useState<'published' | 'drafts'>('published');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [aiDialogOpen, setAiDialogOpen] = useState(false);
   const [hackathonToDelete, setHackathonToDelete] = useState<{
     id: string;
     title: string;
@@ -282,12 +285,22 @@ export default function HackathonsPage() {
                   <span>{stats.drafts} drafts</span>
                 </div>
               </div>
-              <Link href={`/organizations/${organizationId}/hackathons/new`}>
-                <BoundlessButton className='shadow-primary/20 gap-2 shadow-lg'>
-                  <Plus className='h-4 w-4' />
-                  Host Hackathon
+              <div className='flex flex-wrap items-center gap-3'>
+                <BoundlessButton
+                  variant='outline'
+                  className='gap-2'
+                  onClick={() => setAiDialogOpen(true)}
+                >
+                  <Sparkles className='h-4 w-4' />
+                  Generate with AI
                 </BoundlessButton>
-              </Link>
+                <Link href={`/organizations/${organizationId}/hackathons/new`}>
+                  <BoundlessButton className='shadow-primary/20 gap-2 shadow-lg'>
+                    <Plus className='h-4 w-4' />
+                    Host Hackathon
+                  </BoundlessButton>
+                </Link>
+              </div>
             </div>
 
             {/* Tabs */}
@@ -611,7 +624,7 @@ export default function HackathonsPage() {
                             </Badge>
                             <span className='text-sm text-white'>
                               {isPublishing
-                                ? 'Finalizing on-chain…'
+                                ? 'Finalizing…'
                                 : `${completion}% complete`}
                             </span>
                             {endDate && (
@@ -701,6 +714,11 @@ export default function HackathonsPage() {
             isDeleting={isDeleting}
           />
         )}
+        <GenerateWithAiDialog
+          organizationId={organizationId}
+          open={aiDialogOpen}
+          onOpenChange={setAiDialogOpen}
+        />
       </div>
     </AuthGuard>
   );

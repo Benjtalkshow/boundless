@@ -329,6 +329,11 @@ export type Hackathon = {
 
   banner: string;
 
+  // Access control: PRIVATE hides the hackathon and gates it behind a password.
+  // `locked` is set on the public read when the viewer has not unlocked it yet.
+  visibility?: 'PUBLIC' | 'PRIVATE';
+  locked?: boolean;
+
   organizationId: string;
   organization: {
     id: string;
@@ -413,6 +418,10 @@ export type Hackathon = {
     trackId?: string;
   }>;
 
+  /** Prize entity (read path), exposed alongside prizeTiers. Read via
+   *  effectivePrizeTiers(); empty/absent on un-migrated hackathons. */
+  prizes?: import('@/types/hackathon/core').PrizeEntity[];
+
   /** Track-based prize structure. Defaults to OVERALL_ONLY. */
   prizeStructure?: 'OVERALL_ONLY' | 'OVERALL_AND_TRACKS' | 'TRACKS_ONLY';
   /** Cap on tracks a submission may opt into. Defaults to 3. */
@@ -467,17 +476,15 @@ export type Hackathon = {
     followers: number;
   };
 
-  contractId?: string;
-  escrowAddress?: string;
   resultsPublished?: boolean;
+  /** Whether the on-chain escrow event exists (publish completed). */
+  escrowReady?: boolean;
   // Backend-computed viewer perspective. Drives which protected endpoints
   // (organizer-only submissions list, winners before publish, etc.) the
   // client is allowed to query. Anything other than 'organizer'/'admin'
   // means the client should NOT call those endpoints — they 403.
   viewerRole?: 'organizer' | 'admin' | 'participant' | 'judge' | 'visitor';
-  transactionHash?: string | null;
   message?: string;
-  escrowDetails?: object;
   metadata?: {
     advancedSettings?: {
       isPublic: boolean;
@@ -501,10 +508,6 @@ export type UpdateDraftRequest = Partial<HackathonDraftData>;
 
 export interface PublishHackathonRequest extends Hackathon {
   draftId?: string;
-  contractId?: string;
-  escrowAddress?: string;
-  transactionHash?: string;
-  escrowDetails?: object;
 }
 
 /**
@@ -929,6 +932,10 @@ export interface CreateSubmissionRequest {
     }
   >;
 
+  /** Answers to hackathon-level SUBMISSION-scope custom questions. Keyed by
+   * question id; value is a string (or string[] for multi-select). */
+  customAnswers?: Record<string, string | string[]>;
+
   // ── Phase A submission polish ──
   tagline?: string;
   builtWith?: string[];
@@ -1149,22 +1156,6 @@ export interface SubmitGradeResponse extends ApiResponse<GradeSubmissionResponse
   success: true;
   data: GradeSubmissionResponse;
   message: string;
-}
-
-// Rewards API Types
-export interface AssignRanksRequest {
-  ranks: Array<{
-    participantId: string;
-    rank: number;
-  }>;
-}
-
-export interface AssignRanksResponse {
-  success: boolean;
-  message: string;
-  data: {
-    updated: number;
-  };
 }
 
 // Public Hackathons List API Types
@@ -1541,21 +1532,6 @@ export const getSubmissionScores = async (
 ): Promise<GetSubmissionScoresResponse> => {
   const res = await api.get(
     `/organizations/${organizationId}/hackathons/${hackathonId}/judging/submissions/${participantId}/scores`
-  );
-  return res.data;
-};
-
-/**
- * Assign ranks to submissions
- */
-export const assignRanks = async (
-  organizationId: string,
-  hackathonId: string,
-  data: AssignRanksRequest
-): Promise<AssignRanksResponse> => {
-  const res = await api.post(
-    `/organizations/${organizationId}/hackathons/${hackathonId}/rewards/ranks`,
-    data
   );
   return res.data;
 };

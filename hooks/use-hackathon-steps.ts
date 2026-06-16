@@ -17,8 +17,7 @@ interface UseHackathonStepsReturn {
     steps: Record<StepKey, StepData>,
     activeStep: StepKey
   ) => void;
-  navigateToStep: (stepKey: StepKey, skipAccessCheck?: boolean) => void;
-  canAccessStep: (stepKey: StepKey) => boolean;
+  navigateToStep: (stepKey: StepKey) => void;
   updateStepCompletion: (
     stepKey: StepKey,
     isCompleted: boolean,
@@ -33,7 +32,12 @@ function isStepKey(value: string | null | undefined): value is StepKey {
 /**
  * Wizard step state. The active step is URL-driven via the `?step=` query param,
  * so refresh, browser back/forward, and bookmarking all resume the right step.
- * The per-step status map (active/completed/pending) stays local UI state.
+ *
+ * Navigation is free-roam: any step is reachable at any time, regardless of
+ * whether earlier steps are complete. The per-step status map
+ * (active/completed/pending) is purely presentational (it drives the tab badge),
+ * never a navigation gate. Validation happens only when a section is saved and
+ * again at final submit, never on navigation.
  */
 export const useHackathonSteps = (
   initialActiveTab: StepKey = 'information'
@@ -49,7 +53,9 @@ export const useHackathonSteps = (
     information: { status: 'active', isCompleted: false },
     timeline: { status: 'pending', isCompleted: false },
     participation: { status: 'pending', isCompleted: false },
+    tracks: { status: 'pending', isCompleted: false },
     rewards: { status: 'pending', isCompleted: false },
+    'custom-questions': { status: 'pending', isCompleted: false },
     resources: { status: 'pending', isCompleted: false },
     judging: { status: 'pending', isCompleted: false },
     collaboration: { status: 'pending', isCompleted: false },
@@ -74,62 +80,19 @@ export const useHackathonSteps = (
     [writeStep]
   );
 
-  const getCurrentStepIndex = useCallback(
-    () => STEP_ORDER.indexOf(activeTab),
-    [activeTab]
-  );
-
-  const canAccessStep = useCallback(
-    (stepKey: StepKey) => {
-      if (stepKey === 'review') {
-        return steps.collaboration?.isCompleted === true;
-      }
-
-      const stepIndex = STEP_ORDER.indexOf(stepKey);
-      const currentIndex = getCurrentStepIndex();
-
-      if (stepIndex <= currentIndex) return true;
-
-      if (stepIndex === currentIndex + 1 && steps[activeTab].isCompleted) {
-        return true;
-      }
-
-      return false;
-    },
-    [steps, activeTab, getCurrentStepIndex]
-  );
-
+  // Free navigation: mark the target step active and sync the URL. Never reset
+  // or invalidate other steps' progress. The old implementation wiped every
+  // later step back to `pending` on a forward jump, which silently discarded
+  // completion badges and made the tab strip "act weird"; that is removed.
   const navigateToStep = useCallback(
-    (stepKey: StepKey, skipAccessCheck = false) => {
-      if (skipAccessCheck || canAccessStep(stepKey)) {
-        const stepIndex = STEP_ORDER.indexOf(stepKey);
-        const currentIndex = getCurrentStepIndex();
-
-        if (stepIndex > currentIndex) {
-          setSteps(prev => {
-            const newSteps = { ...prev };
-
-            STEP_ORDER.forEach((step, index) => {
-              if (index > stepIndex) {
-                newSteps[step] = { status: 'pending', isCompleted: false };
-              }
-            });
-
-            newSteps[stepKey] = { ...newSteps[stepKey], status: 'active' };
-
-            return newSteps;
-          });
-        } else {
-          setSteps(prev => ({
-            ...prev,
-            [stepKey]: { ...prev[stepKey], status: 'active' },
-          }));
-        }
-
-        writeStep(stepKey, 'push');
-      }
+    (stepKey: StepKey) => {
+      setSteps(prev => ({
+        ...prev,
+        [stepKey]: { ...prev[stepKey], status: 'active' as StepStatus },
+      }));
+      writeStep(stepKey, 'push');
     },
-    [canAccessStep, getCurrentStepIndex, writeStep]
+    [writeStep]
   );
 
   const setStepsFromDraft = useCallback(
@@ -180,7 +143,6 @@ export const useHackathonSteps = (
     setActiveTab,
     setStepsFromDraft,
     navigateToStep,
-    canAccessStep,
     updateStepCompletion,
   };
 };

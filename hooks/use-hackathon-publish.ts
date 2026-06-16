@@ -63,8 +63,6 @@ export interface PublishResponseData {
   slug: string;
   publishedAt: string;
   message: string;
-  /** Kept for the published modal; empty in the events-contract flow. */
-  escrowAddress: string;
   transactionHash: string | null;
 }
 
@@ -144,7 +142,6 @@ export const useHackathonPublish = ({
           slug,
           publishedAt,
           message: 'Hackathon published successfully',
-          escrowAddress: '',
           transactionHash: runner.txHash,
         };
         setPublishResponse(responseData);

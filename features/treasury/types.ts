@@ -87,11 +87,78 @@ export interface InitiateSpendInput {
   referenceId?: string;
 }
 
+/** One-shot "Send funds" from a managed treasury wallet (plain fields). */
+export interface SendFundsInput {
+  sourceWalletId: string;
+  destination: string;
+  amount: string;
+  note?: string;
+}
+
+/** Result of asking the backend to email a send-funds verification code. */
+export interface FundingOtpRequestResult {
+  required: boolean;
+  alreadyVerified: boolean;
+  sent: boolean;
+  expiresInSeconds: number;
+}
+
+/** Result of verifying a send-funds code. */
+export interface FundingOtpVerifyResult {
+  verified: boolean;
+  expiresInSeconds: number;
+}
+
+/** Whether a destination address can receive a USDC payment. */
+export interface SendDestinationReadiness {
+  exists: boolean;
+  hasUsdcTrustline: boolean;
+}
+
+/** A money receipt for a treasury / payment event. */
+export interface Receipt {
+  id: string;
+  receiptNumber: string;
+  organizationId: string;
+  type: string;
+  typeLabel: string;
+  status: string;
+  direction: string;
+  amount: string;
+  currency: string;
+  fromLabel: string | null;
+  fromAddress: string | null;
+  toLabel: string | null;
+  toAddress: string | null;
+  description: string | null;
+  onChainTxHash: string | null;
+  explorerUrl: string | null;
+  network: string | null;
+  issuedByUserId: string | null;
+  issuedAt: string;
+  voidedAt: string | null;
+}
+
+export interface ReceiptListResponse {
+  data: Receipt[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+export interface TreasuryAuditActor {
+  id: string;
+  name: string | null;
+  image: string | null;
+}
+
 export interface TreasuryAuditEntry {
   id: string;
   action: string;
   actorUserId: string | null;
   actorKind: string;
+  /** Resolved profile of the actor (name + avatar), when the actor is a user. */
+  actor: TreasuryAuditActor | null;
   walletId: string | null;
   spendRequestId: string | null;
   details: unknown;

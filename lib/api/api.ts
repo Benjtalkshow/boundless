@@ -83,6 +83,20 @@ export interface RequestConfig {
   signal?: AbortSignal;
 }
 
+/**
+ * Read the visitor's private-hackathon unlock token for a given slug. The
+ * AccessGate stores it as a readable `hx_access_<slug>` cookie after the
+ * correct password is entered. Browser-only; returns undefined on the server.
+ */
+const readHackathonAccessToken = (slug: string): string | undefined => {
+  if (typeof document === 'undefined' || !slug) return undefined;
+  const prefix = `hx_access_${slug}=`;
+  const hit = document.cookie
+    .split('; ')
+    .find(cookie => cookie.startsWith(prefix));
+  return hit ? decodeURIComponent(hit.slice(prefix.length)) : undefined;
+};
+
 const createClientApi = (): AxiosInstance => {
   // Get base URL dynamically (not at module load time)
   const baseURL = getApiBaseUrl();
@@ -126,6 +140,31 @@ const createClientApi = (): AxiosInstance => {
 
       // Better Auth handles authentication via cookies automatically
       // No need to manually add Authorization headers
+
+      // Private-hackathon access: forward the visitor's unlock token on every
+      // `/hackathons/<slug>/...` read so gated sub-resources (participants,
+      // winners, tracks, announcements, teams, ...) load once the password has
+      // been entered. The detail page sets the cookie; this threads it to the
+      // sub-resource calls without touching each call site. No-op server-side,
+      // for public hackathons, or when a token is already present.
+      if (typeof window !== 'undefined' && config.url) {
+        try {
+          const match = config.url.match(/^\/?hackathons\/([^/?#]+)/i);
+          const slug = match?.[1] ? decodeURIComponent(match[1]) : undefined;
+          const existing = config.params as Record<string, unknown> | undefined;
+          const alreadyHasToken =
+            (existing && 'accessToken' in existing) ||
+            /[?&]accessToken=/.test(config.url);
+          if (slug && !alreadyHasToken) {
+            const token = readHackathonAccessToken(slug);
+            if (token) {
+              config.params = { ...(existing ?? {}), accessToken: token };
+            }
+          }
+        } catch {
+          // Best-effort; never block a request on cookie parsing.
+        }
+      }
 
       return config;
     },

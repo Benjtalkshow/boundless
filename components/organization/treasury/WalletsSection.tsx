@@ -1,12 +1,15 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import {
+  Archive,
+  ArrowDownToLine,
   Copy,
   Landmark,
   Link2,
   Loader2,
   Plus,
+  RotateCcw,
   ShieldCheck,
   Star,
   Wallet,
@@ -14,15 +17,38 @@ import {
 import { toast } from 'sonner';
 import { BoundlessButton } from '@/components/buttons';
 import { Input } from '@/components/ui/input';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { QRCodeSVG } from 'qrcode.react';
 import { formatAddress } from '@/lib/wallet-utils';
 import { copyToClipboard } from '@/lib/utils';
 import { connectWallet } from '@/lib/wallet/wallet-kit';
 import {
   useArchiveWallet,
+  useArchivedTreasuryWallets,
   useCreateManagedWallet,
   useRegisterConnectedWallet,
+  useRestoreWallet,
   useTreasuryWallets,
   useUpdateWallet,
+  useWalletBalance,
   type TreasuryWallet,
 } from '@/features/treasury';
 
@@ -202,6 +228,8 @@ export default function WalletsSection({
           </div>
         )}
       </section>
+
+      <ArchivedWalletsSection organizationId={organizationId} />
     </div>
   );
 }
@@ -216,6 +244,31 @@ function WalletRow({
   const updateWallet = useUpdateWallet(organizationId);
   const archiveWallet = useArchiveWallet(organizationId);
   const isManaged = wallet.kind === 'MANAGED';
+
+  const handleSetDefault = async () => {
+    try {
+      await updateWallet.mutateAsync({
+        walletId: wallet.id,
+        patch: { isDefault: true },
+      });
+      toast.success(`"${wallet.label}" is now your default wallet`);
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : 'Could not set default wallet'
+      );
+    }
+  };
+
+  const handleArchive = async () => {
+    try {
+      await archiveWallet.mutateAsync(wallet.id);
+      toast.success(`"${wallet.label}" archived. You can restore it any time.`);
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : 'Could not archive wallet'
+      );
+    }
+  };
 
   return (
     <div className='flex items-center justify-between rounded-xl border border-gray-800 bg-gray-900/40 p-4'>
@@ -241,6 +294,12 @@ function WalletRow({
               </span>
             )}
           </p>
+          <p className='mt-0.5'>
+            <WalletBalanceFigure
+              organizationId={organizationId}
+              walletId={wallet.id}
+            />
+          </p>
           <p className='flex items-center gap-1 font-mono text-xs text-gray-400'>
             <button
               type='button'
@@ -256,31 +315,270 @@ function WalletRow({
         </div>
       </div>
       <div className='flex items-center gap-1'>
+        <DepositDialog wallet={wallet} />
         {!wallet.isDefault && (
-          <button
-            type='button'
-            onClick={() =>
-              updateWallet.mutate({
-                walletId: wallet.id,
-                patch: { isDefault: true },
-              })
+          <ConfirmDialog
+            title='Set as default wallet?'
+            description={`"${wallet.label}" will be used by default for organization funding and payouts.`}
+            confirmLabel='Set as default'
+            onConfirm={handleSetDefault}
+            trigger={
+              <button
+                type='button'
+                disabled={updateWallet.isPending}
+                className='rounded-lg p-2 text-gray-500 hover:text-amber-300 disabled:opacity-50'
+                title='Set as default'
+              >
+                <Star className='h-4 w-4' />
+              </button>
             }
-            disabled={updateWallet.isPending}
-            className='rounded-lg p-2 text-gray-500 hover:text-amber-300 disabled:opacity-50'
-            title='Set as default'
-          >
-            <Star className='h-4 w-4' />
-          </button>
+          />
         )}
+        <ConfirmDialog
+          destructive
+          title='Archive this wallet?'
+          description='It moves to Archived and is hidden from the active list. Your funds are not affected, and you can restore it any time.'
+          confirmLabel='Archive'
+          onConfirm={handleArchive}
+          trigger={
+            <button
+              type='button'
+              disabled={archiveWallet.isPending}
+              className='flex items-center gap-1 rounded-lg px-2 py-1 text-xs text-gray-500 hover:text-red-400 disabled:opacity-50'
+            >
+              <Archive className='h-3.5 w-3.5' />
+              Archive
+            </button>
+          }
+        />
+      </div>
+    </div>
+  );
+}
+
+// ── Live balance ────────────────────────────────────────────────────────────
+function WalletBalanceFigure({
+  organizationId,
+  walletId,
+}: {
+  organizationId: string;
+  walletId: string;
+}) {
+  const { data, isLoading, isError } = useWalletBalance(
+    organizationId,
+    walletId
+  );
+
+  if (isLoading) {
+    return (
+      <span className='inline-flex items-center gap-1 text-xs text-gray-500'>
+        <Loader2 className='h-3 w-3 animate-spin' />
+        Loading balance…
+      </span>
+    );
+  }
+  if (isError || !data) {
+    return <span className='text-xs text-gray-500'>Balance unavailable</span>;
+  }
+
+  const usdc = Number(data.usdc);
+  const formatted = Number.isFinite(usdc)
+    ? usdc.toLocaleString(undefined, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })
+    : data.usdc;
+
+  return (
+    <span className='text-base font-semibold text-white'>
+      {formatted}
+      <span className='ml-1 text-xs font-normal text-gray-400'>USDC</span>
+    </span>
+  );
+}
+
+// ── Deposit (add funds) ─────────────────────────────────────────────────────
+function DepositDialog({ wallet }: { wallet: TreasuryWallet }) {
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
         <button
           type='button'
-          onClick={() => archiveWallet.mutate(wallet.id)}
-          disabled={archiveWallet.isPending}
-          className='rounded-lg px-2 py-1 text-xs text-gray-500 hover:text-red-400 disabled:opacity-50'
+          className='hover:text-primary flex items-center gap-1 rounded-lg px-2 py-1 text-xs text-gray-400'
         >
-          Archive
+          <ArrowDownToLine className='h-3.5 w-3.5' />
+          Deposit
         </button>
+      </DialogTrigger>
+      <DialogContent className='border-gray-800 bg-gray-950 text-white sm:max-w-md'>
+        <DialogHeader>
+          <DialogTitle>Add funds to {wallet.label}</DialogTitle>
+          <DialogDescription className='text-gray-400'>
+            Send USDC on the Stellar network to this address. It appears in your
+            treasury balance once the transfer settles.
+          </DialogDescription>
+        </DialogHeader>
+        <div className='flex flex-col items-center gap-4 py-2'>
+          <div className='rounded-xl bg-white p-3'>
+            <QRCodeSVG value={wallet.publicKey} size={168} />
+          </div>
+          <button
+            type='button'
+            onClick={() => {
+              copyToClipboard(wallet.publicKey);
+              toast.success('Address copied');
+            }}
+            className='flex w-full items-center justify-between gap-2 rounded-lg border border-gray-800 bg-gray-900/60 px-3 py-2 font-mono text-xs text-gray-300 transition-colors hover:text-white'
+          >
+            <span className='truncate'>{wallet.publicKey}</span>
+            <Copy className='h-3.5 w-3.5 shrink-0' />
+          </button>
+          <p className='text-center text-xs text-gray-500'>
+            Only send USDC on Stellar. Other assets or networks may be lost.
+          </p>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ── Confirmation dialog (sensitive/destructive actions) ─────────────────────
+function ConfirmDialog({
+  trigger,
+  title,
+  description,
+  confirmLabel,
+  onConfirm,
+  destructive,
+}: {
+  trigger: ReactNode;
+  title: string;
+  description: string;
+  confirmLabel: string;
+  onConfirm: () => void;
+  destructive?: boolean;
+}) {
+  return (
+    <AlertDialog>
+      <AlertDialogTrigger asChild>{trigger}</AlertDialogTrigger>
+      <AlertDialogContent className='border-gray-800 text-white'>
+        <AlertDialogHeader>
+          <AlertDialogTitle>{title}</AlertDialogTitle>
+          <AlertDialogDescription className='text-gray-400'>
+            {description}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel className='border-gray-700 bg-transparent text-gray-200 hover:bg-gray-900 hover:text-white'>
+            Cancel
+          </AlertDialogCancel>
+          <AlertDialogAction
+            onClick={onConfirm}
+            className={
+              destructive
+                ? 'bg-red-600 text-white hover:bg-red-500'
+                : 'bg-primary hover:bg-primary/90 text-black'
+            }
+          >
+            {confirmLabel}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
+
+// ── Archived wallets (never deleted, always restorable) ─────────────────────
+function ArchivedWalletsSection({
+  organizationId,
+}: {
+  organizationId: string;
+}) {
+  const { data: archived, isLoading } =
+    useArchivedTreasuryWallets(organizationId);
+
+  if (isLoading || !archived || archived.length === 0) return null;
+
+  return (
+    <section>
+      <h3 className='mb-1 text-sm font-medium tracking-wider text-gray-500 uppercase'>
+        Archived ({archived.length})
+      </h3>
+      <p className='mb-3 text-xs text-gray-500'>
+        Wallets are never deleted, only archived. Restore one any time to move
+        it back to your active wallets.
+      </p>
+      <div className='space-y-3'>
+        {archived.map(w => (
+          <ArchivedWalletRow
+            key={w.id}
+            organizationId={organizationId}
+            wallet={w}
+          />
+        ))}
       </div>
+    </section>
+  );
+}
+
+function ArchivedWalletRow({
+  organizationId,
+  wallet,
+}: {
+  organizationId: string;
+  wallet: TreasuryWallet;
+}) {
+  const restoreWallet = useRestoreWallet(organizationId);
+
+  const handleRestore = async () => {
+    try {
+      await restoreWallet.mutateAsync(wallet.id);
+      toast.success(`"${wallet.label}" restored`);
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : 'Could not restore wallet'
+      );
+    }
+  };
+
+  return (
+    <div className='flex items-center justify-between rounded-xl border border-gray-800/60 bg-gray-900/20 p-4 opacity-80'>
+      <div className='flex items-center gap-3'>
+        <span className='flex h-9 w-9 items-center justify-center rounded-full bg-gray-800/60'>
+          <Archive className='h-4 w-4 text-gray-400' />
+        </span>
+        <div>
+          <p className='text-sm font-medium text-gray-300'>{wallet.label}</p>
+          <p className='flex items-center gap-1 font-mono text-xs text-gray-500'>
+            <button
+              type='button'
+              onClick={() => copyToClipboard(wallet.publicKey)}
+              title='Copy full address'
+              className='inline-flex items-center gap-1 transition-colors hover:text-gray-300'
+            >
+              {formatAddress(wallet.publicKey, 6)}
+              <Copy className='h-3 w-3' />
+            </button>
+            <span>· archived</span>
+          </p>
+        </div>
+      </div>
+      <ConfirmDialog
+        title='Restore this wallet?'
+        description={`"${wallet.label}" will move back to your active wallets.`}
+        confirmLabel='Restore'
+        onConfirm={handleRestore}
+        trigger={
+          <button
+            type='button'
+            disabled={restoreWallet.isPending}
+            className='flex items-center gap-1 rounded-lg px-2 py-1 text-xs text-gray-400 hover:text-emerald-300 disabled:opacity-50'
+          >
+            <RotateCcw className='h-3.5 w-3.5' />
+            Restore
+          </button>
+        }
+      />
     </div>
   );
 }

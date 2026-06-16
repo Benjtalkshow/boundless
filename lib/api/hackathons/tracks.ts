@@ -110,6 +110,24 @@ export const updateTrack = async (
 };
 
 /**
+ * Hackathon-level track config (currently the max number of tracks a single
+ * submission may enter). Lives on its own endpoint so the Tracks wizard
+ * section can save it without a valid prize payload.
+ */
+export const updateTracksConfig = async (
+  organizationId: string,
+  hackathonId: string,
+  data: { tracksMaxPerSubmission: number }
+): Promise<{ tracksMaxPerSubmission: number }> => {
+  const res = await api.patch<ApiResponse<{ tracksMaxPerSubmission: number }>>(
+    `/organizations/${organizationId}/hackathons/${hackathonId}/tracks/config`,
+    data
+  );
+  if (!res.data?.data) throw new Error('Invalid update-tracks-config response');
+  return res.data.data;
+};
+
+/**
  * Hard-deletes a track with no entries; soft-archives it otherwise.
  * 204 No Content on success.
  */

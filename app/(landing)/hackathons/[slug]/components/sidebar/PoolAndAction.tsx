@@ -16,6 +16,9 @@ import {
   useHackathonTracks,
   useJoinHackathon,
 } from '@/hooks/hackathon/use-hackathon-queries';
+import RegistrationQuestionsDialog, {
+  useRegistrationQuestions,
+} from '../RegistrationQuestionsDialog';
 import { useOptionalAuth } from '@/hooks/use-auth';
 import { useRequireAuthForAction } from '@/hooks/use-require-auth-for-action';
 import { useSubmission } from '@/features/hackathons';
@@ -23,7 +26,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import Image from 'next/image';
 import { BoundlessButton } from '@/components/buttons';
-import { cn } from '@/lib/utils';
+import { effectivePrizeTiers } from '@/lib/utils/effective-prize-tiers';
 import { toast } from 'sonner';
 import { ExtendedBadge } from '@/components/hackathons/ExtendedBadge';
 import { Participant } from '@/lib/api/hackathons';
@@ -102,11 +105,11 @@ export default function PoolAndAction() {
   const startDate = hackathon?.startDate;
   const timeLeft = useCountdown(deadline);
 
-  const totalPool =
-    hackathon?.prizeTiers.reduce(
-      (acc, t) => acc + Number(t.prizeAmount || 0),
-      0
-    ) ?? 0;
+  const tiers = effectivePrizeTiers(hackathon);
+  const totalPool = tiers.reduce(
+    (acc, t) => acc + Number(t.prizeAmount || 0),
+    0
+  );
 
   const now = new Date();
   const isNotStarted = startDate ? now < new Date(startDate) : false;
@@ -121,7 +124,7 @@ export default function PoolAndAction() {
     ['COMPLETED', 'JUDGING', 'ARCHIVED', 'CANCELLED'].includes(
       hackathon?.status || ''
     ) || (deadline ? now > new Date(deadline) : false);
-  const currency = hackathon?.prizeTiers[0]?.currency ?? 'USDC';
+  const currency = tiers[0]?.currency ?? 'USDC';
   const categories = hackathon?.categories ?? [];
 
   const isParticipant = user
@@ -145,19 +148,42 @@ export default function PoolAndAction() {
   // refresh flips the CTA to "Submit Now". withAuth opens the auth modal when
   // the viewer is signed out.
   const joinMutation = useJoinHackathon(slug);
+  const { data: registrationQuestions = [] } = useRegistrationQuestions(slug);
+  const [regDialogOpen, setRegDialogOpen] = useState(false);
+
+  const doJoin = async (answers?: Record<string, string | string[]>) => {
+    await joinMutation.mutateAsync(answers);
+    await refreshCurrentHackathon();
+    toast.success('You joined the hackathon. You can now submit your project.');
+  };
+
   const handleJoinToSubmit = withAuth(async () => {
+    // Collect registration questions first when the organizer set any.
+    if (registrationQuestions.length > 0) {
+      setRegDialogOpen(true);
+      return;
+    }
     try {
-      await joinMutation.mutateAsync();
-      await refreshCurrentHackathon();
-      toast.success(
-        'You joined the hackathon — you can now submit your project.'
-      );
+      await doJoin();
     } catch (err) {
       toast.error(
         err instanceof Error ? err.message : 'Failed to join hackathon'
       );
     }
   });
+
+  const handleRegisterSubmit = async (
+    answers: Record<string, string | string[]>
+  ) => {
+    try {
+      await doJoin(answers);
+      setRegDialogOpen(false);
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : 'Failed to join hackathon'
+      );
+    }
+  };
 
   if (isDataLoading) {
     return (
@@ -264,66 +290,98 @@ export default function PoolAndAction() {
         </div>
 
         {hackathon &&
-          hackathon.prizeTiers.length > 0 &&
+          tiers.length > 0 &&
           (() => {
-            // Walk the tiers once, but keep a separate counter for
-            // OVERALL placements so the "1st/2nd/3rd" labels stay
-            // accurate even when track tiers are interleaved. Track
-            // tiers get the actual track name (looked up via trackId)
-            // and a "TRACK" prefix so the sidebar matches what the
-            // organizer set up in Rewards.
-            let overallIdx = 0;
+            const ordinal = (i: number) =>
+              `${i + 1}${['st', 'nd', 'rd'][i] ?? 'th'}`;
+            const overallTiers = tiers.filter(
+              t => !t.kind || t.kind === 'OVERALL'
+            );
+            const trackTiers = tiers.filter(t => t.kind === 'TRACK');
+            // Group track placements under their track so each track shows its
+            // own placement ladder, instead of interleaving them as flat dots.
+            const order: string[] = [];
+            const byTrack = new Map<string, typeof trackTiers>();
+            for (const t of trackTiers) {
+              const key = t.trackId ?? 'untracked';
+              if (!byTrack.has(key)) {
+                byTrack.set(key, []);
+                order.push(key);
+              }
+              byTrack.get(key)!.push(t);
+            }
             return (
-              <div className='relative mb-5 ml-1'>
-                <div className='bg-primary/30 absolute top-2 bottom-2 left-[5px] w-[2px]' />
-                <div className='flex flex-col gap-3'>
-                  {hackathon.prizeTiers.map((tier, i) => {
-                    const isTrack = tier.kind === 'TRACK';
-                    const track =
-                      isTrack && tier.trackId
-                        ? trackById.get(tier.trackId)
-                        : undefined;
-                    let label: string;
-                    if (isTrack) {
-                      label = track?.name ?? tier.name ?? 'Track';
-                    } else {
-                      const place = overallIdx;
-                      overallIdx += 1;
-                      label =
-                        tier.name ??
-                        `${place + 1}${['st', 'nd', 'rd'][place] ?? 'th'} Place`;
-                    }
-                    return (
-                      <div
-                        key={tier.id ?? i}
-                        className='flex items-start gap-4'
-                      >
-                        <span
-                          className={cn(
-                            'relative z-10 mt-[5px] h-3 w-3 shrink-0 rounded-full ring-4 ring-[#11230F]',
-                            isTrack ? 'bg-primary/60' : 'bg-primary'
-                          )}
-                        />
-                        <div>
-                          <p className='text-xs text-gray-500'>
-                            {isTrack && (
-                              <span className='text-primary/80 mr-1 text-[9px] font-bold tracking-widest uppercase'>
-                                Track ·
+              <div className='mb-5 space-y-4'>
+                {overallTiers.length > 0 && (
+                  <div className='relative ml-1'>
+                    <div className='bg-primary/30 absolute top-2 bottom-2 left-[5px] w-[2px]' />
+                    <div className='flex flex-col gap-3'>
+                      {overallTiers.map((tier, i) => (
+                        <div
+                          key={tier.id ?? `o-${i}`}
+                          className='flex items-start gap-4'
+                        >
+                          <span className='bg-primary relative z-10 mt-[5px] h-3 w-3 shrink-0 rounded-full ring-4 ring-[#11230F]' />
+                          <div>
+                            <p className='text-xs text-gray-500'>
+                              {tier.name ?? `${ordinal(i)} Place`}
+                            </p>
+                            <p className='text-base font-bold text-white'>
+                              {Number(tier.prizeAmount ?? 0).toLocaleString()}{' '}
+                              <span className='font-medium text-gray-400'>
+                                {tier.currency ?? currency}
                               </span>
-                            )}
-                            {label}
-                          </p>
-                          <p className='text-base font-bold text-white'>
-                            {Number(tier.prizeAmount ?? 0).toLocaleString()}{' '}
-                            <span className='font-medium text-gray-400'>
-                              {tier.currency ?? currency}
-                            </span>
-                          </p>
+                            </p>
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })}
-                </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {order.length > 0 && (
+                  <div className='space-y-2.5'>
+                    <p className='text-primary/80 flex items-center gap-1.5 text-[10px] font-bold tracking-widest uppercase'>
+                      Track Prizes
+                    </p>
+                    {order.map(trackId => {
+                      const placements = byTrack.get(trackId)!;
+                      const track =
+                        trackId !== 'untracked'
+                          ? trackById.get(trackId)
+                          : undefined;
+                      const single = placements.length === 1;
+                      return (
+                        <div
+                          key={trackId}
+                          className='rounded-lg border border-white/5 bg-white/[0.02] p-3'
+                        >
+                          <p className='mb-2 truncate text-xs font-semibold text-gray-200'>
+                            {track?.name ?? placements[0]?.name ?? 'Track'}
+                          </p>
+                          <div className='space-y-1.5'>
+                            {placements.map((pl, pi) => (
+                              <div
+                                key={pl.id ?? `${trackId}-${pi}`}
+                                className='flex items-center justify-between gap-2'
+                              >
+                                <span className='text-[11px] text-gray-500'>
+                                  {single ? 'Winner' : `${ordinal(pi)} place`}
+                                </span>
+                                <span className='text-sm font-bold text-white'>
+                                  {Number(pl.prizeAmount ?? 0).toLocaleString()}{' '}
+                                  <span className='text-[11px] font-medium text-gray-400'>
+                                    {pl.currency ?? currency}
+                                  </span>
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             );
           })()}
@@ -407,6 +465,14 @@ export default function PoolAndAction() {
             </Link>
           ))}
       </div>
+
+      <RegistrationQuestionsDialog
+        open={regDialogOpen}
+        onOpenChange={setRegDialogOpen}
+        questions={registrationQuestions}
+        submitting={joinMutation.isPending}
+        onSubmit={handleRegisterSubmit}
+      />
     </div>
   );
 }

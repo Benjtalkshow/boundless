@@ -46,8 +46,8 @@ export const PublishSection: React.FC<PublishSectionProps> = ({
           </h3>
           <p className='text-sm text-gray-400'>
             {walletAddress
-              ? 'Review all sections above and publish your hackathon when ready. Funds will be locked in escrow.'
-              : 'Please connect your wallet to publish and lock funds in escrow.'}
+              ? 'Review all sections above and publish your hackathon when ready. Your prize funds will be set aside securely.'
+              : 'Please connect your wallet to publish and set aside the prize funds.'}
           </p>
         </div>
         <div className='flex w-full flex-wrap items-center gap-3 sm:w-auto'>

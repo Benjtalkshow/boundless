@@ -120,7 +120,7 @@ export default function ReviewTab({
         })}
       </Accordion>
 
-      {allData.rewards && allData.rewards.prizeTiers.length > 0 && (
+      {allData.rewards && (allData.rewards.prizeTiers?.length ?? 0) > 0 && (
         <EscrowSummary
           rewards={allData.rewards}
           totalPrizePool={totalPrizePool}

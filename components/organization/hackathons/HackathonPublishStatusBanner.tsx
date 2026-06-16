@@ -122,14 +122,14 @@ export default function HackathonPublishStatusBanner({
             opFailed ? 'text-red-300' : 'text-amber-200'
           }`}
         >
-          {opFailed ? 'Escrow funding failed' : 'Finalizing publication'}
+          {opFailed ? 'Prize pool setup failed' : 'Finalizing publication'}
         </p>
         <p className='mt-1 text-sm text-gray-400'>
           {opFailed
             ? `Funding failed${
                 errorCode ? ` (${errorCode})` : ''
               }. The hackathon will return to draft so you can fix the issue and republish.`
-            : 'Publishing your hackathon — funding the escrow on-chain. This ' +
+            : 'Publishing your hackathon and setting up the prize pool. This ' +
               'usually takes a few moments and resumes automatically.'}
         </p>
         <button

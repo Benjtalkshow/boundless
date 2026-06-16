@@ -2807,6 +2807,24 @@
         "tags": ["wallet"]
       }
     },
+    "/api/wallet/balance/{address}": {
+      "get": {
+        "description": "Public on-chain balances for an arbitrary G-address. Used by funding flows to pre-check the selected wallet before submitting on-chain.",
+        "operationId": "WalletController_getAddressBalance",
+        "parameters": [
+          {
+            "name": "address",
+            "required": true,
+            "in": "path",
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": { "200": { "description": "" } },
+        "security": [{ "bearer": [] }],
+        "summary": "Get USDC + XLM balance for any Stellar address",
+        "tags": ["wallet"]
+      }
+    },
     "/api/wallet/sync": {
       "post": {
         "operationId": "WalletController_syncWallet",
@@ -3746,6 +3764,14 @@
             "schema": { "example": "hack_1234567890", "type": "string" }
           }
         ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/JoinHackathonDto" }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "Successfully joined hackathon",
@@ -5471,46 +5497,6 @@
         "tags": ["Organization Hackathons - Drafts"]
       }
     },
-    "/api/organizations/{organizationId}/hackathons/draft/{id}/publish": {
-      "put": {
-        "description": "Validates and publishes a complete hackathon draft, making it publicly visible",
-        "operationId": "OrganizationHackathonsDraftsController_publishDraft",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "description": "Hackathon draft ID to publish",
-            "schema": { "example": "hack_1234567890", "type": "string" }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": { "$ref": "#/components/schemas/PublishDraftDto" }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Hackathon published successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PublishHackathonResponseDto"
-                }
-              }
-            }
-          },
-          "400": { "description": "Validation failed - draft incomplete" },
-          "404": { "description": "Resource not found" }
-        },
-        "security": [{ "bearer": [] }],
-        "summary": "Publish hackathon draft",
-        "tags": ["Organization Hackathons - Drafts"]
-      }
-    },
     "/api/organizations/{organizationId}/hackathons/hackathons/{id}/announcement-preview": {
       "get": {
         "description": "Returns the number of recipients that would receive the launch announcement email if the hackathon were published right now. Useful for the publish UI.",
@@ -5530,53 +5516,95 @@
         "tags": ["Organization Hackathons - Drafts"]
       }
     },
-    "/api/organizations/{organizationId}/hackathons/draft/{id}/escrow/retry-funding": {
+    "/api/organizations/{organizationId}/hackathons/draft/from-brief": {
       "post": {
-        "description": "Retries funding for a deployed escrow using stored escrow details",
-        "operationId": "OrganizationHackathonsDraftsController_retryEscrowFunding",
+        "description": "Calls the AI service to turn a brief into a structured draft, persists a new hackathon draft pre-filled with the timeline, prizes, and judging criteria, and returns it together with the full AI suggestion for review. The organizer reviews, completes (banner, venue), and publishes.",
+        "operationId": "OrganizationHackathonsAiController_generateFromBrief",
         "parameters": [
           {
-            "name": "id",
+            "name": "organizationId",
             "required": true,
             "in": "path",
-            "description": "Hackathon draft ID to retry funding",
-            "schema": { "example": "hack_1234567890", "type": "string" }
+            "description": "Organization ID",
+            "schema": { "example": "org_1234567890", "type": "string" }
           }
         ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GenerateDraftFromBriefDto"
+              }
+            }
+          }
+        },
         "responses": {
-          "200": {
-            "description": "Escrow funding retried successfully",
+          "201": {
+            "description": "Draft generated and pre-filled.",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string",
-                      "example": "Escrow funded successfully"
-                    },
-                    "escrowStatus": { "type": "string", "example": "funded" },
-                    "escrowAddress": {
-                      "type": "string",
-                      "example": "ESCROW_CONTRACT_ID"
-                    },
-                    "transactionHash": {
-                      "type": "string",
-                      "example": "TX_HASH"
-                    }
-                  }
+                  "$ref": "#/components/schemas/GenerateDraftFromBriefResponseDto"
                 }
               }
             }
           },
-          "400": {
-            "description": "Escrow not ready, missing details, or insufficient balance"
-          },
+          "400": { "description": "Invalid request" },
           "404": { "description": "Resource not found" }
         },
         "security": [{ "bearer": [] }],
-        "summary": "Retry hackathon escrow funding",
-        "tags": ["Organization Hackathons - Drafts"]
+        "summary": "Generate a hackathon draft from a brief (Organizer Assist)",
+        "tags": ["Organization Hackathons - AI Assist"]
+      }
+    },
+    "/api/organizations/{organizationId}/hackathons/draft/{id}/regenerate-section": {
+      "post": {
+        "description": "Calls the AI service to regenerate a single section (criteria, prizes, tracks, timeline, or description) from the current draft and returns the new section for the organizer to accept or discard.",
+        "operationId": "OrganizationHackathonsAiController_regenerateSection",
+        "parameters": [
+          {
+            "name": "organizationId",
+            "required": true,
+            "in": "path",
+            "description": "Organization ID",
+            "schema": { "example": "org_1234567890", "type": "string" }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Hackathon draft ID",
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegenerateDraftSectionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Regenerated section returned.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegenerateDraftSectionResponseDto"
+                }
+              }
+            }
+          },
+          "400": { "description": "Invalid request" },
+          "404": { "description": "Resource not found" }
+        },
+        "security": [{ "bearer": [] }],
+        "summary": "Regenerate one section of a draft (Organizer Assist)",
+        "tags": ["Organization Hackathons - AI Assist"]
       }
     },
     "/api/organizations/{organizationId}/hackathons/{id}/visibility": {
@@ -6935,6 +6963,35 @@
         "tags": ["Organization Hackathons - Judging"]
       }
     },
+    "/api/organizations/{organizationId}/hackathons/{idOrSlug}/judging/allocation-parity": {
+      "get": {
+        "description": "Runs the new WinnerAssignment allocator and compares its (winner -> payout) map against the legacy rank/wonRank result. Persists nothing and never touches the on-chain path. match=true is the prerequisite for switching select_winners over to WinnerAssignment.",
+        "operationId": "OrganizationHackathonsJudgingController_allocationParity",
+        "parameters": [
+          {
+            "name": "organizationId",
+            "required": true,
+            "in": "path",
+            "description": "Organization ID",
+            "schema": { "example": "org_1234567890", "type": "string" }
+          },
+          {
+            "name": "idOrSlug",
+            "required": true,
+            "in": "path",
+            "description": "Hackathon ID or slug",
+            "schema": { "example": "hack_1234567890", "type": "string" }
+          }
+        ],
+        "responses": {
+          "400": { "description": "Invalid request" },
+          "404": { "description": "Resource not found" }
+        },
+        "security": [{ "bearer": [] }],
+        "summary": "Phase 4 gate: new allocator vs legacy parity (compute-only)",
+        "tags": ["Organization Hackathons - Judging"]
+      }
+    },
     "/api/organizations/{organizationId}/hackathons/{idOrSlug}/judging/completeness": {
       "get": {
         "description": "Returns which submissions are short any active judge, and which judges still have outstanding work. The frontend uses this to render the publish-results confirmation dialog before the organizer commits.",
@@ -7057,6 +7114,51 @@
         "tags": ["Organization Hackathons - Judging"]
       }
     },
+    "/api/organizations/{organizationId}/hackathons/{idOrSlug}/judging/invitations/bulk": {
+      "post": {
+        "description": "Invites up to 25 judges in one request. Each row is processed independently, so one bad row (duplicate, already accepted, rejected email) does not abort the rest. Returns a per-row result.",
+        "operationId": "OrganizationHackathonsJudgingController_bulkInviteJudges",
+        "parameters": [
+          {
+            "name": "organizationId",
+            "required": true,
+            "in": "path",
+            "description": "Organization ID",
+            "schema": { "example": "org_1234567890", "type": "string" }
+          },
+          {
+            "name": "idOrSlug",
+            "required": true,
+            "in": "path",
+            "description": "Hackathon ID or slug",
+            "schema": { "example": "hack_1234567890", "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/BulkInviteJudgesDto" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/BulkInviteResultDto" }
+              }
+            }
+          },
+          "400": { "description": "Invalid request" },
+          "404": { "description": "Resource not found" }
+        },
+        "security": [{ "bearer": [] }],
+        "summary": "Bulk-invite judges (e.g. from a CSV import)",
+        "tags": ["Organization Hackathons - Judging"]
+      }
+    },
     "/api/organizations/{organizationId}/hackathons/{idOrSlug}/judging/invitations/{invitationId}": {
       "delete": {
         "operationId": "OrganizationHackathonsJudgingController_cancelInvitation",
@@ -7125,6 +7227,305 @@
         },
         "security": [{ "bearer": [] }],
         "summary": "Resend a pending judge invitation",
+        "tags": ["Organization Hackathons - Judging"]
+      }
+    },
+    "/api/organizations/{organizationId}/hackathons/{idOrSlug}/judging/recommendation-thresholds": {
+      "get": {
+        "operationId": "OrganizationHackathonsJudgingController_listRecommendationThresholds",
+        "parameters": [
+          {
+            "name": "idOrSlug",
+            "required": true,
+            "in": "path",
+            "description": "Hackathon ID or slug",
+            "schema": { "example": "hack_1234567890", "type": "string" }
+          },
+          {
+            "name": "organizationId",
+            "required": true,
+            "in": "path",
+            "description": "Organization ID",
+            "schema": { "example": "org_1234567890" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RecommendationThresholdDto"
+                  }
+                }
+              }
+            }
+          },
+          "400": { "description": "Invalid request" },
+          "404": { "description": "Resource not found" }
+        },
+        "security": [{ "bearer": [] }],
+        "summary": "List recommendation thresholds",
+        "tags": ["Organization Hackathons - Judging"]
+      },
+      "put": {
+        "description": "Creates or updates the top-X% threshold for a scope. Omit trackId for the overall cut.",
+        "operationId": "OrganizationHackathonsJudgingController_setRecommendationThreshold",
+        "parameters": [
+          {
+            "name": "idOrSlug",
+            "required": true,
+            "in": "path",
+            "description": "Hackathon ID or slug",
+            "schema": { "example": "hack_1234567890", "type": "string" }
+          },
+          {
+            "name": "organizationId",
+            "required": true,
+            "in": "path",
+            "description": "Organization ID",
+            "schema": { "example": "org_1234567890" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetRecommendationThresholdDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecommendationThresholdDto"
+                }
+              }
+            }
+          },
+          "400": { "description": "Invalid request" },
+          "404": { "description": "Resource not found" }
+        },
+        "security": [{ "bearer": [] }],
+        "summary": "Set a recommendation threshold (overall or per-track)",
+        "tags": ["Organization Hackathons - Judging"]
+      }
+    },
+    "/api/organizations/{organizationId}/hackathons/{idOrSlug}/judging/recommendation-thresholds/{thresholdId}": {
+      "delete": {
+        "operationId": "OrganizationHackathonsJudgingController_deleteRecommendationThreshold",
+        "parameters": [
+          {
+            "name": "idOrSlug",
+            "required": true,
+            "in": "path",
+            "description": "Hackathon ID or slug",
+            "schema": { "example": "hack_1234567890", "type": "string" }
+          },
+          {
+            "name": "thresholdId",
+            "required": true,
+            "in": "path",
+            "description": "Threshold ID",
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "organizationId",
+            "required": true,
+            "in": "path",
+            "description": "Organization ID",
+            "schema": { "example": "org_1234567890" }
+          }
+        ],
+        "responses": {
+          "400": { "description": "Invalid request" },
+          "404": { "description": "Resource not found" }
+        },
+        "security": [{ "bearer": [] }],
+        "summary": "Delete a recommendation threshold",
+        "tags": ["Organization Hackathons - Judging"]
+      }
+    },
+    "/api/organizations/{organizationId}/hackathons/{idOrSlug}/judging/recommendation-thresholds/compute": {
+      "post": {
+        "description": "Stamps recommendedOverall on submissions and recommended on track entries by the current aggregated scores. Advisory only.",
+        "operationId": "OrganizationHackathonsJudgingController_computeRecommendations",
+        "parameters": [
+          {
+            "name": "idOrSlug",
+            "required": true,
+            "in": "path",
+            "description": "Hackathon ID or slug",
+            "schema": { "example": "hack_1234567890", "type": "string" }
+          },
+          {
+            "name": "organizationId",
+            "required": true,
+            "in": "path",
+            "description": "Organization ID",
+            "schema": { "example": "org_1234567890" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecommendationComputeResultDto"
+                }
+              }
+            }
+          },
+          "400": { "description": "Invalid request" },
+          "404": { "description": "Resource not found" }
+        },
+        "security": [{ "bearer": [] }],
+        "summary": "Recompute recommended flags from the configured thresholds",
+        "tags": ["Organization Hackathons - Judging"]
+      }
+    },
+    "/api/organizations/{organizationId}/hackathons/{idOrSlug}/judging/submissions/{submissionId}/ai-score": {
+      "post": {
+        "description": "Generates an advisory scorecard against the rubric (per-prize criteria override the hackathon criteria via ?prizeId=). Stored as an AI_ASSIST score, excluded from ranking until promoted.",
+        "operationId": "OrganizationHackathonsJudgingController_aiScoreSubmission",
+        "parameters": [
+          {
+            "name": "idOrSlug",
+            "required": true,
+            "in": "path",
+            "description": "Hackathon ID or slug",
+            "schema": { "example": "hack_1234567890", "type": "string" }
+          },
+          {
+            "name": "submissionId",
+            "required": true,
+            "in": "path",
+            "description": "Submission ID",
+            "schema": { "type": "string" }
+          },
+          { "name": "prizeId", "required": false, "in": "query", "schema": {} },
+          {
+            "name": "organizationId",
+            "required": true,
+            "in": "path",
+            "description": "Organization ID",
+            "schema": { "example": "org_1234567890" }
+          }
+        ],
+        "responses": {
+          "400": { "description": "Invalid request" },
+          "404": { "description": "Resource not found" }
+        },
+        "security": [{ "bearer": [] }],
+        "summary": "Run AI Judging Assist on a submission (advisory)",
+        "tags": ["Organization Hackathons - Judging"]
+      }
+    },
+    "/api/organizations/{organizationId}/hackathons/{idOrSlug}/judging/ai-scorecards": {
+      "get": {
+        "description": "Returns the stored advisory AI scorecards for this hackathon. These do not count toward ranking until promoted.",
+        "operationId": "OrganizationHackathonsJudgingController_aiScorecards",
+        "parameters": [
+          {
+            "name": "idOrSlug",
+            "required": true,
+            "in": "path",
+            "description": "Hackathon ID or slug",
+            "schema": { "example": "hack_1234567890", "type": "string" }
+          },
+          {
+            "name": "organizationId",
+            "required": true,
+            "in": "path",
+            "description": "Organization ID",
+            "schema": { "example": "org_1234567890" }
+          }
+        ],
+        "responses": {
+          "400": { "description": "Invalid request" },
+          "404": { "description": "Resource not found" }
+        },
+        "security": [{ "bearer": [] }],
+        "summary": "List AI Judging Assist scorecards (advisory)",
+        "tags": ["Organization Hackathons - Judging"]
+      }
+    },
+    "/api/organizations/{organizationId}/hackathons/{idOrSlug}/judging/submissions/{submissionId}/ai-score/promote": {
+      "post": {
+        "description": "Rosters the AI as a judge and flips the scorecard off AI_ASSIST so it counts toward ranking. Reversible. The AI judge is excluded from the expected-judge count.",
+        "operationId": "OrganizationHackathonsJudgingController_promoteAiScore",
+        "parameters": [
+          {
+            "name": "idOrSlug",
+            "required": true,
+            "in": "path",
+            "description": "Hackathon ID or slug",
+            "schema": { "example": "hack_1234567890", "type": "string" }
+          },
+          {
+            "name": "submissionId",
+            "required": true,
+            "in": "path",
+            "description": "Submission ID",
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "organizationId",
+            "required": true,
+            "in": "path",
+            "description": "Organization ID",
+            "schema": { "example": "org_1234567890" }
+          }
+        ],
+        "responses": {
+          "400": { "description": "Invalid request" },
+          "404": { "description": "Resource not found" }
+        },
+        "security": [{ "bearer": [] }],
+        "summary": "Promote an AI scorecard into a counting score",
+        "tags": ["Organization Hackathons - Judging"]
+      }
+    },
+    "/api/organizations/{organizationId}/hackathons/{idOrSlug}/judging/submissions/{submissionId}/ai-score/unpromote": {
+      "post": {
+        "operationId": "OrganizationHackathonsJudgingController_unpromoteAiScore",
+        "parameters": [
+          {
+            "name": "idOrSlug",
+            "required": true,
+            "in": "path",
+            "description": "Hackathon ID or slug",
+            "schema": { "example": "hack_1234567890", "type": "string" }
+          },
+          {
+            "name": "submissionId",
+            "required": true,
+            "in": "path",
+            "description": "Submission ID",
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "organizationId",
+            "required": true,
+            "in": "path",
+            "description": "Organization ID",
+            "schema": { "example": "org_1234567890" }
+          }
+        ],
+        "responses": {
+          "400": { "description": "Invalid request" },
+          "404": { "description": "Resource not found" }
+        },
+        "security": [{ "bearer": [] }],
+        "summary": "Reverse a promotion (back to advisory-only)",
         "tags": ["Organization Hackathons - Judging"]
       }
     },
@@ -7836,146 +8237,6 @@
         "tags": ["Organization Hackathons - Updates"]
       }
     },
-    "/api/organizations/{organizationId}/hackathons/{id}/rewards/trigger": {
-      "post": {
-        "description": "\n      Start a new reward distribution workflow. Requirements:\n      - Hackathon results must be published\n      - You must be the hackathon organizer\n      - Idempotency key prevents duplicate processing (same key = same distribution returned)\n      \n      Milestone A: Creates immutable snapshot of winners + totals, moves to PENDING_ADMIN_REVIEW.\n      Milestone B will add execution/release phase.\n    ",
-        "operationId": "OrganizationHackathonsRewardsController_triggerRewardDistribution",
-        "parameters": [
-          {
-            "name": "organizationId",
-            "required": true,
-            "in": "path",
-            "description": "UUID of your organization",
-            "schema": {
-              "example": "a1b2c3d4-e5f6-4g7h-8i9j-k0l1m2n3o4p5",
-              "type": "string"
-            }
-          },
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "description": "UUID or slug of the hackathon",
-            "schema": { "example": "my-hackatho-2024", "type": "string" }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateRewardDistributionDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Distribution triggered successfully (or returned existing)",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/RewardDistributionResponseDto"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Results not published, wrong currency, no prize tiers, no winners"
-          },
-          "403": {
-            "description": "Not authorized as organization member/organizer"
-          },
-          "404": { "description": "Hackathon not found" }
-        },
-        "security": [{ "bearer": [] }],
-        "summary": "Trigger reward distribution (organizer)",
-        "tags": ["Hackathons - Organizer Rewards"]
-      }
-    },
-    "/api/organizations/{organizationId}/hackathons/{id}/rewards/status": {
-      "get": {
-        "description": "\n      Fetch the current status of the active reward distribution.\n      Returns latest PENDING_ADMIN_REVIEW, APPROVED, REJECTED, or EXECUTING state.\n    ",
-        "operationId": "OrganizationHackathonsRewardsController_getRewardDistributionStatus",
-        "parameters": [
-          {
-            "name": "organizationId",
-            "required": true,
-            "in": "path",
-            "description": "UUID of your organization",
-            "schema": {
-              "example": "a1b2c3d4-e5f6-4g7h-8i9j-k0l1m2n3o4p5",
-              "type": "string"
-            }
-          },
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "description": "UUID or slug of the hackathon",
-            "schema": { "example": "my-hackatho-2024", "type": "string" }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Current distribution status",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/RewardDistributionResponseDto"
-                }
-              }
-            }
-          },
-          "403": { "description": "Not authorized as organizer" },
-          "404": {
-            "description": "Hackathon not found or no active distribution"
-          }
-        },
-        "security": [{ "bearer": [] }],
-        "summary": "Get reward distribution status (organizer)",
-        "tags": ["Hackathons - Organizer Rewards"]
-      }
-    },
-    "/api/organizations/{organizationId}/hackathons/{id}/rewards/escrow": {
-      "get": {
-        "description": "\n      Fetches current balance and milestones for the hackathon escrow from the indexer.\n      Requires organizer permissions.\n    ",
-        "operationId": "OrganizationHackathonsRewardsController_getHackathonEscrow",
-        "parameters": [
-          {
-            "name": "organizationId",
-            "required": true,
-            "in": "path",
-            "description": "UUID of your organization",
-            "schema": { "type": "string" }
-          },
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "description": "UUID or slug of the hackathon",
-            "schema": { "type": "string" }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Escrow details retrieved successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HackathonEscrowResponseDto"
-                }
-              }
-            }
-          },
-          "403": { "description": "Not authorized as organizer" },
-          "404": { "description": "Hackathon not found or no escrow address" }
-        },
-        "security": [{ "bearer": [] }],
-        "summary": "Get hackathon escrow details (organizer)",
-        "tags": ["Hackathons - Organizer Rewards"]
-      }
-    },
     "/api/organizations/{organizationId}/hackathons/{id}/export": {
       "get": {
         "description": "Export hackathon data as a **CSV** or a **branded PDF**.\n\n**CSV** — A multi-section spreadsheet-compatible file with UTF-8 BOM for\nExcel compatibility. Sections: Overview, Prize Tiers, Participants, Submissions, Winners, Judging.\n\n**PDF** — A professionally branded Boundless report including cover header,\nkey-metric stat cards, and data tables. Dark brand palette with mint accent.\n\nUse the `dataset` param to limit which sections are included.\n\n> Only hackathon organizers (organization managers) can use this endpoint.",
@@ -8237,6 +8498,30 @@
         "tags": ["Hackathons - Organizer Partners"]
       }
     },
+    "/api/organizations/{organizationId}/hackathons/{hackathonId}/partners/prizes": {
+      "get": {
+        "description": "Returns the hackathon prizes with their placements (the fundable slots) so partner money can be allocated to a specific placement.",
+        "operationId": "OrganizationHackathonsPartnersController_prizes",
+        "parameters": [
+          {
+            "name": "organizationId",
+            "required": true,
+            "in": "path",
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "hackathonId",
+            "required": true,
+            "in": "path",
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": { "200": { "description": "Prizes with placements" } },
+        "security": [{ "bearer": [] }],
+        "summary": "List prizes + placements available for allocation",
+        "tags": ["Hackathons - Organizer Partners"]
+      }
+    },
     "/api/organizations/{organizationId}/hackathons/{hackathonId}/partners/allocations/{allocationId}": {
       "delete": {
         "description": "Reverses an allocation, decrementing the prize tier amount and removing the tier if it was created by the allocation and no longer has any remaining amount.",
@@ -8381,6 +8666,49 @@
         "tags": ["Hackathons - Tracks"]
       }
     },
+    "/api/hackathons/{idOrSlug}/custom-questions": {
+      "get": {
+        "description": "Returns a hackathon's custom questions for the public forms. Filter with ?scope=SUBMISSION|REGISTRATION (the submission form passes SUBMISSION).",
+        "operationId": "HackathonsCustomQuestionsController_list",
+        "parameters": [
+          {
+            "name": "idOrSlug",
+            "required": true,
+            "in": "path",
+            "description": "Hackathon ID or slug",
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "scope",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": ["REGISTRATION", "SUBMISSION"],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CustomQuestionResponseDto"
+                  }
+                }
+              }
+            }
+          },
+          "400": { "description": "Invalid request" },
+          "404": { "description": "Resource not found" }
+        },
+        "summary": "List public custom questions",
+        "tags": ["Hackathons - Custom Questions"]
+      }
+    },
     "/api/organizations/{organizationId}/hackathons/{id}/tracks": {
       "get": {
         "description": "Returns the full set of tracks for this hackathon, including archived ones by default. Use ?includeArchived=false to hide them.",
@@ -8453,6 +8781,32 @@
         },
         "security": [{ "bearer": [] }],
         "summary": "Create a track",
+        "tags": ["Hackathons - Organizer Tracks"]
+      }
+    },
+    "/api/organizations/{organizationId}/hackathons/{id}/tracks/config": {
+      "patch": {
+        "description": "Sets track settings stored on the hackathon (e.g. max tracks per submission), distinct from per-track CRUD. Declared before :trackId so the static path wins.",
+        "operationId": "OrganizationHackathonsTracksController_updateConfig",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UpdateTracksConfigDto" }
+            }
+          }
+        },
+        "responses": { "200": { "description": "" } },
+        "security": [{ "bearer": [] }],
+        "summary": "Update hackathon-level track config",
         "tags": ["Hackathons - Organizer Tracks"]
       }
     },
@@ -8541,6 +8895,94 @@
         "security": [{ "bearer": [] }],
         "summary": "Opt in every existing submission into this track",
         "tags": ["Hackathons - Organizer Tracks"]
+      }
+    },
+    "/api/organizations/{organizationId}/hackathons/{id}/custom-questions": {
+      "get": {
+        "description": "Returns the full question set for this hackathon. Filter to one scope with ?scope=REGISTRATION|SUBMISSION.",
+        "operationId": "OrganizationHackathonsCustomQuestionsController_list",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Hackathon ID or slug",
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "scope",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": ["REGISTRATION", "SUBMISSION"],
+              "type": "string"
+            }
+          },
+          {
+            "name": "organizationId",
+            "required": true,
+            "in": "path",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CustomQuestionResponseDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [{ "bearer": [] }],
+        "summary": "List custom questions (organizer view)",
+        "tags": ["Hackathons - Organizer Custom Questions"]
+      },
+      "put": {
+        "description": "Delete-and-recreate: the submitted array becomes the complete question set across both scopes.",
+        "operationId": "OrganizationHackathonsCustomQuestionsController_replace",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpsertCustomQuestionsDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CustomQuestionResponseDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [{ "bearer": [] }],
+        "summary": "Replace the full custom-question set",
+        "tags": ["Hackathons - Organizer Custom Questions"]
       }
     },
     "/api/organizations/{organizationId}/hackathons/{id}/escrow/funding-otp/request": {
@@ -12332,230 +12774,6 @@
         "security": [{ "JWT-auth": [] }],
         "summary": "Escalate dispute to arbitration",
         "tags": ["Admin"]
-      }
-    },
-    "/api/admin/hackathons/rewards/queue": {
-      "get": {
-        "description": "\n      Fetch all reward distributions in queue, filterable by status.\n      Pagination via limit/offset.\n      Statuses: PENDING_ADMIN_REVIEW, APPROVED, REJECTED, EXECUTING, COMPLETED, FAILED, PARTIAL_SUCCESS\n    ",
-        "operationId": "AdminHackathonsRewardsController_getRewardQueue",
-        "parameters": [
-          {
-            "name": "status",
-            "required": false,
-            "in": "query",
-            "description": "Filter by status (e.g., PENDING_ADMIN_REVIEW)",
-            "schema": { "example": "PENDING_ADMIN_REVIEW", "type": "string" }
-          },
-          {
-            "name": "limit",
-            "required": false,
-            "in": "query",
-            "description": "Results per page",
-            "schema": { "example": 50, "type": "string" }
-          },
-          {
-            "name": "offset",
-            "required": false,
-            "in": "query",
-            "description": "Pagination offset",
-            "schema": { "example": 0, "type": "string" }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Queue of reward distributions",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "properties": {
-                    "items": {
-                      "type": "array",
-                      "items": {
-                        "$ref": "#/components/schemas/AdminRewardQueueItemDto"
-                      }
-                    },
-                    "total": { "type": "number" },
-                    "limit": { "type": "number" },
-                    "offset": { "type": "number" }
-                  }
-                }
-              }
-            }
-          }
-        },
-        "security": [{ "bearer": [] }],
-        "summary": "Get reward distribution queue (admin)",
-        "tags": ["Admin - Hackathon Rewards"]
-      }
-    },
-    "/api/admin/hackathons/rewards/{hackathonId}/rewards/{distributionId}": {
-      "get": {
-        "description": "Fetch full details of a specific reward distribution",
-        "operationId": "AdminHackathonsRewardsController_getRewardDistributionDetail",
-        "parameters": [
-          {
-            "name": "hackathonId",
-            "required": true,
-            "in": "path",
-            "description": "UUID of the hackathon",
-            "schema": {
-              "example": "a1b2c3d4-e5f6-4g7h-8i9j-k0l1m2n3o4p5",
-              "type": "string"
-            }
-          },
-          {
-            "name": "distributionId",
-            "required": true,
-            "in": "path",
-            "description": "UUID of the reward distribution",
-            "schema": {
-              "example": "b2c3d4e5-f6g7-4h8i-9j0k-l1m2n3o4p5q6",
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": { "description": "Distribution detail" },
-          "404": { "description": "Hackathon or distribution not found" }
-        },
-        "security": [{ "bearer": [] }],
-        "summary": "Get reward distribution detail (admin)",
-        "tags": ["Admin - Hackathon Rewards"]
-      }
-    },
-    "/api/admin/hackathons/rewards/{hackathonId}/rewards/{distributionId}/approve": {
-      "post": {
-        "description": "\n      Approve a pending reward distribution.\n      Moves to APPROVED state, locks for Milestone B execution.\n      Can include optional admin note.\n    ",
-        "operationId": "AdminHackathonsRewardsController_approveRewardDistribution",
-        "parameters": [
-          {
-            "name": "hackathonId",
-            "required": true,
-            "in": "path",
-            "description": "UUID of the hackathon",
-            "schema": {
-              "example": "a1b2c3d4-e5f6-4g7h-8i9j-k0l1m2n3o4p5",
-              "type": "string"
-            }
-          },
-          {
-            "name": "distributionId",
-            "required": true,
-            "in": "path",
-            "description": "UUID of the reward distribution",
-            "schema": {
-              "example": "b2c3d4e5-f6g7-4h8i-9j0k-l1m2n3o4p5q6",
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ApproveRewardDistributionDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": { "description": "Distribution approved" },
-          "400": {
-            "description": "Distribution already approved/rejected or in wrong state"
-          },
-          "404": { "description": "Hackathon or distribution not found" }
-        },
-        "security": [{ "bearer": [] }],
-        "summary": "Approve reward distribution (admin)",
-        "tags": ["Admin - Hackathon Rewards"]
-      }
-    },
-    "/api/admin/hackathons/rewards/{hackathonId}/rewards/{distributionId}/reject": {
-      "post": {
-        "description": "\n      Reject a pending reward distribution.\n      Moves to REJECTED state; organizer sees reason and can re-trigger with fixes.\n      Requires rejection reason (visible to organizer) and optional internal admin note.\n    ",
-        "operationId": "AdminHackathonsRewardsController_rejectRewardDistribution",
-        "parameters": [
-          {
-            "name": "hackathonId",
-            "required": true,
-            "in": "path",
-            "description": "UUID of the hackathon",
-            "schema": {
-              "example": "a1b2c3d4-e5f6-4g7h-8i9j-k0l1m2n3o4p5",
-              "type": "string"
-            }
-          },
-          {
-            "name": "distributionId",
-            "required": true,
-            "in": "path",
-            "description": "UUID of the reward distribution",
-            "schema": {
-              "example": "b2c3d4e5-f6g7-4h8i-9j0k-l1m2n3o4p5q6",
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/RejectRewardDistributionDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": { "description": "Distribution rejected" },
-          "400": {
-            "description": "Distribution already approved/rejected or in wrong state"
-          },
-          "404": { "description": "Hackathon or distribution not found" }
-        },
-        "security": [{ "bearer": [] }],
-        "summary": "Reject reward distribution (admin)",
-        "tags": ["Admin - Hackathon Rewards"]
-      }
-    },
-    "/api/admin/hackathons/rewards/{hackathonId}/rewards/{distributionId}/sync": {
-      "post": {
-        "description": "Manually trigger indexer sync for this distribution. Updates executionRecords from escrow released flags.",
-        "operationId": "AdminHackathonsRewardsController_syncRewardDistribution",
-        "parameters": [
-          {
-            "name": "hackathonId",
-            "required": true,
-            "in": "path",
-            "description": "UUID of the hackathon",
-            "schema": { "type": "string" }
-          },
-          {
-            "name": "distributionId",
-            "required": true,
-            "in": "path",
-            "description": "UUID of the reward distribution",
-            "schema": { "type": "string" }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Sync completed",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": { "updated": { "type": "boolean" } }
-                }
-              }
-            }
-          },
-          "404": { "description": "Hackathon or distribution not found" }
-        },
-        "security": [{ "bearer": [] }],
-        "summary": "Sync reward distribution with on-chain (admin)",
-        "tags": ["Admin - Hackathon Rewards"]
       }
     },
     "/api/admin/manual-projects/pending": {
@@ -27417,6 +27635,16 @@
         },
         "required": ["createdBy"]
       },
+      "JoinHackathonDto": {
+        "type": "object",
+        "properties": {
+          "customAnswers": {
+            "type": "object",
+            "description": "Answers to REGISTRATION-scope custom questions. Keyed by question id; each value is a string (or string[] for multi-select).",
+            "example": { "cq_role": "Backend developer" }
+          }
+        }
+      },
       "ParticipationResponseDto": { "type": "object", "properties": {} },
       "ParticipantResponseDto": { "type": "object", "properties": {} },
       "HackathonParticipantsResponseDto": {
@@ -27676,6 +27904,14 @@
               }
             }
           },
+          "customAnswers": {
+            "type": "object",
+            "description": "Answers to hackathon-level SUBMISSION-scope custom questions. Keyed by question id; each value is a string (or string[] for multi-select). Validated against the question set.",
+            "example": {
+              "cq_audience": "Freelancers",
+              "cq_stack": ["Web", "AI"]
+            }
+          },
           "tagline": {
             "type": "string",
             "description": "Short elevator pitch shown on cards / sidebars / judge queue. Max ~160 chars.",
@@ -27783,6 +28019,14 @@
           "trackAnswers": {
             "type": "object",
             "description": "Per-track answers, same shape as on create. Phase B."
+          },
+          "customAnswers": {
+            "type": "object",
+            "description": "Answers to hackathon-level SUBMISSION-scope custom questions. Keyed by question id; each value is a string (or string[] for multi-select). Replaces the stored answers when provided.",
+            "example": {
+              "cq_audience": "Freelancers",
+              "cq_stack": ["Web", "AI"]
+            }
           },
           "tagline": { "type": "string" },
           "builtWith": { "type": "array", "items": { "type": "string" } },
@@ -28209,16 +28453,48 @@
               "type": "string",
               "enum": [
                 "DeFi",
+                "Payments",
+                "Stablecoins",
+                "Lending & Borrowing",
+                "Trading & DEXs",
+                "Derivatives",
+                "Prediction Markets",
                 "NFTs",
+                "Creator Economy",
+                "Social",
+                "Social Tokens",
                 "DAOs",
+                "Governance",
+                "Web3 Gaming",
+                "Metaverse",
+                "Layer 1",
                 "Layer 2",
                 "Cross-chain",
-                "Web3 Gaming",
-                "Social Tokens",
+                "Interoperability",
                 "Infrastructure",
+                "Developer Tooling",
+                "Wallets",
+                "Account Abstraction",
+                "Oracles",
+                "Data & Indexing",
+                "Analytics",
+                "AI",
+                "AI Agents",
+                "DePIN",
+                "DeSci",
                 "Privacy",
-                "Sustainability",
+                "Zero-Knowledge",
+                "Security",
+                "Identity",
                 "Real World Assets",
+                "Tokenization",
+                "Supply Chain",
+                "Sustainability",
+                "Climate",
+                "Education",
+                "Healthcare",
+                "Consumer Apps",
+                "Mobile",
                 "Other"
               ]
             }
@@ -28325,6 +28601,15 @@
         },
         "required": ["participantType"]
       },
+      "HackathonDraftTracksDto": {
+        "type": "object",
+        "properties": {
+          "tracksMaxPerSubmission": {
+            "type": "number",
+            "description": "Max number of tracks a single submission may enter (1-20)."
+          }
+        }
+      },
       "PrizeTierDto": {
         "type": "object",
         "properties": {
@@ -28344,6 +28629,43 @@
           "trackId": { "type": "string" }
         },
         "required": ["id", "place", "prizeAmount", "passMark"]
+      },
+      "PrizePlacementWriteDto": {
+        "type": "object",
+        "properties": {
+          "position": {
+            "type": "number",
+            "description": "1 = 1st place; unique within a prize"
+          },
+          "label": { "type": "string" },
+          "amount": {
+            "type": "string",
+            "description": "Prize amount as a decimal string"
+          },
+          "currency": { "type": "string" },
+          "passMark": { "type": "number", "minimum": 0, "maximum": 100 }
+        },
+        "required": ["position", "amount"]
+      },
+      "PrizeWriteDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Prize name, e.g. \"Grand Prize\" or \"Best UI/UX\""
+          },
+          "description": { "type": "string" },
+          "trackIds": {
+            "description": "Linked HackathonTrack ids; empty = overall prize",
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "placements": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/PrizePlacementWriteDto" }
+          }
+        },
+        "required": ["name", "trackIds", "placements"]
       },
       "WinnerOverrideDto": {
         "type": "object",
@@ -28365,6 +28687,10 @@
             "type": "array",
             "items": { "$ref": "#/components/schemas/PrizeTierDto" }
           },
+          "prizes": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/PrizeWriteDto" }
+          },
           "winnerOverrides": {
             "type": "array",
             "items": { "$ref": "#/components/schemas/WinnerOverrideDto" }
@@ -28378,8 +28704,7 @@
             "minimum": 1,
             "maximum": 20
           }
-        },
-        "required": ["prizeTiers"]
+        }
       },
       "ResourceItemDto": {
         "type": "object",
@@ -28472,6 +28797,7 @@
           "participation": {
             "$ref": "#/components/schemas/ParticipantFormData"
           },
+          "tracks": { "$ref": "#/components/schemas/HackathonDraftTracksDto" },
           "rewards": { "$ref": "#/components/schemas/RewardsFormData" },
           "resources": { "$ref": "#/components/schemas/ResourcesFormData" },
           "judging": { "$ref": "#/components/schemas/JudgingFormData" },
@@ -28479,6 +28805,58 @@
             "$ref": "#/components/schemas/CollaborationFormData"
           }
         }
+      },
+      "HackathonDraftAiGenerationDto": {
+        "type": "object",
+        "properties": {
+          "generationId": {
+            "type": "string",
+            "description": "AI generationId that produced or last-updated this draft."
+          }
+        },
+        "required": ["generationId"]
+      },
+      "HackathonDraftPrizePlacementDto": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "position": {
+            "type": "number",
+            "description": "1 = 1st place, unique within a prize"
+          },
+          "label": { "type": "string", "nullable": true },
+          "amount": {
+            "type": "string",
+            "description": "Decimal string in the prize currency"
+          },
+          "currency": { "type": "string" },
+          "passMark": {
+            "type": "number",
+            "description": "Minimum score (0-100) to win this placement"
+          }
+        },
+        "required": ["id", "position", "amount", "currency", "passMark"]
+      },
+      "HackathonDraftPrizeDto": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "description": { "type": "string", "nullable": true },
+          "displayOrder": { "type": "number" },
+          "trackIds": {
+            "description": "Linked track ids; empty = overall prize",
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "placements": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HackathonDraftPrizePlacementDto"
+            }
+          }
+        },
+        "required": ["id", "name", "displayOrder", "trackIds", "placements"]
       },
       "HackathonDraftResponseDto": {
         "type": "object",
@@ -28510,7 +28888,18 @@
             "description": "Per-section validation messages, keyed by step"
           },
           "createdAt": { "type": "string", "format": "date-time" },
-          "updatedAt": { "type": "string", "format": "date-time" }
+          "updatedAt": { "type": "string", "format": "date-time" },
+          "aiGeneration": {
+            "description": "Present when the draft was generated with Organizer Assist; enables per-section AI regenerate in the wizard.",
+            "allOf": [
+              { "$ref": "#/components/schemas/HackathonDraftAiGenerationDto" }
+            ]
+          },
+          "prizes": {
+            "description": "Prize entity (named prizes + linked tracks + placements). Additive read path alongside data.rewards.prizeTiers; becomes authoritative as readers cut over.",
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/HackathonDraftPrizeDto" }
+          }
         },
         "required": [
           "id",
@@ -28521,7 +28910,8 @@
           "isValidForPublish",
           "validationErrors",
           "createdAt",
-          "updatedAt"
+          "updatedAt",
+          "prizes"
         ]
       },
       "UpdateHackathonDraftDto": {
@@ -28544,22 +28934,90 @@
           }
         }
       },
-      "PublishDraftDto": {
+      "GenerateDraftFromBriefDto": {
         "type": "object",
         "properties": {
-          "skipAnnouncement": { "type": "boolean" },
-          "announcementSubject": { "type": "string", "maxLength": 120 }
-        }
-      },
-      "PublishHackathonResponseDto": {
-        "type": "object",
-        "properties": {
-          "id": { "type": "string" },
-          "slug": { "type": "string" },
-          "publishedAt": { "type": "string", "format": "date-time" },
-          "message": { "type": "string" }
+          "brief": {
+            "type": "string",
+            "description": "Free-text brief describing the hackathon to generate.",
+            "minLength": 10,
+            "maxLength": 2000,
+            "example": "A two-week hackathon for AI agent tooling on Stellar, aimed at indie builders."
+          },
+          "budgetCapUsdc": {
+            "type": "string",
+            "description": "Total budget cap in USDC, as a decimal string.",
+            "example": "10000"
+          },
+          "earliestStart": {
+            "type": "string",
+            "description": "Earliest the hackathon may start (YYYY-MM-DD).",
+            "example": "2026-07-01"
+          },
+          "examples": {
+            "description": "Up to 3 example briefs/drafts to steer style.",
+            "maxItems": 3,
+            "type": "array",
+            "items": { "type": "string" }
+          }
         },
-        "required": ["id", "slug", "publishedAt", "message"]
+        "required": ["brief", "budgetCapUsdc", "earliestStart"]
+      },
+      "AiGenerationMetaDto": {
+        "type": "object",
+        "properties": {
+          "generationId": { "type": "string" },
+          "model": { "type": "string" },
+          "promptVersion": { "type": "string" },
+          "costUsd": {
+            "type": "string",
+            "description": "Cost in USD as a decimal string (never a float)."
+          }
+        },
+        "required": ["generationId", "model", "promptVersion", "costUsd"]
+      },
+      "GenerateDraftFromBriefResponseDto": {
+        "type": "object",
+        "properties": {
+          "draftId": {
+            "type": "string",
+            "description": "Id of the created draft."
+          },
+          "draft": { "$ref": "#/components/schemas/HackathonDraftResponseDto" },
+          "generation": { "$ref": "#/components/schemas/AiGenerationMetaDto" }
+        },
+        "required": ["draftId", "draft", "generation"]
+      },
+      "RegenerateDraftSectionDto": {
+        "type": "object",
+        "properties": {
+          "section": {
+            "type": "string",
+            "enum": ["criteria", "prizes", "tracks", "timeline", "description"]
+          },
+          "instructions": {
+            "type": "string",
+            "description": "Optional steering instructions for the regeneration.",
+            "maxLength": 1000
+          }
+        },
+        "required": ["section"]
+      },
+      "RegenerateDraftSectionResponseDto": {
+        "type": "object",
+        "properties": {
+          "section": {
+            "type": "string",
+            "enum": ["criteria", "prizes", "tracks", "timeline", "description"]
+          },
+          "data": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Regenerated values in the wizard section shape."
+          },
+          "generation": { "$ref": "#/components/schemas/AiGenerationMetaDto" }
+        },
+        "required": ["section", "data", "generation"]
       },
       "UpdateVisibilitySettingsDto": {
         "type": "object",
@@ -29056,7 +29514,16 @@
           "isComplete": { "type": "boolean" },
           "isPending": { "type": "boolean" },
           "hasDisagreement": { "type": "boolean" },
-          "trackIds": { "type": "array", "items": { "type": "string" } }
+          "trackIds": { "type": "array", "items": { "type": "string" } },
+          "recommendedOverall": {
+            "type": "boolean",
+            "description": "True when this submission is in the top X% overall per the recommendation threshold."
+          },
+          "recommendedTrackIds": {
+            "description": "Track ids where this submission is in the top X% per the per-track recommendation threshold.",
+            "type": "array",
+            "items": { "type": "string" }
+          }
         },
         "required": [
           "submissionId",
@@ -29125,6 +29592,10 @@
             "type": "string",
             "description": "Optional public display name for the judge"
           },
+          "title": {
+            "type": "string",
+            "description": "Optional title/role shown with the judge (e.g. \"Time Traveler\")."
+          },
           "message": {
             "type": "string",
             "description": "Personal message included in the invitation email"
@@ -29137,6 +29608,101 @@
           }
         },
         "required": ["email"]
+      },
+      "BulkInviteJudgesDto": {
+        "type": "object",
+        "properties": {
+          "invites": {
+            "description": "Up to 25 judges per request",
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/InviteJudgeDto" }
+          }
+        },
+        "required": ["invites"]
+      },
+      "BulkInviteRowResultDto": {
+        "type": "object",
+        "properties": {
+          "email": { "type": "string" },
+          "status": {
+            "type": "string",
+            "enum": ["invited", "failed"],
+            "description": "'invited' = sent; 'failed' = skipped with a reason."
+          },
+          "reason": {
+            "type": "string",
+            "description": "Failure reason when status is failed."
+          }
+        },
+        "required": ["email", "status"]
+      },
+      "BulkInviteResultDto": {
+        "type": "object",
+        "properties": {
+          "results": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/BulkInviteRowResultDto" }
+          },
+          "invited": {
+            "type": "number",
+            "description": "Count of invitations sent."
+          },
+          "failed": {
+            "type": "number",
+            "description": "Count of rows that failed / were skipped."
+          }
+        },
+        "required": ["results", "invited", "failed"]
+      },
+      "RecommendationThresholdDto": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "hackathonId": { "type": "string" },
+          "trackId": {
+            "type": "string",
+            "nullable": true,
+            "description": "null = overall threshold; otherwise the scoped track id."
+          },
+          "topPercent": {
+            "type": "number",
+            "description": "Top percent (0-100)."
+          }
+        },
+        "required": ["id", "hackathonId", "topPercent"]
+      },
+      "SetRecommendationThresholdDto": {
+        "type": "object",
+        "properties": {
+          "trackId": {
+            "type": "string",
+            "description": "Track id to scope the threshold to; omit for the overall cut."
+          },
+          "topPercent": {
+            "type": "number",
+            "description": "Top percent (0-100) of submissions flagged as recommended.",
+            "minimum": 0,
+            "maximum": 100,
+            "example": 10
+          }
+        },
+        "required": ["topPercent"]
+      },
+      "RecommendationComputeResultDto": {
+        "type": "object",
+        "properties": {
+          "overallRecommended": {
+            "type": "number",
+            "description": "Submissions flagged recommendedOverall."
+          },
+          "tracks": {
+            "description": "Per-track recommended counts.",
+            "example": [{ "trackId": "trk_1", "recommended": 3 }],
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        },
+        "required": ["overallRecommended", "tracks"]
       },
       "AcceptJudgeInvitationDto": {
         "type": "object",
@@ -29467,218 +30033,6 @@
         },
         "required": ["advancedSettings"]
       },
-      "CreateRewardDistributionDto": {
-        "type": "object",
-        "properties": {
-          "idempotencyKey": {
-            "type": "string",
-            "description": "Client-supplied UUID for idempotent triggering. Duplicate requests with same key return existing distribution.",
-            "example": "a1b2c3d4-e5f6-47g8-h9i0-j1k2l3m4n5o6"
-          },
-          "organizerNote": {
-            "type": "string",
-            "description": "Optional organizer note (max 500 chars) explaining the distribution context",
-            "example": "Allocating sponsors tier to finalists"
-          }
-        },
-        "required": ["idempotencyKey"]
-      },
-      "WinnerSnapshot": {
-        "type": "object",
-        "properties": {
-          "submissionId": {
-            "type": "string",
-            "description": "Submission ID of the winner"
-          },
-          "rank": {
-            "type": "number",
-            "description": "Rank of the winner (1-based)"
-          },
-          "submissionTitle": {
-            "type": "string",
-            "description": "Display name of the submission/team"
-          },
-          "prizeTierName": {
-            "type": "string",
-            "description": "Prize tier this winner maps to"
-          },
-          "prizeAmount": {
-            "type": "number",
-            "description": "Prize amount in USDC (7 decimals)"
-          },
-          "walletAddresses": {
-            "type": "string",
-            "description": "Wallet public keys (Stellar) for prize distribution - comma-separated for teams, single address for individuals. Fetched from user.wallet.publicKey."
-          }
-        },
-        "required": [
-          "submissionId",
-          "rank",
-          "submissionTitle",
-          "prizeTierName",
-          "prizeAmount",
-          "walletAddresses"
-        ]
-      },
-      "RewardDistributionSnapshot": {
-        "type": "object",
-        "properties": {
-          "idempotencyKey": {
-            "type": "string",
-            "description": "Client-supplied idempotency key (UUID) for replay safety. Duplicate trigger with same key returns existing distribution.",
-            "example": "a1b2c3d4-e5f6-47g8-h9i0-j1k2l3m4n5o6"
-          },
-          "winners": {
-            "description": "Array of winners ranked and assigned to tiers at trigger time",
-            "type": "array",
-            "items": { "$ref": "#/components/schemas/WinnerSnapshot" }
-          },
-          "totalPrizePool": {
-            "type": "number",
-            "description": "Total prize pool in USDC (7 decimals)"
-          },
-          "platformFee": {
-            "type": "number",
-            "description": "Platform fee (7 decimals)"
-          },
-          "totalRequired": {
-            "type": "number",
-            "description": "Total funding required (prizePool + platformFee)"
-          },
-          "currency": {
-            "type": "string",
-            "description": "Currency code (hardcoded: USDC)"
-          },
-          "escrowAddress": {
-            "type": "string",
-            "description": "Hackathon escrow address where funds will be released from (captures state at trigger)"
-          },
-          "winnersChecksum": {
-            "type": "string",
-            "description": "SHA256 checksum of winners array (prevents tampering)"
-          },
-          "snapshotAt": {
-            "type": "string",
-            "description": "ISO timestamp when snapshot was created",
-            "example": "2024-01-19T14:30:00Z"
-          },
-          "organizerNote": {
-            "type": "string",
-            "description": "Organizer-supplied note explaining reward distribution context",
-            "nullable": true
-          }
-        },
-        "required": [
-          "idempotencyKey",
-          "winners",
-          "totalPrizePool",
-          "platformFee",
-          "totalRequired",
-          "currency",
-          "escrowAddress",
-          "winnersChecksum",
-          "snapshotAt",
-          "organizerNote"
-        ]
-      },
-      "RewardDistributionResponseDto": {
-        "type": "object",
-        "properties": {
-          "distributionId": {
-            "type": "object",
-            "description": "UUID of the distribution record (only at trigger; null for status-only)",
-            "nullable": true
-          },
-          "status": {
-            "type": "string",
-            "description": "Current status of the distribution",
-            "enum": [
-              "NOT_TRIGGERED",
-              "PENDING_ADMIN_REVIEW",
-              "APPROVED",
-              "REJECTED",
-              "EXECUTING",
-              "COMPLETED",
-              "FAILED",
-              "PARTIAL_SUCCESS"
-            ]
-          },
-          "snapshot": {
-            "description": "Immutable snapshot of winners and totals",
-            "allOf": [
-              { "$ref": "#/components/schemas/RewardDistributionSnapshot" }
-            ]
-          },
-          "rejectionReason": {
-            "type": "object",
-            "description": "Admin rejection reason (if status = REJECTED)",
-            "nullable": true
-          },
-          "adminNote": {
-            "type": "object",
-            "description": "Admin note (if status = APPROVED/REJECTED)",
-            "nullable": true
-          },
-          "adminUserId": {
-            "type": "object",
-            "description": "ID of the admin who approved/rejected (null if pending)",
-            "nullable": true
-          },
-          "adminDecisionAt": {
-            "type": "object",
-            "description": "ISO timestamp of admin decision (null if pending)",
-            "nullable": true,
-            "example": "2024-01-19T15:45:00Z"
-          },
-          "triggeredAt": {
-            "type": "string",
-            "description": "ISO timestamp when distribution was triggered",
-            "example": "2024-01-19T14:30:00Z"
-          },
-          "updatedAt": {
-            "type": "string",
-            "description": "ISO timestamp of last status update",
-            "example": "2024-01-19T15:45:00Z"
-          }
-        },
-        "required": ["distributionId", "status", "snapshot", "triggeredAt"]
-      },
-      "HackathonEscrowMilestoneDto": {
-        "type": "object",
-        "properties": {
-          "description": { "type": "string" },
-          "amount": { "type": "number" },
-          "receiver": { "type": "string" },
-          "status": { "type": "string" },
-          "evidence": { "type": "string" },
-          "flags": { "type": "object" }
-        },
-        "required": ["description", "amount", "receiver", "status", "evidence"]
-      },
-      "HackathonEscrowResponseDto": {
-        "type": "object",
-        "properties": {
-          "contractId": { "type": "string" },
-          "escrowAddress": { "type": "string" },
-          "balance": { "type": "number" },
-          "milestones": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/HackathonEscrowMilestoneDto"
-            }
-          },
-          "isFunded": { "type": "boolean" },
-          "canUpdate": { "type": "boolean" }
-        },
-        "required": [
-          "contractId",
-          "escrowAddress",
-          "balance",
-          "milestones",
-          "isFunded",
-          "canUpdate"
-        ]
-      },
       "InvitePartnerDto": {
         "type": "object",
         "properties": {
@@ -29714,25 +30068,16 @@
       "AllocationTargetDto": {
         "type": "object",
         "properties": {
-          "tierId": {
+          "placementId": {
             "type": "string",
-            "description": "Existing prize tier id to inflate. Either tierId or newTier must be set."
-          },
-          "newTierLabel": {
-            "type": "string",
-            "description": "Create a new prize tier with this label. Either tierId or newTier must be set.",
-            "example": "Best AI Project"
-          },
-          "newTierDescription": {
-            "type": "string",
-            "description": "Optional description for the new tier"
+            "description": "PrizePlacement id (the fundable slot) this allocation adds to. Placements are created in the Rewards step."
           },
           "amount": {
             "type": "number",
-            "description": "Net amount (USDC) to add to the tier"
+            "description": "Net amount (USDC) to add to the placement"
           }
         },
-        "required": ["amount"]
+        "required": ["placementId", "amount"]
       },
       "AllocateContributionDto": {
         "type": "object",
@@ -29859,6 +30204,55 @@
           "updatedAt"
         ]
       },
+      "CustomQuestionResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "hackathonId": { "type": "string" },
+          "scope": { "type": "string", "enum": ["REGISTRATION", "SUBMISSION"] },
+          "label": { "type": "string" },
+          "helpText": { "type": "string", "nullable": true },
+          "type": {
+            "type": "string",
+            "enum": [
+              "SHORT",
+              "LONG",
+              "URL",
+              "SINGLE_SELECT",
+              "MULTI_SELECT",
+              "BOOLEAN"
+            ]
+          },
+          "required": { "type": "boolean" },
+          "options": {
+            "nullable": true,
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "maxLength": { "type": "number", "nullable": true },
+          "displayOrder": { "type": "number" }
+        },
+        "required": [
+          "id",
+          "hackathonId",
+          "scope",
+          "label",
+          "type",
+          "required",
+          "displayOrder"
+        ]
+      },
+      "UpdateTracksConfigDto": {
+        "type": "object",
+        "properties": {
+          "tracksMaxPerSubmission": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 20,
+            "description": "Max number of tracks a single submission may enter (1-20)."
+          }
+        }
+      },
       "CreateTrackDto": {
         "type": "object",
         "properties": {
@@ -29935,6 +30329,60 @@
             "items": { "$ref": "#/components/schemas/TrackRequiredArtifactDto" }
           }
         }
+      },
+      "CustomQuestionWriteDto": {
+        "type": "object",
+        "properties": {
+          "scope": { "type": "string", "enum": ["REGISTRATION", "SUBMISSION"] },
+          "label": {
+            "type": "string",
+            "description": "Question shown to the participant."
+          },
+          "helpText": {
+            "type": "string",
+            "description": "Optional helper text under the field."
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "SHORT",
+              "LONG",
+              "URL",
+              "SINGLE_SELECT",
+              "MULTI_SELECT",
+              "BOOLEAN"
+            ],
+            "default": "SHORT"
+          },
+          "required": {
+            "type": "boolean",
+            "description": "Whether an answer is required."
+          },
+          "options": {
+            "description": "Choices for SINGLE_SELECT / MULTI_SELECT.",
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "maxLength": {
+            "type": "number",
+            "description": "Optional length cap for SHORT / LONG answers."
+          },
+          "displayOrder": {
+            "type": "number",
+            "description": "Sort order; lower renders first."
+          }
+        },
+        "required": ["scope", "label", "type"]
+      },
+      "UpsertCustomQuestionsDto": {
+        "type": "object",
+        "properties": {
+          "questions": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/CustomQuestionWriteDto" }
+          }
+        },
+        "required": ["questions"]
       },
       "RequestFundingOtpResponseDto": {
         "type": "object",
@@ -30171,10 +30619,10 @@
       "HackathonWinnerSelectionDto": {
         "type": "object",
         "properties": {
-          "applicantAddress": {
+          "submissionId": {
             "type": "string",
-            "description": "Stellar G-address of the participant being declared a winner. Must have an active submission anchor on this hackathon.",
-            "example": "GBXNQFDSBDPOIA3Q4LYIWBOJFFPCCV6IEDHBSJZEAYFKIKZVUO4QEDVS"
+            "description": "ID of the winning submission. The payout recipient is resolved server-side = the submitter's (team leader's) Boundless managed wallet; no on-chain submission anchor is required.",
+            "example": "cmq7sgwst0001abcd1234efgh"
           },
           "position": {
             "type": "number",
@@ -30196,18 +30644,18 @@
             "example": 50
           }
         },
-        "required": ["applicantAddress", "position"]
+        "required": ["submissionId", "position"]
       },
       "SelectHackathonWinnersDto": {
         "type": "object",
         "properties": {
           "ownerAddress": {
             "type": "string",
-            "description": "Organizer's Stellar G-address that signs select_winners.",
+            "description": "Organizer's Stellar G-address — a hint only. select_winners is authorized by the event manager resolved on-chain (the org treasury for new events), which the backend signs with server-side; this value is used only as a fallback when that on-chain read is unavailable (legacy/pre-upgrade events). Omit for the MANAGED flow.",
             "example": "GDVGP7DWODFVYQ5NHHLLD3WFVLUH5Y3HHELIKSNO4STEFCBETQAWDMKZ"
           },
           "selections": {
-            "description": "Winners to declare. Each must reference an applicant with an active submission anchor. Positions must be unique within the array.",
+            "description": "Winners to declare, each by winning submissionId + position. The payout recipient is resolved server-side = the submitter's (team leader's) Boundless managed wallet; no on-chain submission anchor is required. Positions and submissionIds must be unique within the array.",
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/HackathonWinnerSelectionDto"
@@ -30224,7 +30672,7 @@
             "description": "For MANAGED, the organization treasury wallet to sign with (the event contract-auth identity). ownerAddress must match it. Omit to use the caller's personal managed wallet."
           }
         },
-        "required": ["ownerAddress", "selections"]
+        "required": ["selections"]
       },
       "HackathonSubmitSignedXdrDto": {
         "type": "object",
@@ -31081,100 +31529,6 @@
             "type": "string",
             "description": "Reason for escalation to arbitration",
             "example": "Parties cannot agree on resolution terms"
-          }
-        },
-        "required": ["reason"]
-      },
-      "AdminRewardQueueItemDto": {
-        "type": "object",
-        "properties": {
-          "distributionId": {
-            "type": "string",
-            "description": "Distribution ID (UUID)"
-          },
-          "hackathonId": {
-            "type": "string",
-            "description": "Hackathon ID this distribution belongs to"
-          },
-          "hackathonName": {
-            "type": "string",
-            "description": "Hackathon name"
-          },
-          "organizationId": {
-            "type": "string",
-            "description": "Organization ID (for context)"
-          },
-          "organizationName": {
-            "type": "string",
-            "description": "Organization name"
-          },
-          "status": {
-            "type": "string",
-            "description": "Current status",
-            "enum": [
-              "NOT_TRIGGERED",
-              "PENDING_ADMIN_REVIEW",
-              "APPROVED",
-              "REJECTED",
-              "EXECUTING",
-              "COMPLETED",
-              "FAILED",
-              "PARTIAL_SUCCESS"
-            ]
-          },
-          "winnerCount": {
-            "type": "number",
-            "description": "Number of winners in snapshot"
-          },
-          "totalRequired": {
-            "type": "number",
-            "description": "Total funding required (USDC, 7 decimals)"
-          },
-          "triggeredByUserId": {
-            "type": "string",
-            "description": "ID of triggering organizer"
-          },
-          "triggeredAt": {
-            "type": "string",
-            "description": "ISO timestamp of trigger",
-            "example": "2024-01-19T14:30:00Z"
-          },
-          "adminNote": {
-            "type": "object",
-            "description": "Admin note (if reviewed)",
-            "nullable": true
-          }
-        },
-        "required": [
-          "distributionId",
-          "hackathonId",
-          "hackathonName",
-          "organizationId",
-          "organizationName",
-          "status",
-          "winnerCount",
-          "totalRequired",
-          "triggeredByUserId",
-          "triggeredAt"
-        ]
-      },
-      "ApproveRewardDistributionDto": {
-        "type": "object",
-        "properties": {
-          "adminNote": {
-            "type": "string",
-            "description": "Optional admin note (max 500 chars)",
-            "example": "Approved. Escrow verified and funded."
-          }
-        }
-      },
-      "RejectRewardDistributionDto": {
-        "type": "object",
-        "properties": {
-          "reason": {
-            "type": "string",
-            "description": "Required reason for rejection (max 500 chars, visible to organizer)",
-            "example": "Escrow address not approved. Please contact support."
           }
         },
         "required": ["reason"]

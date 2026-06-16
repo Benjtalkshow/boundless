@@ -74,6 +74,7 @@ const UPDATE_SUBMISSION_FIELDS: readonly (keyof SubmissionFormData)[] = [
   'teamMembers',
   'trackIds',
   'trackAnswers',
+  'customAnswers',
   'tagline',
   'builtWith',
   'screenshots',

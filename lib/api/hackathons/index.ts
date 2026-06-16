@@ -52,9 +52,6 @@ export type {
   SubmissionScoresResponse,
   GradeSubmissionRequest,
   GradeSubmissionResponse,
-  // Rewards types
-  AssignRanksRequest,
-  AssignRanksResponse,
   // Team types
   AcceptTeamInvitationRequest,
 } from '@/types/hackathon';
