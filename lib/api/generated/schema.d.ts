@@ -3598,6 +3598,70 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/organizations/{organizationId}/hackathons/{idOrSlug}/judging/winners/board': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Get the winners board
+     * @description One row per prize placement (overall and per-track), each with the score-ranked default pick, the current selection, the candidate list to choose from, and a conflict flag when a project already holds another placement. Drives the organizer "review and pick winners" step.
+     */
+    get: operations['OrganizationHackathonsJudgingController_winnersBoard'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/organizations/{organizationId}/hackathons/{idOrSlug}/judging/winners/placements/{placementId}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    /**
+     * Pick the winner for a placement
+     * @description Pins a submission to a prize placement as an organizer override (saved as a draft until results are published). A project already holding another placement is allowed; the UI confirms the stacking inline.
+     */
+    put: operations['OrganizationHackathonsJudgingController_setPlacementWinner'];
+    post?: never;
+    /**
+     * Clear an organizer pick for a placement
+     * @description Removes the organizer override draft for a placement, reverting it to the score-based default. Only valid before results are published.
+     */
+    delete: operations['OrganizationHackathonsJudgingController_clearPlacementWinner'];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/organizations/{organizationId}/hackathons/{idOrSlug}/judging/winners/placements/{placementId}/withhold': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Leave a placement unawarded
+     * @description Deliberately leaves a prize placement vacant ("no submission earned this prize"). Clears any pick and marks it withheld so the allocator skips it. Distinct from clearing back to the score-based default. Only valid before results are published.
+     */
+    post: operations['OrganizationHackathonsJudgingController_withholdPlacement'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/organizations/{organizationId}/hackathons/{idOrSlug}/judging/invitations': {
     parameters: {
       query?: never;
@@ -7349,6 +7413,94 @@ export interface paths {
     };
     /** Get my project by ID */
     get: operations['ProjectsController_getProject'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/organizations/{organizationId}/bounties/draft/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Get a bounty draft for resume
+     * @description Returns the current section-keyed state of a bounty draft.
+     */
+    get: operations['OrganizationBountiesDraftsController_getDraft'];
+    put?: never;
+    post?: never;
+    /**
+     * Delete a bounty draft
+     * @description Deletes an unpublished bounty (draft / draft_awaiting_funding).
+     */
+    delete: operations['OrganizationBountiesDraftsController_deleteDraft'];
+    options?: never;
+    head?: never;
+    /**
+     * Update one or more sections of a bounty draft
+     * @description Applies any subset of wizard sections in a single PATCH. Send one section for a per-step "Continue", or several for "Save draft". Each present section is validated and transformed independently, then merged into one write. The reward section replaces the prize tiers.
+     */
+    patch: operations['OrganizationBountiesDraftsController_updateDraft'];
+    trace?: never;
+  };
+  '/api/organizations/{organizationId}/bounties': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Get an organization's published bounties
+     * @description Lists bounties for an organization, newest first.
+     */
+    get: operations['OrganizationBountiesDraftsController_getOrganizationBounties'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/organizations/{organizationId}/bounties/draft': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Create a new bounty draft for an organization
+     * @description Creates an empty bounty in draft status that organization members can edit section by section through the Configure wizard.
+     */
+    post: operations['OrganizationBountiesDraftsController_createDraft'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/organizations/{organizationId}/bounties/drafts': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Get an organization's bounty drafts
+     * @description Lists draft and draft_awaiting_funding bounties for an organization.
+     */
+    get: operations['OrganizationBountiesDraftsController_getOrganizationDrafts'];
     put?: never;
     post?: never;
     delete?: never;
@@ -16326,6 +16478,10 @@ export interface components {
       };
       metadata: components['schemas']['JudgingResultsMetadataDto'];
     };
+    SetPlacementWinnerDto: {
+      /** @description The submission to award this placement to. */
+      submissionId: string;
+    };
     InviteJudgeDto: {
       /** @example judge@example.com */
       email: string;
@@ -17810,6 +17966,93 @@ export interface components {
       reason: string;
     };
     Function: Record<string, never>;
+    BountyScopeSectionDto: {
+      /** @description Bounty title */
+      title: string;
+      /** @description Bounty description */
+      description: string;
+      /** Format: uri */
+      githubIssueUrl?: string | null;
+      githubIssueNumber?: number | null;
+      projectId?: string | null;
+      bountyWindowId?: string | null;
+    };
+    BountyModeSectionDto: {
+      /** @enum {string} */
+      claimType: 'SINGLE_CLAIM' | 'COMPETITION';
+      /** @enum {string} */
+      entryType: 'OPEN' | 'APPLICATION_LIGHT' | 'APPLICATION_FULL';
+    };
+    BountySubmissionSectionDto: {
+      /** Format: date-time */
+      submissionDeadline: string;
+      /** Format: date-time */
+      applicationWindowCloseAt?: string | null;
+      maxApplicants?: number | null;
+      shortlistSize?: number | null;
+      reputationMinimum?: number | null;
+      /** @enum {string} */
+      submissionVisibility?: 'ORGANIZER_ONLY' | 'HIDDEN_UNTIL_DEADLINE';
+      /** @description Credits required to apply (anti-spam). Supplied to the contract at publish via PublishBountyEscrowDto; not a Bounty column. */
+      applicationCreditCost?: number | null;
+    };
+    BountyPrizeTierInputDto: {
+      /** @description 1 = 1st place; unique within a bounty */
+      position: number;
+      /** @description Tier amount as a positive decimal string */
+      amount: string;
+      passMark?: number | null;
+    };
+    BountyRewardSectionDto: {
+      /** @description Token / currency code the prize is denominated in */
+      rewardCurrency: string;
+      /** @description 1 tier for single claim; 1-3 tiers for a competition (multiple winners). */
+      prizeTiers: components['schemas']['BountyPrizeTierInputDto'][];
+    };
+    BountyDraftDataDto: {
+      scope?: components['schemas']['BountyScopeSectionDto'];
+      mode?: components['schemas']['BountyModeSectionDto'];
+      submission?: components['schemas']['BountySubmissionSectionDto'];
+      reward?: components['schemas']['BountyRewardSectionDto'];
+    };
+    BountyDraftPrizeTierDto: {
+      position: number;
+      /** @description Tier amount as a decimal string */
+      amount: string;
+      passMark?: number | null;
+    };
+    BountyDraftResponseDto: {
+      id: string;
+      /**
+       * @description Bounty lifecycle state (lowercase).
+       * @example draft
+       */
+      status: string;
+      /** @description First incomplete step (1-based) */
+      currentStep: number;
+      completedSteps: string[];
+      /** @description Plain mode label derived from (entryType, claimType, winner count), e.g. "Open competition (multiple winners)". */
+      modeLabel?: string | null;
+      data: components['schemas']['BountyDraftDataDto'];
+      prizeTiers: components['schemas']['BountyDraftPrizeTierDto'][];
+      isValidForPublish: boolean;
+      /** @description Per-section validation messages, keyed by step */
+      validationErrors: {
+        [key: string]: Record<string, never>[];
+      };
+      /** Format: date-time */
+      createdAt: string;
+      /** Format: date-time */
+      updatedAt: string;
+    };
+    UpdateBountyDraftDto: {
+      scope?: components['schemas']['BountyScopeSectionDto'];
+      mode?: components['schemas']['BountyModeSectionDto'];
+      submission?: components['schemas']['BountySubmissionSectionDto'];
+      reward?: components['schemas']['BountyRewardSectionDto'];
+      /** @description Hint that this is an autosave (no completion side effects). */
+      autoSave?: boolean;
+    };
     BountyWinnerDistributionEntryDto: {
       /**
        * @description 1-indexed winner position.
@@ -25676,6 +25919,136 @@ export interface operations {
       };
     };
   };
+  OrganizationHackathonsJudgingController_winnersBoard: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description Organization ID */
+        organizationId: string;
+        /** @description Hackathon ID or slug */
+        idOrSlug: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Resource not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  OrganizationHackathonsJudgingController_setPlacementWinner: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description Organization ID */
+        organizationId: string;
+        /** @description Hackathon ID or slug */
+        idOrSlug: string;
+        /** @description Prize placement id */
+        placementId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['SetPlacementWinnerDto'];
+      };
+    };
+    responses: {
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Resource not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  OrganizationHackathonsJudgingController_clearPlacementWinner: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description Organization ID */
+        organizationId: string;
+        /** @description Hackathon ID or slug */
+        idOrSlug: string;
+        /** @description Prize placement id */
+        placementId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Resource not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  OrganizationHackathonsJudgingController_withholdPlacement: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description Organization ID */
+        organizationId: string;
+        /** @description Hackathon ID or slug */
+        idOrSlug: string;
+        /** @description Prize placement id */
+        placementId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Resource not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
   OrganizationHackathonsJudgingController_listInvitations: {
     parameters: {
       query?: never;
@@ -32070,6 +32443,168 @@ export interface operations {
           [name: string]: unknown;
         };
         content?: never;
+      };
+    };
+  };
+  OrganizationBountiesDraftsController_getDraft: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        organizationId: string;
+        /** @description Bounty draft id */
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Draft retrieved */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['BountyDraftResponseDto'];
+        };
+      };
+    };
+  };
+  OrganizationBountiesDraftsController_deleteDraft: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        organizationId: string;
+        /** @description Bounty draft id */
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Draft deleted */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Draft not found, not authorized, or not an unpublished draft */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  OrganizationBountiesDraftsController_updateDraft: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        organizationId: string;
+        /** @description Bounty draft id */
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateBountyDraftDto'];
+      };
+    };
+    responses: {
+      /** @description Draft updated */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['BountyDraftResponseDto'];
+        };
+      };
+      /** @description Validation failed for one or more sections */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  OrganizationBountiesDraftsController_getOrganizationBounties: {
+    parameters: {
+      query: {
+        page: number;
+        limit: number;
+      };
+      header?: never;
+      path: {
+        organizationId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Bounties retrieved */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  OrganizationBountiesDraftsController_createDraft: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        organizationId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Draft created */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['BountyDraftResponseDto'];
+        };
+      };
+      /** @description User is not a member of the organization */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  OrganizationBountiesDraftsController_getOrganizationDrafts: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        organizationId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Drafts retrieved */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['BountyDraftResponseDto'][];
+        };
       };
     };
   };
