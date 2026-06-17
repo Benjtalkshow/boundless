@@ -5,11 +5,13 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
 
 import { Tabs, TabsContent } from '@/components/ui/tabs';
-import { BoundlessButton } from '@/components/buttons';
 import { useBountySteps } from '@/hooks/use-bounty-steps';
 import { useBountyDraft } from '@/hooks/use-bounty-draft';
+import ScopeTab from './tabs/ScopeTab';
 import ModeTab from './tabs/ModeTab';
 import SubmissionModelTab from './tabs/SubmissionModelTab';
+import RewardTab from './tabs/RewardTab';
+import ReviewTab from './tabs/ReviewTab';
 import type { ModeSelection } from './tabs/schemas/modeSchema';
 import {
   BountyFormData,
@@ -22,33 +24,6 @@ import {
 interface NewBountyTabProps {
   organizationId?: string;
   draftId?: string;
-}
-
-/** Placeholder for a wizard section whose tab lands in #600 (Scope / Reward). */
-function SectionPlaceholder({
-  title,
-  description,
-  onContinue,
-}: {
-  title: string;
-  description: string;
-  onContinue?: () => void;
-}) {
-  return (
-    <div className='space-y-6'>
-      <div className='rounded-lg border border-dashed border-zinc-800 bg-zinc-900/30 p-6'>
-        <h3 className='text-sm font-medium text-white'>{title}</h3>
-        <p className='mt-1 text-sm text-zinc-500'>{description}</p>
-      </div>
-      {onContinue && (
-        <div className='flex justify-end'>
-          <BoundlessButton type='button' size='lg' onClick={onContinue}>
-            Continue
-          </BoundlessButton>
-        </div>
-      )}
-    </div>
-  );
 }
 
 /**
@@ -206,11 +181,11 @@ export default function NewBountyTab({
       <Tabs value={activeTab} className='w-full'>
         <div className='px-6 py-6 md:px-20'>
           <TabsContent value='scope' className='mt-0'>
-            {/* TODO(#600): replace with ScopeTab (title/description/github/...). */}
-            <SectionPlaceholder
-              title='Scope'
-              description='The Scope tab (title, description, GitHub issue) lands in #600.'
+            <ScopeTab
+              onSave={createSaveHandler('scope', 'mode')}
               onContinue={() => navigateToStep('mode')}
+              initialData={stepData.scope}
+              isLoading={loadingStates.scope}
             />
           </TabsContent>
 
@@ -234,41 +209,35 @@ export default function NewBountyTab({
           </TabsContent>
 
           <TabsContent value='reward' className='mt-0'>
-            {/* TODO(#600): replace with RewardTab (currency + prize tiers). */}
-            <SectionPlaceholder
-              title='Reward'
-              description='The Reward tab (currency + prize tiers) lands in #600.'
+            <RewardTab
+              mode={
+                stepData.mode
+                  ? {
+                      claimType: stepData.mode.claimType,
+                      winnerCount: stepData.mode.winnerCount,
+                    }
+                  : undefined
+              }
+              onSave={createSaveHandler('reward', 'review')}
               onContinue={() => navigateToStep('review')}
+              initialData={stepData.reward}
+              isLoading={loadingStates.reward}
             />
           </TabsContent>
 
           <TabsContent value='review' className='mt-0'>
-            {/* TODO(#600/#601): replace with ReviewTab + publish/funding flow. */}
-            <div className='space-y-6'>
-              <div className='rounded-lg border border-dashed border-zinc-800 bg-zinc-900/30 p-6'>
-                <h3 className='text-sm font-medium text-white'>
-                  Review &amp; publish
-                </h3>
-                <p className='mt-1 text-sm text-zinc-500'>
-                  The review summary and the publish + funding flow land in #600
-                  / #601.
-                </p>
-              </div>
-              <div className='flex justify-end gap-3'>
-                <BoundlessButton
-                  type='button'
-                  variant='outline'
-                  size='lg'
-                  onClick={saveDraft}
-                  disabled={isSavingDraft}
-                >
-                  {isSavingDraft ? 'Saving...' : 'Save draft'}
-                </BoundlessButton>
-                <BoundlessButton type='button' size='lg' disabled>
-                  Publish (coming in #601)
-                </BoundlessButton>
-              </div>
-            </div>
+            <ReviewTab
+              allData={stepData}
+              onEdit={navigateToStep}
+              onSaveDraft={saveDraft}
+              isSavingDraft={isSavingDraft}
+              // TODO(#601): wire the real publish + funding flow. For now the
+              // CTA enables once every section is valid, then reports that
+              // publishing lands in #601.
+              onPublish={() => {
+                toast.info('Publishing lands in #601 (escrow publish flow).');
+              }}
+            />
           </TabsContent>
         </div>
       </Tabs>

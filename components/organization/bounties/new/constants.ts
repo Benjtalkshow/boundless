@@ -1,9 +1,7 @@
 import type { ModeFormData } from './tabs/schemas/modeSchema';
 import type { SubmissionModelFormData } from './tabs/schemas/submissionModelSchema';
-import type {
-  BountyRewardSection,
-  BountyScopeSection,
-} from '@/features/bounties';
+import type { ScopeFormData } from './tabs/schemas/scopeSchema';
+import type { RewardFormData } from './tabs/schemas/rewardSchema';
 
 export type StepStatus = 'pending' | 'active' | 'completed';
 
@@ -25,15 +23,14 @@ export const STEP_ORDER: StepKey[] = [
 ];
 
 /**
- * In-progress wizard form snapshot. The four editable sections use the #599
- * form schemas where they exist (mode, submission) and the generated section
- * types otherwise (scope, reward — refined by the dedicated tabs in #600).
+ * In-progress wizard form snapshot, one entry per editable section, each typed
+ * by its tab's form schema.
  */
 export interface BountyFormData {
-  scope?: BountyScopeSection;
+  scope?: ScopeFormData;
   mode?: ModeFormData;
   submission?: SubmissionModelFormData;
-  reward?: BountyRewardSection;
+  reward?: RewardFormData;
 }
 
 /**
