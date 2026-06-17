@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { useBountySteps } from '@/hooks/use-bounty-steps';
 import { useBountyDraft } from '@/hooks/use-bounty-draft';
+import { useBountyPublish } from '@/hooks/use-bounty-publish';
 import ScopeTab from './tabs/ScopeTab';
 import ModeTab from './tabs/ModeTab';
 import SubmissionModelTab from './tabs/SubmissionModelTab';
@@ -154,6 +155,16 @@ export default function NewBountyTab({
     ? { entryType: stepData.mode.entryType, claimType: stepData.mode.claimType }
     : undefined;
 
+  // Publish via the shared escrow runner. Defaults to MANAGED (the connected
+  // custodial wallet funds + the backend signs); the funding-source picker
+  // (external wallet / treasury) is a follow-up.
+  const { publish, isPublishing } = useBountyPublish({
+    organizationId: derivedOrgId || '',
+    stepData,
+    draftId,
+    fundingMode: 'MANAGED',
+  });
+
   if (isLoadingDraft) {
     return (
       <div className='bg-background-main-bg flex min-h-[60vh] flex-1 items-center justify-center text-white'>
@@ -231,12 +242,10 @@ export default function NewBountyTab({
               onEdit={navigateToStep}
               onSaveDraft={saveDraft}
               isSavingDraft={isSavingDraft}
-              // TODO(#601): wire the real publish + funding flow. For now the
-              // CTA enables once every section is valid, then reports that
-              // publishing lands in #601.
-              onPublish={() => {
-                toast.info('Publishing lands in #601 (escrow publish flow).');
+              onPublish={async () => {
+                await publish();
               }}
+              isLoading={isPublishing}
             />
           </TabsContent>
         </div>
