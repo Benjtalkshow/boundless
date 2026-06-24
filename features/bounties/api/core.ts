@@ -13,6 +13,7 @@ export interface OrganizationBountyListItem {
   rewardAmount?: number;
   rewardCurrency?: string;
   createdAt?: string;
+  _count?: { submissions?: number };
 }
 
 /** List an organization's bounties, newest first. */

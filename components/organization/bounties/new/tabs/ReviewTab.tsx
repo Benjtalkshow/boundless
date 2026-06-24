@@ -1,6 +1,12 @@
 import React from 'react';
 import { toast } from 'sonner';
-import { AlertTriangle, CheckCircle2, Loader2, Pencil } from 'lucide-react';
+import {
+  AlertTriangle,
+  ArrowLeft,
+  CheckCircle2,
+  Loader2,
+  Pencil,
+} from 'lucide-react';
 
 import { BoundlessButton } from '@/components/buttons';
 import {
@@ -11,7 +17,11 @@ import {
 } from '@/lib/utils/bounty-escrow';
 import type { BountyFormData, StepKey } from '../constants';
 import { computeBountyModeLabel } from './schemas/modeSchema';
-import { scopeSchema } from './schemas/scopeSchema';
+import {
+  CATEGORY_LABELS,
+  CATEGORY_REPUTATION_BASELINE,
+  scopeSchema,
+} from './schemas/scopeSchema';
 import { modeSchema } from './schemas/modeSchema';
 import { makeSubmissionModelSchema } from './schemas/submissionModelSchema';
 import { makeRewardSchema } from './schemas/rewardSchema';
@@ -19,6 +29,7 @@ import { makeRewardSchema } from './schemas/rewardSchema';
 interface ReviewTabProps {
   allData: BountyFormData;
   onEdit?: (step: StepKey) => void;
+  onBack?: () => void;
   onPublish?: () => Promise<void> | void;
   onSaveDraft?: () => Promise<void>;
   isLoading?: boolean;
@@ -58,7 +69,10 @@ function validateAll(data: BountyFormData): {
       modeOk && data.mode
         ? makeSubmissionModelSchema(
             data.mode.entryType,
-            data.mode.claimType
+            data.mode.claimType,
+            data.scope?.category
+              ? CATEGORY_REPUTATION_BASELINE[data.scope.category]
+              : 0
           ).safeParse(data.submission).success
         : false,
   });
@@ -125,6 +139,7 @@ function SummaryCard({
 export default function ReviewTab({
   allData,
   onEdit,
+  onBack,
   onPublish,
   onSaveDraft,
   isLoading = false,
@@ -200,6 +215,15 @@ export default function ReviewTab({
       <SummaryCard title='Scope' step='scope' onEdit={onEdit}>
         <Row label='Title' value={allData.scope?.title} />
         <Row label='Description' value={allData.scope?.description} />
+        <Row
+          label='Category'
+          value={
+            allData.scope?.category
+              ? CATEGORY_LABELS[allData.scope.category]
+              : undefined
+          }
+        />
+        <Row label='Country' value={allData.scope?.country} />
         <Row label='GitHub issue' value={allData.scope?.githubIssueUrl} />
       </SummaryCard>
 
@@ -260,35 +284,63 @@ export default function ReviewTab({
         </div>
       </SummaryCard>
 
+      {(allData.resources?.resources?.length ?? 0) > 0 && (
+        <SummaryCard title='Resources' step='resources' onEdit={onEdit}>
+          {allData.resources?.resources?.map((r, i) => (
+            <Row
+              key={r.id ?? i}
+              label={r.description || r.file?.name || `Resource ${i + 1}`}
+              value={r.link || r.file?.name || '—'}
+            />
+          ))}
+        </SummaryCard>
+      )}
+
       {/* Publish CTA — disabled until every section is valid. */}
-      <div className='flex justify-end gap-3 pt-2'>
-        {onSaveDraft && (
+      <div className='flex items-center justify-between gap-3 pt-2'>
+        {onBack ? (
           <BoundlessButton
             type='button'
             variant='outline'
             size='lg'
-            onClick={handleSaveDraft}
-            disabled={isSavingDraft}
+            onClick={onBack}
+            disabled={isLoading || isSavingDraft}
           >
-            {isSavingDraft ? 'Saving...' : 'Save draft'}
+            <ArrowLeft className='mr-2 h-4 w-4' />
+            Back
           </BoundlessButton>
+        ) : (
+          <span />
         )}
-        <BoundlessButton
-          type='button'
-          size='lg'
-          className='min-w-32'
-          onClick={handlePublish}
-          disabled={!isValid || isLoading || !onPublish}
-        >
-          {isLoading ? (
-            <>
-              <Loader2 className='mr-2 h-4 w-4 animate-spin' />
-              Publishing...
-            </>
-          ) : (
-            'Publish'
+        <div className='flex gap-3'>
+          {onSaveDraft && (
+            <BoundlessButton
+              type='button'
+              variant='outline'
+              size='lg'
+              onClick={handleSaveDraft}
+              disabled={isSavingDraft}
+            >
+              {isSavingDraft ? 'Saving...' : 'Save draft'}
+            </BoundlessButton>
           )}
-        </BoundlessButton>
+          <BoundlessButton
+            type='button'
+            size='lg'
+            className='min-w-32'
+            onClick={handlePublish}
+            disabled={!isValid || isLoading || !onPublish}
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                Publishing...
+              </>
+            ) : (
+              'Publish'
+            )}
+          </BoundlessButton>
+        </div>
       </div>
     </div>
   );
