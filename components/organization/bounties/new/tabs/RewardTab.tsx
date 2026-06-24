@@ -2,7 +2,7 @@ import React from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
-import { Loader2 } from 'lucide-react';
+import { ArrowLeft, Loader2 } from 'lucide-react';
 
 import { BoundlessButton } from '@/components/buttons';
 import {
@@ -14,6 +14,14 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { AssetIcon } from '@/components/wallet/AssetIcon';
 import {
   PLATFORM_FEE,
   getBountyPlatformFee,
@@ -27,10 +35,17 @@ interface RewardTabProps {
   /** The claim type + winner count chosen in ModeTab; drives the tier count. */
   mode?: { claimType: BountyClaimType; winnerCount?: number };
   onContinue?: () => void;
+  onBack?: () => void;
   onSave?: (data: RewardFormData) => Promise<void>;
   initialData?: Partial<RewardFormData>;
   isLoading?: boolean;
 }
+
+/** Supported reward currencies. Only USDC is live today; XLM is coming soon. */
+const REWARD_CURRENCIES = [
+  { code: 'USDC', label: 'USDC', disabled: false },
+  { code: 'XLM', label: 'XLM', disabled: true },
+] as const;
 
 const ordinal = (n: number): string => {
   const s = ['th', 'st', 'nd', 'rd'];
@@ -41,6 +56,7 @@ const ordinal = (n: number): string => {
 export default function RewardTab({
   mode,
   onContinue,
+  onBack,
   onSave,
   initialData,
   isLoading = false,
@@ -113,14 +129,35 @@ export default function RewardTab({
               <FormLabel className='text-sm font-medium text-white'>
                 Reward currency<span className='text-red-500'>*</span>
               </FormLabel>
-              <FormControl>
-                <Input
-                  placeholder='USDC'
-                  className='h-10 rounded-lg border-zinc-800 bg-zinc-900/50 text-white'
-                  {...field}
-                  value={field.value ?? ''}
-                />
-              </FormControl>
+              <Select
+                value={field.value ?? 'USDC'}
+                onValueChange={field.onChange}
+              >
+                <FormControl>
+                  <SelectTrigger className='h-10 rounded-lg border-zinc-800 bg-zinc-900/50 text-white'>
+                    <SelectValue />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent className='border-zinc-800 bg-zinc-950 text-white'>
+                  {REWARD_CURRENCIES.map(c => (
+                    <SelectItem
+                      key={c.code}
+                      value={c.code}
+                      disabled={c.disabled}
+                    >
+                      <span className='flex items-center gap-2'>
+                        <AssetIcon assetCode={c.code} size={18} />
+                        {c.label}
+                        {c.disabled && (
+                          <span className='text-xs text-zinc-500'>
+                            (coming soon)
+                          </span>
+                        )}
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <FormMessage className='text-xs text-red-500' />
             </FormItem>
           )}
@@ -204,7 +241,21 @@ export default function RewardTab({
           </div>
         </div>
 
-        <div className='flex justify-end pt-4'>
+        <div className='flex items-center justify-between pt-4'>
+          {onBack ? (
+            <BoundlessButton
+              type='button'
+              variant='outline'
+              size='lg'
+              onClick={onBack}
+              disabled={isLoading}
+            >
+              <ArrowLeft className='mr-2 h-4 w-4' />
+              Back
+            </BoundlessButton>
+          ) : (
+            <span />
+          )}
           <BoundlessButton
             type='submit'
             size='lg'

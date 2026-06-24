@@ -2,10 +2,17 @@ import type { ModeFormData } from './tabs/schemas/modeSchema';
 import type { SubmissionModelFormData } from './tabs/schemas/submissionModelSchema';
 import type { ScopeFormData } from './tabs/schemas/scopeSchema';
 import type { RewardFormData } from './tabs/schemas/rewardSchema';
+import type { ResourcesFormData } from './tabs/schemas/resourcesSchema';
 
 export type StepStatus = 'pending' | 'active' | 'completed';
 
-export type StepKey = 'scope' | 'mode' | 'submission' | 'reward' | 'review';
+export type StepKey =
+  | 'scope'
+  | 'mode'
+  | 'submission'
+  | 'reward'
+  | 'resources'
+  | 'review';
 
 export interface StepData {
   status: StepStatus;
@@ -13,12 +20,14 @@ export interface StepData {
   data?: Record<string, unknown>;
 }
 
-/** The five wizard steps, in order. `review` carries no editable section. */
+/** The wizard steps, in order. `resources` is optional; `review` carries no
+ * editable section. */
 export const STEP_ORDER: StepKey[] = [
   'scope',
   'mode',
   'submission',
   'reward',
+  'resources',
   'review',
 ];
 
@@ -31,6 +40,7 @@ export interface BountyFormData {
   mode?: ModeFormData;
   submission?: SubmissionModelFormData;
   reward?: RewardFormData;
+  resources?: ResourcesFormData;
 }
 
 /**
@@ -60,6 +70,9 @@ export const isBountyStepDataValid = (
         reward?.rewardCurrency && (reward?.prizeTiers?.length ?? 0) > 0
       );
     }
+    case 'resources':
+      // Optional step: never blocks the resume from advancing to review.
+      return true;
     case 'review':
       return false;
     default:
