@@ -130,10 +130,13 @@ function Section({
   );
 }
 
+type Tab = 'overview' | 'milestones' | 'supporters';
+
 export default function PublicCampaignPage({ params }: PageProps) {
   const { slug } = use(params);
   const { data: campaign, isLoading } = useCampaign(slug);
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<Tab>('overview');
   const { user, isAuthenticated } = useAuthStatus();
   const { styledContent: descriptionContent } = useMarkdown(
     campaign?.project?.details ?? campaign?.project?.description ?? ''
@@ -313,195 +316,241 @@ export default function PublicCampaignPage({ params }: PageProps) {
           </div>
         </div>
 
-        <div className='grid gap-10 lg:grid-cols-3'>
-          {/* Main content — single scroll */}
-          <div className='space-y-12 lg:col-span-2'>
-            {/* Story */}
-            <Section title='About this campaign'>
-              <div className='text-zinc-300'>
-                {(project.details ?? project.description) ? (
-                  descriptionContent
-                ) : (
-                  <span className='text-zinc-600 italic'>
-                    No description provided.
-                  </span>
-                )}
-              </div>
-              {(project.githubUrl ||
-                project.projectWebsite ||
-                project.demoVideo) && (
-                <div className='mt-6 flex flex-wrap gap-3'>
-                  {project.githubUrl && (
-                    <a
-                      href={project.githubUrl}
-                      target='_blank'
-                      rel='noreferrer'
-                      className='inline-flex items-center gap-2 rounded-lg border border-zinc-800 bg-zinc-900 px-4 py-2 text-sm text-zinc-300 transition hover:border-zinc-700 hover:text-white'
-                    >
-                      <Github className='h-4 w-4' />
-                      Code
-                      <ExternalLink className='h-3 w-3 text-zinc-600' />
-                    </a>
-                  )}
-                  {project.projectWebsite && (
-                    <a
-                      href={project.projectWebsite}
-                      target='_blank'
-                      rel='noreferrer'
-                      className='inline-flex items-center gap-2 rounded-lg border border-zinc-800 bg-zinc-900 px-4 py-2 text-sm text-zinc-300 transition hover:border-zinc-700 hover:text-white'
-                    >
-                      <Globe className='h-4 w-4' />
-                      Website
-                      <ExternalLink className='h-3 w-3 text-zinc-600' />
-                    </a>
-                  )}
-                  {project.demoVideo && (
-                    <a
-                      href={project.demoVideo}
-                      target='_blank'
-                      rel='noreferrer'
-                      className='inline-flex items-center gap-2 rounded-lg border border-zinc-800 bg-zinc-900 px-4 py-2 text-sm text-zinc-300 transition hover:border-zinc-700 hover:text-white'
-                    >
-                      <Video className='h-4 w-4' />
-                      Demo
-                      <ExternalLink className='h-3 w-3 text-zinc-600' />
-                    </a>
-                  )}
-                </div>
+        {/* Tab bar */}
+        <div className='mb-8 flex gap-1 border-b border-zinc-800'>
+          {(
+            [
+              { key: 'overview', label: 'Overview' },
+              {
+                key: 'milestones',
+                label:
+                  campaign.milestones.length > 0
+                    ? `Milestones (${campaign.milestones.length})`
+                    : 'Milestones',
+              },
+              {
+                key: 'supporters',
+                label:
+                  supporters.length > 0
+                    ? `Supporters (${supporters.length})`
+                    : 'Supporters',
+              },
+            ] as { key: Tab; label: string }[]
+          ).map(tab => (
+            <button
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key)}
+              className={cn(
+                'relative px-4 py-2.5 text-sm font-medium transition-colors',
+                activeTab === tab.key
+                  ? 'after:bg-primary text-white after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:content-[""]'
+                  : 'text-zinc-500 hover:text-zinc-300'
               )}
-            </Section>
-
-            {/* Milestones */}
-            <Section
-              title={
-                showFundingStats && campaign.milestones.length > 0
-                  ? `Milestones (${completedMilestones} / ${campaign.milestones.length} delivered)`
-                  : 'Milestones'
-              }
             >
-              <p className='mb-5 text-sm text-zinc-500'>
-                The plan is delivered in stages. Funds are released to the team
-                one stage at a time, as each is delivered and approved by a
-                reviewer.
-              </p>
-              {campaign.milestones.length === 0 ? (
-                <p className='text-zinc-600 italic'>No milestones listed.</p>
-              ) : (
-                <div className='space-y-4'>
-                  {campaign.milestones.map((m, idx) => {
-                    const st = milestoneState(m.reviewStatus, m.claimedAt);
-                    const planned = formatDate(m.endDate);
-                    const inner = (
-                      <>
-                        <div className='flex items-start justify-between gap-3'>
-                          <div className='min-w-0'>
-                            <p className='text-sm font-semibold text-white'>
-                              {idx + 1}. {m.title || m.name}
-                            </p>
-                            {m.description && (
-                              <p className='mt-1 text-sm text-zinc-500'>
-                                {m.description}
-                              </p>
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        <div className='grid gap-10 lg:grid-cols-3'>
+          {/* Main content — tab-driven */}
+          <div className='lg:col-span-2'>
+            {/* Overview tab */}
+            {activeTab === 'overview' && (
+              <div className='space-y-12'>
+                <Section title='About this campaign'>
+                  <div className='text-zinc-300'>
+                    {(project.details ?? project.description) ? (
+                      descriptionContent
+                    ) : (
+                      <span className='text-zinc-600 italic'>
+                        No description provided.
+                      </span>
+                    )}
+                  </div>
+                  {(project.githubUrl ||
+                    project.projectWebsite ||
+                    project.demoVideo) && (
+                    <div className='mt-6 flex flex-wrap gap-3'>
+                      {project.githubUrl && (
+                        <a
+                          href={project.githubUrl}
+                          target='_blank'
+                          rel='noreferrer'
+                          className='inline-flex items-center gap-2 rounded-lg border border-zinc-800 bg-zinc-900 px-4 py-2 text-sm text-zinc-300 transition hover:border-zinc-700 hover:text-white'
+                        >
+                          <Github className='h-4 w-4' />
+                          Code
+                          <ExternalLink className='h-3 w-3 text-zinc-600' />
+                        </a>
+                      )}
+                      {project.projectWebsite && (
+                        <a
+                          href={project.projectWebsite}
+                          target='_blank'
+                          rel='noreferrer'
+                          className='inline-flex items-center gap-2 rounded-lg border border-zinc-800 bg-zinc-900 px-4 py-2 text-sm text-zinc-300 transition hover:border-zinc-700 hover:text-white'
+                        >
+                          <Globe className='h-4 w-4' />
+                          Website
+                          <ExternalLink className='h-3 w-3 text-zinc-600' />
+                        </a>
+                      )}
+                      {project.demoVideo && (
+                        <a
+                          href={project.demoVideo}
+                          target='_blank'
+                          rel='noreferrer'
+                          className='inline-flex items-center gap-2 rounded-lg border border-zinc-800 bg-zinc-900 px-4 py-2 text-sm text-zinc-300 transition hover:border-zinc-700 hover:text-white'
+                        >
+                          <Video className='h-4 w-4' />
+                          Demo
+                          <ExternalLink className='h-3 w-3 text-zinc-600' />
+                        </a>
+                      )}
+                    </div>
+                  )}
+                </Section>
+
+                {campaign.team.length > 0 && (
+                  <Section title='Team'>
+                    <div className='grid gap-4 sm:grid-cols-2'>
+                      {campaign.team.map((m, idx) => (
+                        <div
+                          key={idx}
+                          className='flex items-center gap-3 rounded-xl border border-zinc-800/60 bg-zinc-900/30 p-4'
+                        >
+                          <div className='relative h-10 w-10 flex-shrink-0 overflow-hidden rounded-full bg-zinc-800'>
+                            {m.image ? (
+                              <Image
+                                src={m.image}
+                                alt={m.name}
+                                fill
+                                className='object-cover'
+                              />
+                            ) : (
+                              <div className='flex h-full w-full items-center justify-center text-sm font-bold text-zinc-500'>
+                                {m.name.charAt(0).toUpperCase()}
+                              </div>
                             )}
                           </div>
-                          <div className='flex flex-shrink-0 flex-col items-end gap-1'>
-                            {showFundingStats && m.amount != null && (
-                              <span className='text-sm font-semibold text-white'>
-                                ${m.amount.toLocaleString()}
-                              </span>
-                            )}
-                            <Badge
-                              variant='outline'
-                              className={cn('text-xs', TONE_PILL[st.tone])}
-                            >
-                              {st.label}
-                            </Badge>
+                          <div className='min-w-0'>
+                            <p className='text-sm font-medium text-white'>
+                              {m.name}
+                            </p>
+                            <p className='text-xs text-zinc-500'>{m.role}</p>
                           </div>
                         </div>
-                        {planned && (
-                          <p className='mt-2 flex items-center gap-1.5 text-xs text-zinc-600'>
-                            <CalendarDays className='h-3 w-3' />
-                            Planned for {planned}
-                          </p>
-                        )}
-                      </>
-                    );
-                    return m.id ? (
-                      <Link
-                        key={m.id}
-                        href={`/crowdfunding/${slug}/milestones/${m.id}`}
-                        className='block rounded-xl border border-zinc-800/60 bg-zinc-900/30 p-5 transition hover:border-zinc-700 hover:bg-zinc-900/60'
-                      >
-                        {inner}
-                      </Link>
-                    ) : (
-                      <div
-                        key={idx}
-                        className='rounded-xl border border-zinc-800/60 bg-zinc-900/30 p-5'
-                      >
-                        {inner}
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </Section>
-
-            {/* Team */}
-            {campaign.team.length > 0 && (
-              <Section title='Team'>
-                <div className='grid gap-4 sm:grid-cols-2'>
-                  {campaign.team.map((m, idx) => (
-                    <div
-                      key={idx}
-                      className='flex items-center gap-3 rounded-xl border border-zinc-800/60 bg-zinc-900/30 p-4'
-                    >
-                      <div className='relative h-10 w-10 flex-shrink-0 overflow-hidden rounded-full bg-zinc-800'>
-                        {m.image ? (
-                          <Image
-                            src={m.image}
-                            alt={m.name}
-                            fill
-                            className='object-cover'
-                          />
-                        ) : (
-                          <div className='flex h-full w-full items-center justify-center text-sm font-bold text-zinc-500'>
-                            {m.name.charAt(0).toUpperCase()}
-                          </div>
-                        )}
-                      </div>
-                      <div className='min-w-0'>
-                        <p className='text-sm font-medium text-white'>
-                          {m.name}
-                        </p>
-                        <p className='text-xs text-zinc-500'>{m.role}</p>
-                      </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
+                  </Section>
+                )}
+              </div>
+            )}
+
+            {/* Milestones tab */}
+            {activeTab === 'milestones' && (
+              <Section
+                title={
+                  showFundingStats && campaign.milestones.length > 0
+                    ? `Milestones — ${completedMilestones} of ${campaign.milestones.length} delivered`
+                    : 'Milestones'
+                }
+              >
+                <p className='mb-5 text-sm text-zinc-500'>
+                  Funds are released to the team one stage at a time, as each
+                  milestone is delivered and approved.
+                </p>
+                {campaign.milestones.length === 0 ? (
+                  <p className='text-zinc-600 italic'>No milestones listed.</p>
+                ) : (
+                  <div className='space-y-4'>
+                    {campaign.milestones.map((m, idx) => {
+                      const st = milestoneState(m.reviewStatus, m.claimedAt);
+                      const planned = formatDate(m.endDate);
+                      const inner = (
+                        <>
+                          <div className='flex items-start justify-between gap-3'>
+                            <div className='min-w-0'>
+                              <p className='text-sm font-semibold text-white'>
+                                {idx + 1}. {m.title || m.name}
+                              </p>
+                              {m.description && (
+                                <p className='mt-1 text-sm text-zinc-500'>
+                                  {m.description}
+                                </p>
+                              )}
+                            </div>
+                            <div className='flex flex-shrink-0 flex-col items-end gap-1'>
+                              {showFundingStats && m.amount != null && (
+                                <span className='text-sm font-semibold text-white'>
+                                  ${m.amount.toLocaleString()}
+                                </span>
+                              )}
+                              <Badge
+                                variant='outline'
+                                className={cn('text-xs', TONE_PILL[st.tone])}
+                              >
+                                {st.label}
+                              </Badge>
+                            </div>
+                          </div>
+                          {planned && (
+                            <p className='mt-2 flex items-center gap-1.5 text-xs text-zinc-600'>
+                              <CalendarDays className='h-3 w-3' />
+                              Planned for {planned}
+                            </p>
+                          )}
+                        </>
+                      );
+                      return m.id ? (
+                        <Link
+                          key={m.id}
+                          href={`/crowdfunding/${slug}/milestones/${m.id}`}
+                          className='block rounded-xl border border-zinc-800/60 bg-zinc-900/30 p-5 transition hover:border-zinc-700 hover:bg-zinc-900/60'
+                        >
+                          {inner}
+                        </Link>
+                      ) : (
+                        <div
+                          key={idx}
+                          className='rounded-xl border border-zinc-800/60 bg-zinc-900/30 p-5'
+                        >
+                          {inner}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </Section>
             )}
 
-            {/* Supporters */}
-            <Section
-              title={`Supporters${supporters.length ? ` (${supporters.length})` : ''}`}
-            >
-              {supporters.length === 0 ? (
-                <div className='flex flex-col items-center gap-2 rounded-xl border border-dashed border-zinc-800 py-10 text-center'>
-                  <Users className='h-8 w-8 text-zinc-700' />
-                  <p className='text-sm text-zinc-600'>
-                    No supporters yet.
-                    {isFunding ? ' Be the first to back this.' : ''}
-                  </p>
-                </div>
-              ) : (
-                <div className='space-y-3'>
-                  {supporters.map((c, i) => (
-                    <SupporterRow key={i} c={c} />
-                  ))}
-                </div>
-              )}
-            </Section>
+            {/* Supporters tab */}
+            {activeTab === 'supporters' && (
+              <Section
+                title={
+                  supporters.length > 0
+                    ? `Supporters (${supporters.length})`
+                    : 'Supporters'
+                }
+              >
+                {supporters.length === 0 ? (
+                  <div className='flex flex-col items-center gap-2 rounded-xl border border-dashed border-zinc-800 py-10 text-center'>
+                    <Users className='h-8 w-8 text-zinc-700' />
+                    <p className='text-sm text-zinc-600'>
+                      No supporters yet.
+                      {isFunding ? ' Be the first to back this.' : ''}
+                    </p>
+                  </div>
+                ) : (
+                  <div className='space-y-3'>
+                    {supporters.map((c, i) => (
+                      <SupporterRow key={i} c={c} />
+                    ))}
+                  </div>
+                )}
+              </Section>
+            )}
           </div>
 
           {/* Sticky sidebar — funding + action */}
@@ -535,8 +584,13 @@ export default function PublicCampaignPage({ params }: PageProps) {
                       </p>
                     </div>
                     <p className='mb-4 text-sm text-zinc-500'>
-                      {supporters.length}{' '}
-                      {supporters.length === 1 ? 'supporter' : 'supporters'}
+                      <button
+                        onClick={() => setActiveTab('supporters')}
+                        className='hover:text-primary underline-offset-2 transition-colors hover:underline'
+                      >
+                        {supporters.length}{' '}
+                        {supporters.length === 1 ? 'supporter' : 'supporters'}
+                      </button>
                       {isFunding && closeDate ? ` · closes ${closeDate}` : ''}
                     </p>
                   </>
@@ -553,11 +607,16 @@ export default function PublicCampaignPage({ params }: PageProps) {
                     </div>
                     {campaign.milestones.length > 0 && (
                       <p className='text-sm text-zinc-500'>
-                        {campaign.milestones.length}{' '}
-                        {campaign.milestones.length === 1
-                          ? 'milestone'
-                          : 'milestones'}{' '}
-                        planned
+                        <button
+                          onClick={() => setActiveTab('milestones')}
+                          className='hover:text-primary underline-offset-2 transition-colors hover:underline'
+                        >
+                          {campaign.milestones.length}{' '}
+                          {campaign.milestones.length === 1
+                            ? 'milestone'
+                            : 'milestones'}{' '}
+                          planned
+                        </button>
                       </p>
                     )}
                   </div>
