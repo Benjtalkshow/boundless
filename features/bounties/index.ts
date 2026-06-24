@@ -130,6 +130,23 @@ export {
   submitSignedParticipantBounty,
 } from './api/participant-escrow-client';
 
+// Builder "my bounties" dashboard (#332 reads; hand-typed until codegen).
+export type {
+  BountyActivitySummary,
+  MyBountyApplicationRow,
+  MyBountySubmissionRow,
+  BountyActivityPage,
+} from './types';
+export {
+  listMyBountyApplications,
+  listMyBountySubmissions,
+} from './api/participant-dashboard-client';
+export type { MyActivityParams } from './api/participant-dashboard-client';
+export {
+  useMyBountyApplications,
+  useMyBountySubmissions,
+} from './api/use-participant-dashboard';
+
 // Participant hooks (React Query).
 export {
   useBountiesList,
