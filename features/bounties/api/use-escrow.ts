@@ -33,6 +33,10 @@ import {
   submitSignedBountyEscrow,
 } from './escrow-client';
 import {
+  getParticipantBountyOp,
+  submitSignedParticipantBounty,
+} from './participant-escrow-client';
+import {
   isTerminalEscrowStatus,
   type BountyEscrowOpResponse,
   type CancelBountyEscrowRequest,
@@ -41,19 +45,19 @@ import {
   type SelectBountyWinnersRequest,
 } from '../types';
 
-// ─── Scope: organizer (org + bounty) ─────────────────────────────────────────
+// ─── Scope: organizer (org + bounty) or participant (bounty-only) ─────────────
 
-export type EscrowOpScope = {
-  kind: 'organizer';
-  organizationId: string;
-  bountyId: string;
-};
+export type EscrowOpScope =
+  | { kind: 'organizer'; organizationId: string; bountyId: string }
+  | { kind: 'participant'; bountyId: string };
 
 function getOpForScope(
   scope: EscrowOpScope,
   opRowId: string
 ): Promise<BountyEscrowOpResponse> {
-  return getBountyEscrowOp(scope.organizationId, scope.bountyId, opRowId);
+  return scope.kind === 'participant'
+    ? getParticipantBountyOp(scope.bountyId, opRowId)
+    : getBountyEscrowOp(scope.organizationId, scope.bountyId, opRowId);
 }
 
 function submitSignedForScope(
@@ -61,22 +65,23 @@ function submitSignedForScope(
   opRowId: string,
   signedXdr: string
 ): Promise<BountyEscrowOpResponse> {
-  return submitSignedBountyEscrow(
-    scope.organizationId,
-    scope.bountyId,
-    opRowId,
-    { signedXdr }
-  );
+  return scope.kind === 'participant'
+    ? submitSignedParticipantBounty(scope.bountyId, opRowId, { signedXdr })
+    : submitSignedBountyEscrow(scope.organizationId, scope.bountyId, opRowId, {
+        signedXdr,
+      });
 }
 
 function escrowOpKey(scope: EscrowOpScope, opRowId: string): QueryKey {
-  return [
-    'bounty-escrow-op',
-    'organizer',
-    scope.organizationId,
-    scope.bountyId,
-    opRowId,
-  ];
+  return scope.kind === 'participant'
+    ? ['bounty-escrow-op', 'participant', scope.bountyId, opRowId]
+    : [
+        'bounty-escrow-op',
+        'organizer',
+        scope.organizationId,
+        scope.bountyId,
+        opRowId,
+      ];
 }
 
 // ─── 1. Polling primitive ────────────────────────────────────────────────────
