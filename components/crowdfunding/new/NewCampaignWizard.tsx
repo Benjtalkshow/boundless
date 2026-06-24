@@ -23,6 +23,7 @@ import {
   updateCrowdfundingProject,
   submitCampaignForReview,
 } from '@/features/projects/api';
+import { extractApiErrorMessage } from '@/lib/api/api';
 
 export interface WizardMilestone {
   title: string;
@@ -83,14 +84,14 @@ function validateStep(step: number, d: CampaignWizardData): string | null {
     case 1:
       if (!d.title.trim() || d.title.length < 3)
         return 'Campaign title is required (min 3 characters)';
-      if (!d.tagline.trim() || d.tagline.length < 10)
-        return 'Tagline is required (min 10 characters)';
       if (!d.category) return 'Please select a category';
       if (!d.logoUrl) return 'Please upload a campaign logo before continuing';
       return null;
     case 2:
+      if (!d.tagline.trim() || d.tagline.length < 10)
+        return 'Vision is required (min 10 characters)';
       if (!d.vision.trim() || d.vision.length < 50)
-        return 'Project story must be at least 50 characters';
+        return 'Project description must be at least 50 characters';
       return null;
     case 3:
       if (!d.fundingGoal || d.fundingGoal < 1)
@@ -144,13 +145,18 @@ function buildDraftPayload(data: CampaignWizardData): Record<string, unknown> {
   if (data.fundingGoal >= 1) payload.fundingAmount = data.fundingGoal;
   if (data.githubUrl) payload.githubUrl = data.githubUrl;
   if (data.gitlabUrl) payload.gitlabUrl = data.gitlabUrl;
-  if (data.websiteUrl) {
-    payload.websiteUrl = data.websiteUrl;
-    payload.projectWebsite = data.websiteUrl;
-  }
+  if (data.websiteUrl) payload.projectWebsite = data.websiteUrl;
   if (data.demoVideoUrl) payload.demoVideo = data.demoVideoUrl;
 
-  const socialLinks = data.socialLinks.filter(s => s.platform && s.url);
+  // Deduplicate by platform so @ArrayUnique never fires.
+  const seen = new Set<string>();
+  const socialLinks = data.socialLinks
+    .filter(s => s.platform && s.url)
+    .filter(s => {
+      if (seen.has(s.platform)) return false;
+      seen.add(s.platform);
+      return true;
+    });
   if (socialLinks.length) payload.socialLinks = socialLinks;
 
   const team = data.teamMembers
@@ -305,8 +311,13 @@ export default function NewCampaignWizard() {
         setCompletedSteps(done);
         setActiveStep(landing);
       })
-      .catch(() =>
-        toast.error('Could not load your draft. Starting a fresh form.')
+      .catch((err: unknown) =>
+        toast.error(
+          extractApiErrorMessage(
+            err,
+            'Could not load your draft. Starting a fresh form.'
+          )
+        )
       )
       .finally(() => setIsHydrating(false));
   }, []);
@@ -359,8 +370,13 @@ export default function NewCampaignWizard() {
       await persistDraft(data);
       markStepDone(activeStep);
       setActiveStep(s => s + 1);
-    } catch {
-      toast.error('Could not save your progress. Please try again.');
+    } catch (err) {
+      toast.error(
+        extractApiErrorMessage(
+          err,
+          'Could not save your progress. Please try again.'
+        )
+      );
     } finally {
       setIsSaving(false);
     }
@@ -384,8 +400,13 @@ export default function NewCampaignWizard() {
         toast.success('Campaign submitted for review!');
       }
       router.push(`/me/crowdfunding/${id}`);
-    } catch {
-      toast.error('Failed to submit for review. Please try again.');
+    } catch (err) {
+      toast.error(
+        extractApiErrorMessage(
+          err,
+          'Failed to submit for review. Please try again.'
+        )
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -440,6 +461,7 @@ export default function NewCampaignWizard() {
         activeStep={activeStep}
         completedSteps={completedSteps}
         campaignId={campaignId}
+        onStepClick={setActiveStep}
       />
 
       <WizardHelpButton activeStep={activeStep} />
