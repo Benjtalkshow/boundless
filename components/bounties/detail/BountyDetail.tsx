@@ -17,6 +17,7 @@ import EmptyState from '@/components/EmptyState';
 import { computeBountyModeLabel } from '@/components/organization/bounties/new/tabs/schemas/modeSchema';
 import { useBounty, useMyBountyApplication } from '@/features/bounties';
 import { BountyEntryCta } from './BountyEntryCta';
+import BountySubmitPanel from './submit/BountySubmitPanel';
 
 // Markdown renderer (matches the wizard's editor package).
 const Markdown = dynamic(
@@ -201,6 +202,12 @@ export default function BountyDetail({ id }: { id: string }) {
 
           {/* Mode-aware CTA + caller status */}
           <BountyEntryCta
+            bounty={bounty}
+            myApplication={myApplication ?? null}
+          />
+
+          {/* Submit work (shown when the builder is eligible) */}
+          <BountySubmitPanel
             bounty={bounty}
             myApplication={myApplication ?? null}
           />
