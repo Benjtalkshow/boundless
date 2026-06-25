@@ -86,3 +86,79 @@ export type {
   UseEscrowOpRunnerOptions,
   EscrowOpRunner,
 } from './api/use-escrow';
+
+// ── Builder / participant data layer (#621) ──────────────────────────────────
+
+// Participant types (all aliased from the generated schema).
+export type {
+  BountyPublic,
+  BountyPublicList,
+  MyBountyApplication,
+  BountyApplicationStatus,
+  ApplyBountyRequest,
+  SubmitBountyRequest,
+  WithdrawApplicationRequest,
+  WithdrawSubmissionRequest,
+  ContributeBountyRequest,
+  CreateBountyApplicationRequest,
+  EditBountyApplicationRequest,
+  JoinCompetitionRequest,
+} from './types';
+
+// Participant REST client (public reads + v2 application records + competition).
+export {
+  listBounties,
+  getBounty,
+  getMyBountyApplication,
+  applyToBounty,
+  editBountyApplication,
+  withdrawBountyApplication,
+  joinCompetition,
+  leaveCompetition,
+} from './api/participant-client';
+export type { BountiesListParams } from './api/participant-client';
+
+// Participant escrow client (on-chain apply/submit/withdraw/contribute).
+export {
+  applyToBountyEscrow,
+  withdrawBountyApplicationEscrow,
+  submitBountyWorkEscrow,
+  withdrawBountySubmissionEscrow,
+  contributeToBountyEscrow,
+  getParticipantBountyOp,
+  submitSignedParticipantBounty,
+} from './api/participant-escrow-client';
+
+// Builder "my bounties" dashboard (#332 reads; hand-typed until codegen).
+export type {
+  BountyActivitySummary,
+  MyBountyApplicationRow,
+  MyBountySubmissionRow,
+  BountyActivityPage,
+} from './types';
+export {
+  listMyBountyApplications,
+  listMyBountySubmissions,
+} from './api/participant-dashboard-client';
+export type { MyActivityParams } from './api/participant-dashboard-client';
+export {
+  useMyBountyApplications,
+  useMyBountySubmissions,
+} from './api/use-participant-dashboard';
+
+// Participant hooks (React Query).
+export {
+  useBountiesList,
+  useBounty,
+  useMyBountyApplication,
+  useApplyToBounty,
+  useEditApplication,
+  useWithdrawApplication,
+  useJoinCompetition,
+  useLeaveCompetition,
+  useSubmitBounty,
+  useWithdrawSubmission,
+  useApplyToBountyEscrow,
+  useWithdrawApplicationEscrow,
+  useContributeToBounty,
+} from './api/use-participant';

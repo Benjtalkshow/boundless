@@ -9,6 +9,7 @@ import {
   IconUserCircle,
   IconUsers,
   IconRocket,
+  IconTarget,
 } from '@tabler/icons-react';
 
 import { NavMain } from '@/components/nav-main';
@@ -65,6 +66,13 @@ const getNavigationData = (counts?: {
         (counts?.submissions ?? 0) > 0
           ? String(counts?.submissions)
           : undefined,
+    },
+  ],
+  bounties: [
+    {
+      title: 'My Bounties',
+      url: '/me/bounties',
+      icon: IconTarget,
     },
   ],
   account: [
@@ -151,6 +159,7 @@ export function AppSidebar({
         <NavMain items={navigationData.main} />
         <NavMain items={navigationData.crowdfunding} label='Crowdfunding' />
         <NavMain items={navigationData.hackathons} label='Hackathons' />
+        <NavMain items={navigationData.bounties} label='Bounties' />
         <NavMain items={navigationData.account} label='Account' />
       </SidebarContent>
       {/* Footer with User */}

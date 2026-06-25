@@ -74,3 +74,49 @@ export const TERMINAL_ESCROW_STATUSES: readonly EscrowOpStatus[] = [
 
 export const isTerminalEscrowStatus = (status: EscrowOpStatus): boolean =>
   TERMINAL_ESCROW_STATUSES.includes(status);
+
+// ── Builder / participant ─────────────────────────────────────────────────────
+
+/** Public marketplace bounty (list row + detail share this shape). */
+export type BountyPublic = Schemas['BountyPublicDto'];
+/** Paginated marketplace list response. */
+export type BountyPublicList = Schemas['BountyPublicListDto'];
+
+// Participant escrow op request bodies (on-chain apply/submit/withdraw/contribute).
+export type ApplyBountyRequest = Schemas['ApplyBountyDto'];
+export type SubmitBountyRequest = Schemas['SubmitBountyDto'];
+export type WithdrawApplicationRequest = Schemas['WithdrawApplicationDto'];
+export type WithdrawSubmissionRequest = Schemas['WithdrawSubmissionDto'];
+export type ContributeBountyRequest = Schemas['ContributeBountyDto'];
+
+// v2 application records (off-chain proposal carrier for application modes).
+export type CreateBountyApplicationRequest =
+  Schemas['CreateBountyApplicationDto'];
+export type EditBountyApplicationRequest = Schemas['EditBountyApplicationDto'];
+export type JoinCompetitionRequest = Schemas['JoinCompetitionDto'];
+
+/** The caller's own application for a bounty (GET …/v2/applications/me). */
+export type MyBountyApplication = Schemas['BountyApplicationResponseDto'];
+
+/** Application lifecycle status (derived from the generated DTO enum). */
+export type BountyApplicationStatus = NonNullable<
+  MyBountyApplication['applicationStatus']
+>;
+
+// ── Cross-bounty "my activity" dashboard ──────────────────────────────────────
+// GET /bounties/me/applications and /bounties/me/submissions.
+
+/** Compact bounty summary embedded in each activity row. */
+export type BountyActivitySummary = Schemas['BountySummaryDto'];
+/** A row in the "my applications" activity list. */
+export type MyBountyApplicationRow = Schemas['MyBountyApplicationRowDto'];
+/** A row in the "my submissions" activity list. */
+export type MyBountySubmissionRow = Schemas['MyBountySubmissionRowDto'];
+
+/** Generic paginated activity envelope (items + page meta). */
+export interface BountyActivityPage<T> {
+  items: T[];
+  total: number;
+  page: number;
+  limit: number;
+}
