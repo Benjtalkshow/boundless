@@ -29,7 +29,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { BoundlessButton } from '@/components/buttons';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import { ApiError } from '@/lib/api';
-import { useGenerateDraftFromBrief } from '@/features/hackathons';
+import {
+  useGenerateDraftFromBrief,
+  useBriefTemplates,
+} from '@/features/hackathons';
+import type { BriefTemplate } from '@/features/hackathons';
 
 const briefSchema = z.object({
   brief: z
@@ -48,8 +52,6 @@ const briefSchema = z.object({
 
 type BriefForm = z.infer<typeof briefSchema>;
 
-// Friendly status lines cycled during the ~20s generation so the wait reads as
-// deliberate progress rather than a hung spinner.
 const PROGRESS_STEPS = [
   'Reading your brief…',
   'Shaping tracks and prizes…',
@@ -60,6 +62,34 @@ const PROGRESS_STEPS = [
 
 function todayIso(): string {
   return new Date().toISOString().slice(0, 10);
+}
+
+function TemplateChip({
+  template,
+  selected,
+  onSelect,
+}: {
+  template: BriefTemplate;
+  selected: boolean;
+  onSelect: () => void;
+}) {
+  return (
+    <button
+      type='button'
+      onClick={onSelect}
+      className={[
+        'rounded-lg border px-3 py-2 text-left text-sm transition-colors',
+        selected
+          ? 'border-primary bg-primary/10 text-primary'
+          : 'border-border hover:border-primary/50 hover:bg-muted/40 text-foreground',
+      ].join(' ')}
+    >
+      <div className='leading-tight font-medium'>{template.name}</div>
+      <div className='text-muted-foreground mt-0.5 text-xs leading-tight'>
+        {template.description}
+      </div>
+    </button>
+  );
 }
 
 interface GenerateWithAiDialogProps {
@@ -75,7 +105,11 @@ export default function GenerateWithAiDialog({
 }: GenerateWithAiDialogProps) {
   const router = useRouter();
   const generate = useGenerateDraftFromBrief(organizationId);
+  const { data: templates } = useBriefTemplates();
   const [progressStep, setProgressStep] = useState(0);
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(
+    null
+  );
 
   const form = useForm<BriefForm>({
     resolver: zodResolver(briefSchema),
@@ -84,7 +118,6 @@ export default function GenerateWithAiDialog({
 
   const isGenerating = generate.isPending;
 
-  // Cycle the progress copy while the request is in flight.
   useEffect(() => {
     if (!isGenerating) {
       setProgressStep(0);
@@ -96,12 +129,25 @@ export default function GenerateWithAiDialog({
     return () => clearInterval(id);
   }, [isGenerating]);
 
+  // Reset selected template when dialog closes.
+  useEffect(() => {
+    if (!open) setSelectedTemplateId(null);
+  }, [open]);
+
   const handleClose = (next: boolean) => {
-    // Don't let the organizer dismiss mid-generation and orphan the request.
     if (isGenerating) return;
     if (!next)
       form.reset({ ...form.getValues(), brief: form.getValues().brief });
     onOpenChange(next);
+  };
+
+  const handleSelectTemplate = (template: BriefTemplate) => {
+    if (selectedTemplateId === template.id) {
+      setSelectedTemplateId(null);
+      return;
+    }
+    setSelectedTemplateId(template.id);
+    form.setValue('brief', template.brief, { shouldValidate: true });
   };
 
   const onSubmit = async (values: BriefForm) => {
@@ -149,18 +195,20 @@ export default function GenerateWithAiDialog({
     toast.error('Could not generate a draft. Please try again.');
   };
 
+  const hasTemplates = templates && templates.length > 0;
+
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className='sm:max-w-[520px]'>
+      <DialogContent className='sm:max-w-[560px]'>
         <DialogHeader>
           <DialogTitle className='flex items-center gap-2'>
             <Sparkles className='text-primary h-5 w-5' />
             Generate with AI
           </DialogTitle>
           <DialogDescription>
-            Describe your hackathon in a sentence or two. We&apos;ll draft the
-            tracks, prizes, judging criteria, and timeline for you to review and
-            edit.
+            Describe your hackathon or pick a template below. We&apos;ll draft
+            the tracks, prizes, judging criteria, and timeline for you to review
+            and edit.
           </DialogDescription>
         </DialogHeader>
 
@@ -177,6 +225,25 @@ export default function GenerateWithAiDialog({
         ) : (
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-4'>
+              {hasTemplates && (
+                <div className='space-y-2'>
+                  <p className='text-sm font-medium'>Start from a template</p>
+                  <div className='grid grid-cols-2 gap-2 sm:grid-cols-3'>
+                    {templates.map(t => (
+                      <TemplateChip
+                        key={t.id}
+                        template={t}
+                        selected={selectedTemplateId === t.id}
+                        onSelect={() => handleSelectTemplate(t)}
+                      />
+                    ))}
+                  </div>
+                  <p className='text-muted-foreground text-xs'>
+                    Selecting a template fills the brief — edit it freely.
+                  </p>
+                </div>
+              )}
+
               <FormField
                 control={form.control}
                 name='brief'
@@ -188,6 +255,10 @@ export default function GenerateWithAiDialog({
                         {...field}
                         rows={4}
                         placeholder='A two-week hackathon for AI agent tooling on Stellar, aimed at indie builders.'
+                        onChange={e => {
+                          field.onChange(e);
+                          setSelectedTemplateId(null);
+                        }}
                       />
                     </FormControl>
                     <FormMessage />
