@@ -14,6 +14,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
 import {
   getModeFields,
   ModeSelection,
@@ -89,11 +90,15 @@ export default function SubmissionModelTab({
     defaultValues: {
       submissionDeadline: '',
       reputationMinimum:
-        fields.reputationMinimum === 'hidden' ? null : reputationFloor || null,
+        fields.reputationMinimum === 'hidden' ? null : reputationFloor,
       applicationWindowCloseAt: null,
       maxApplicants: null,
       shortlistSize: null,
       applicationCreditCost: null,
+      requireDocumentation: false,
+      requireTweet: false,
+      requireDemoVideo: false,
+      requireMedia: false,
       ...initialData,
       // The mode forces submission visibility, regardless of any saved value.
       submissionVisibility: fields.submissionVisibility,
@@ -112,7 +117,7 @@ export default function SubmissionModelTab({
     if (fields.reputationMinimum === 'hidden') return;
     const current = form.getValues('reputationMinimum');
     if (current == null || current < reputationFloor) {
-      form.setValue('reputationMinimum', reputationFloor || null);
+      form.setValue('reputationMinimum', reputationFloor);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reputationFloor, fields.reputationMinimum]);
@@ -342,6 +347,46 @@ export default function SubmissionModelTab({
               (set by the selected mode)
             </span>
           </p>
+        </div>
+
+        {/* Required submission fields — the primary link is always required. */}
+        <div className='space-y-3 rounded-xl border border-zinc-800 bg-zinc-900/30 p-4'>
+          <div>
+            <p className='text-sm font-medium text-white'>
+              Required submission fields
+            </p>
+            <p className='mt-0.5 text-xs text-zinc-500'>
+              The submission link is always required. Toggle any extra fields
+              builders must provide when they submit work.
+            </p>
+          </div>
+          {(
+            [
+              ['requireDocumentation', 'Documentation link'],
+              ['requireDemoVideo', 'Demo video link'],
+              ['requireTweet', 'Tweet link'],
+              ['requireMedia', 'Media image'],
+            ] as const
+          ).map(([name, label]) => (
+            <FormField
+              key={name}
+              control={form.control}
+              name={name}
+              render={({ field }) => (
+                <FormItem className='flex items-center justify-between gap-3 space-y-0'>
+                  <FormLabel className='text-sm font-normal text-zinc-300'>
+                    {label}
+                  </FormLabel>
+                  <FormControl>
+                    <Switch
+                      checked={!!field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+          ))}
         </div>
 
         <div className='flex items-center justify-between pt-4'>

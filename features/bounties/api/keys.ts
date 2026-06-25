@@ -18,5 +18,7 @@ export const bountyKeys = {
     [...bountyKeys.all, 'detail', bountyId] as const,
   myApplication: (bountyId: string) =>
     [...bountyKeys.all, 'my-application', bountyId] as const,
+  mySubmission: (bountyId: string) =>
+    [...bountyKeys.all, 'my-submission', bountyId] as const,
   myActivity: () => [...bountyKeys.all, 'my-activity'] as const,
 };

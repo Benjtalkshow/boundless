@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 
 import { bountyKeys } from './keys';
 import {
+  getMyBountySubmission,
   listMyBountyApplications,
   listMyBountySubmissions,
   type MyActivityParams,
@@ -27,6 +28,16 @@ export function useMyBountySubmissions(params: MyActivityParams = {}) {
   return useQuery({
     queryKey: [...bountyKeys.myActivity(), 'submissions', params],
     queryFn: () => listMyBountySubmissions(params),
+    retry: false,
+  });
+}
+
+/** The caller's submission for one bounty (drives submit/withdraw gating). */
+export function useMyBountySubmission(bountyId: string | undefined) {
+  return useQuery({
+    queryKey: bountyKeys.mySubmission(bountyId ?? ''),
+    queryFn: () => getMyBountySubmission(bountyId as string),
+    enabled: !!bountyId,
     retry: false,
   });
 }
