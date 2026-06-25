@@ -1569,23 +1569,6 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/api/crowdfunding/campaigns/{id}/v2/escrow/claim-milestone': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /** Claim a milestone payout (reviewStatus must be APPROVED) */
-    post: operations['BuilderCrowdfundingV2Controller_claimMilestone'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
   '/api/crowdfunding/campaigns/{id}/v2/escrow/contribute': {
     parameters: {
       query?: never;
@@ -1785,6 +1768,40 @@ export interface paths {
     put?: never;
     /** Reject a submitted milestone with feedback */
     post: operations['AdminCrowdfundingV2Controller_rejectMilestone'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/crowdfunding/campaigns/{id}/v2/disputes': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Open a dispute on a campaign (backers only) */
+    post: operations['CrowdfundingDisputesController_file'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/crowdfunding/campaigns/{id}/v2/disputes/mine': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List the caller’s disputes on a campaign */
+    get: operations['CrowdfundingDisputesController_mine'];
+    put?: never;
+    post?: never;
     delete?: never;
     options?: never;
     head?: never;
@@ -7121,7 +7138,7 @@ export interface paths {
     put?: never;
     /**
      * Create verification session
-     * @description Creates a Didit verification session. Returns session_token and verification_url for the frontend SDK. Authenticated user id is sent as vendor_data unless user_id is provided.
+     * @description Creates a Didit verification session for the authenticated user. Returns session_token and verification_url for the frontend SDK.
      */
     post: operations['DiditController_createSession'];
     delete?: never;
@@ -7141,7 +7158,7 @@ export interface paths {
     put?: never;
     /**
      * Didit webhook
-     * @description Receives verification completion events from Didit. Verifies X-Signature-V2 when DIDIT_WEBHOOK_SECRET is set. Updates user verification status and DiditVerificationSession.
+     * @description Receives verification completion events from Didit. The signature is verified by DiditWebhookGuard. Updates user verification status and DiditVerificationSession.
      */
     post: operations['DiditController_webhook'];
     delete?: never;
@@ -7209,6 +7226,1224 @@ export interface paths {
     get?: never;
     put?: never;
     post: operations['AdminOpsController_setFeeBps'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/admin/v2/access/me': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** The current staff principal and role */
+    get: operations['AccessController_me'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/admin/v2/access/roles': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** The role and permission matrix (Super Admin only) */
+    get: operations['AccessController_roles'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/admin/v2/analytics': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Platform analytics (growth, breakdowns, trend) */
+    get: operations['AnalyticsController_get'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/admin/v2/overview': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Platform overview counts */
+    get: operations['OverviewController_get'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/admin/v2/users': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List users (paginated, searchable) */
+    get: operations['UsersController_list'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/admin/v2/users/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Get one user */
+    get: operations['UsersController_getById'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/admin/v2/users/{id}/earnings': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Get a user's earnings (summary, breakdown, activity) */
+    get: operations['UsersController_getEarnings'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/admin/v2/users/{id}/organizations': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Get a user's organizations */
+    get: operations['UsersController_getOrganizations'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/admin/v2/users/{id}/wallet': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Get a user's wallet and live balances */
+    get: operations['UsersController_getWallet'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/admin/v2/users/{id}/ban': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    /** Ban or unban a user (Tier 2: requires step-up) */
+    patch: operations['UsersController_setBanned'];
+    trace?: never;
+  };
+  '/api/admin/v2/organizations': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List organizations (paginated, searchable) */
+    get: operations['OrganizationsController_list'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/admin/v2/organizations/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Get one organization */
+    get: operations['OrganizationsController_getById'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    /** Update organization details (Tier 2: requires step-up) */
+    patch: operations['OrganizationsController_update'];
+    trace?: never;
+  };
+  '/api/admin/v2/organizations/{id}/suspend': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Suspend an organization (Tier 2: requires step-up)
+     * @description Freezes member-initiated mutations (treasury, member management, owner config). Reversible via reinstate.
+     */
+    post: operations['OrganizationsController_suspend'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/admin/v2/organizations/{id}/reinstate': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Reinstate a suspended organization (Tier 2: requires step-up) */
+    post: operations['OrganizationsController_reinstate'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/admin/v2/programs': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List programs across a pillar (paginated, searchable) */
+    get: operations['ProgramsController_list'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/admin/v2/programs/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Get one program (type selects the pillar) */
+    get: operations['ProgramsController_getById'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/admin/v2/programs/{id}/feature': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    /** Feature or unfeature a program (Tier 1; hackathons & bounties) */
+    patch: operations['ProgramsController_setFeatured'];
+    trace?: never;
+  };
+  '/api/admin/v2/programs/{id}/status': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    /** Set an admin lifecycle status (Tier 2: requires step-up) */
+    patch: operations['ProgramsController_setStatus'];
+    trace?: never;
+  };
+  '/api/admin/v2/disputes': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List disputes (paginated, searchable) */
+    get: operations['DisputesController_list'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/admin/v2/disputes/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Get one dispute */
+    get: operations['DisputesController_getById'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/admin/v2/disputes/{id}/assign': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Assign a dispute to a staff handler, or unassign (Tier 1) */
+    post: operations['DisputesController_assign'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/admin/v2/disputes/{id}/note': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Add an internal note to a dispute (Tier 1) */
+    post: operations['DisputesController_note'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/admin/v2/disputes/{id}/resolve': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Resolve a dispute with an outcome (Tier 2: requires step-up) */
+    post: operations['DisputesController_resolve'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/admin/v2/disputes/{id}/escalate': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Escalate a dispute to arbitration (Tier 2: requires step-up) */
+    post: operations['DisputesController_escalate'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/admin/v2/escrow': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List escrow transactions (paginated, searchable) */
+    get: operations['EscrowController_list'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/admin/v2/escrow/requests': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List escrow release/refund requests (maker-checker) */
+    get: operations['EscrowController_listRequests'];
+    put?: never;
+    /** Propose an escrow release/refund (Tier 3: step-up) */
+    post: operations['EscrowController_propose'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/admin/v2/escrow/requests/{id}/decision': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Approve or reject a request (Tier 3: step-up, maker-checker) */
+    post: operations['EscrowController_decide'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/admin/v2/escrow/requests/{id}/execute': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Record an approved request as executed (Tier 3: step-up) */
+    post: operations['EscrowController_execute'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/admin/v2/payouts': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List platform payouts (paginated, searchable) */
+    get: operations['PayoutsController_list'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/admin/v2/payouts/requests': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List payout requests (maker-checker) */
+    get: operations['PayoutsController_listRequests'];
+    put?: never;
+    /** Propose a payout (Tier 3: step-up) */
+    post: operations['PayoutsController_propose'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/admin/v2/payouts/requests/{id}/decision': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Approve or reject a payout request (Tier 3: step-up, maker-checker) */
+    post: operations['PayoutsController_decide'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/admin/v2/payouts/requests/{id}/build-xdr': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Build the unsigned payout XDR for offline signing (Tier 3: step-up) */
+    post: operations['PayoutsController_buildXdr'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/admin/v2/payouts/requests/{id}/submit-signed': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Submit the offline-signed payout XDR; verifies + broadcasts (Tier 3: step-up) */
+    post: operations['PayoutsController_submitSigned'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/admin/v2/payouts/requests/{id}/execute': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Fallback: record a payout signed + broadcast off-platform (Tier 3: step-up) */
+    post: operations['PayoutsController_execute'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/admin/v2/content': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List blog posts (paginated, searchable; archived via ?archived) */
+    get: operations['ContentController_list'];
+    put?: never;
+    /** Create a blog post (MDX body) (Tier 1) */
+    post: operations['ContentController_create'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/admin/v2/content/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Get one post (full body + metadata, for editing) */
+    get: operations['ContentController_getById'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    /** Update a blog post (Tier 1) */
+    patch: operations['ContentController_update'];
+    trace?: never;
+  };
+  '/api/admin/v2/content/{id}/publish': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    /** Publish or unpublish a post (Tier 1) */
+    patch: operations['ContentController_setPublished'];
+    trace?: never;
+  };
+  '/api/admin/v2/content/{id}/archive': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Archive (soft-delete) a post (Tier 2: requires step-up) */
+    post: operations['ContentController_archive'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/admin/v2/content/{id}/restore': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Restore an archived post (Tier 1) */
+    post: operations['ContentController_restore'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/admin/v2/crowdfunding/review-checklist': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List active review checklist items (display order) */
+    get: operations['CrowdfundingChecklistController_list'];
+    put?: never;
+    /** Add a checklist item (super_admin / operations) */
+    post: operations['CrowdfundingChecklistController_create'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/admin/v2/crowdfunding/review-checklist/reorder': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Reorder checklist items (super_admin / operations) */
+    post: operations['CrowdfundingChecklistController_reorder'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/admin/v2/crowdfunding/review-checklist/{itemId}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    /** Archive a checklist item (super_admin / operations) */
+    delete: operations['CrowdfundingChecklistController_archive'];
+    options?: never;
+    head?: never;
+    /** Edit a checklist item (super_admin / operations) */
+    patch: operations['CrowdfundingChecklistController_update'];
+    trace?: never;
+  };
+  '/api/admin/v2/crowdfunding': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List crowdfunding campaigns (defaults to the review queue) */
+    get: operations['CrowdfundingController_list'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/admin/v2/crowdfunding/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Get one campaign with its review history */
+    get: operations['CrowdfundingController_getById'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/admin/v2/crowdfunding/{id}/approve': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Approve a submitted campaign; assigns a reviewer (Tier 2: step-up) */
+    post: operations['CrowdfundingController_approve'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/admin/v2/crowdfunding/{id}/reject': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Reject a submitted campaign (Tier 2: step-up) */
+    post: operations['CrowdfundingController_reject'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/admin/v2/crowdfunding/{id}/request-revision': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Send a submitted campaign back for revisions (Tier 1) */
+    post: operations['CrowdfundingController_requestRevision'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/admin/v2/access/totp/enroll': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Begin TOTP enrollment (returns secret + QR URI) */
+    post: operations['SecurityController_enroll'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/admin/v2/access/totp/activate': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Confirm TOTP enrollment with a code */
+    post: operations['SecurityController_activate'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/admin/v2/access/step-up': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Step up: verify a fresh TOTP code for sensitive actions */
+    post: operations['SecurityController_stepUp'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/admin/v2/audit': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List admin audit log entries (paginated, searchable) */
+    get: operations['AuditController_list'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/admin/v2/audit/stream': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Live stream of new audit entries (Server-Sent Events) */
+    get: operations['AuditController_stream'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/admin/v2/feature-flags': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List feature flags */
+    get: operations['FeatureFlagsController_list'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/admin/v2/feature-flags/{key}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    /** Toggle a feature flag (Tier 2: requires step-up) */
+    patch: operations['FeatureFlagsController_toggle'];
+    trace?: never;
+  };
+  '/api/admin/v2/staff': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List staff members and their roles */
+    get: operations['StaffController_list'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/admin/v2/staff/{id}/role': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    /** Assign a staff role (Tier 2: requires step-up) */
+    patch: operations['StaffController_setRole'];
+    trace?: never;
+  };
+  '/api/admin/v2/governance': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List governance proposals (optionally by status) */
+    get: operations['GovernanceController_list'];
+    put?: never;
+    /** Propose a governance action (Tier 4: step-up) */
+    post: operations['GovernanceController_propose'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/admin/v2/governance/{id}/decision': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Approve or reject a proposal (Tier 3: step-up, maker-checker) */
+    post: operations['GovernanceController_decide'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/admin/v2/governance/{id}/execute': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Record an approved proposal as executed (Tier 4: step-up) */
+    post: operations['GovernanceController_execute'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/admin/v2/kyc': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List identity-verification (KYC) records (paginated, filterable) */
+    get: operations['KycController_list'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/admin/v2/kyc/connection': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Live Didit integration status (config presence) */
+    get: operations['KycController_connection'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/admin/v2/kyc/{userId}/sync': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Pull the latest decision live from Didit and reconcile (Tier 1) */
+    post: operations['KycController_sync'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/admin/v2/kyc/{userId}/retrigger': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Create a fresh Didit verification session for the user (Tier 1) */
+    post: operations['KycController_retrigger'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/admin/v2/kyc/{userId}/override': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Manually force a KYC decision, overriding Didit (Tier 2: step-up) */
+    post: operations['KycController_override'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/admin/v2/milestones': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List deliverable milestones across a pillar (paginated) */
+    get: operations['MilestonesController_list'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/admin/v2/milestones/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Get full milestone detail for admin review */
+    get: operations['MilestonesController_findOne'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/admin/v2/milestones/{id}/approve': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Approve a submitted crowdfunding milestone (Tier 3: step-up) */
+    post: operations['MilestonesController_approve'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/admin/v2/milestones/{id}/reject': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Reject a submitted crowdfunding milestone (Tier 2: step-up) */
+    post: operations['MilestonesController_reject'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/admin/v2/milestones/{id}/release/build-xdr': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Build the unsigned release transaction for an APPROVED milestone (admin signs the envelope offline at the Lab). Tier 3: step-up. */
+    post: operations['MilestonesController_buildReleaseXdr'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/admin/v2/milestones/{id}/release/submit-signed': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Submit the admin-signed release transaction for a milestone (verified against the built XDR). Tier 3: step-up. */
+    post: operations['MilestonesController_submitReleaseSigned'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/admin/v2/wallets': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List abstracted wallets (paginated, searchable) */
+    get: operations['WalletsController_list'];
+    put?: never;
+    post?: never;
     delete?: never;
     options?: never;
     head?: never;
@@ -7892,6 +9127,91 @@ export interface paths {
     post: operations['BountyCompetitionJoinController_join'];
     /** Leave an open competition before submitting */
     delete: operations['BountyCompetitionJoinController_leave'];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/bounties/me/applications': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List the caller's applications across all bounties */
+    get: operations['BountyParticipantDashboardController_myApplications'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/bounties/me/submissions': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List the caller's submissions across all bounties */
+    get: operations['BountyParticipantDashboardController_mySubmissions'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/bounties/me/submissions/{bountyId}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Read the caller's submission for one bounty */
+    get: operations['BountyParticipantDashboardController_mySubmissionForBounty'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/bounties/{id}/results': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Public results / leaderboard (winners by tier) */
+    get: operations['BountyResultsController_getResults'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/bounties/{id}/submissions': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Submissions the caller may see (respects submissionVisibility) */
+    get: operations['BountyResultsController_getSubmissions'];
+    put?: never;
+    post?: never;
+    delete?: never;
     options?: never;
     head?: never;
     patch?: never;
@@ -14404,6 +15724,8 @@ export interface components {
       occurredAt: string;
       /** @description Entity id for claim (e.g. submissionId, milestoneId) */
       entityId?: string;
+      /** @description On-chain payout transaction hash (when settled). */
+      txHash?: string;
     };
     EarningsResponseDto: {
       summary: components['schemas']['EarningsSummaryDto'];
@@ -14768,10 +16090,10 @@ export interface components {
     };
     PublishCrowdfundingEscrowDto: {
       /**
-       * @description Stellar G-address that signs create_event. Strictly the builder's Boundless abstracted wallet (D9). MANAGED funding is the only path.
+       * @description Stellar G-address that signs create_event. Strictly the builder's Boundless abstracted wallet (D9). Optional: defaults to the authenticated builder's managed wallet, the only valid value.
        * @example GBXNQFDSBDPOIA3Q4LYIWBOJFFPCCV6IEDHBSJZEAYFKIKZVUO4QEDVS
        */
-      builderAddress: string;
+      builderAddress?: string;
       /**
        * @description Whitelisted SAC token contract (USDC by default).
        * @example CBIELTK6YBZJU5UP2WWQEUCYKLPU6AUNZ2BQ4WWFEIE3USCIHMXQDAMA
@@ -14796,14 +16118,8 @@ export interface components {
       contentUri?: string;
     };
     CancelCrowdfundingEscrowDto: {
-      /** @description Builder G-address. */
-      builderAddress: string;
-    };
-    ClaimCrowdfundingMilestoneDto: {
-      /** @description Builder G-address (must match campaign). */
-      builderAddress: string;
-      /** @description Crowdfunding milestone id. */
-      crowdfundingMilestoneId: string;
+      /** @description Builder G-address. Optional: defaults to the authenticated builder's managed wallet (the only valid value). */
+      builderAddress?: string;
     };
     ContributeCrowdfundingDto: {
       /**
@@ -14853,6 +16169,11 @@ export interface components {
        * @example 10
        */
       voteGoal?: number;
+      /**
+       * @description Bypass community voting and approve straight to launch-ready (REVIEW_APPROVED). Default false: the campaign enters community voting.
+       * @example false
+       */
+      bypassVoting?: boolean;
     };
     RejectCrowdfundingCampaignDto: {
       /** @description Reason for rejection; surfaced to the builder. */
@@ -14875,6 +16196,34 @@ export interface components {
       rejectionFeedback: string;
       /** @description Deadline by which the builder must resubmit (ISO 8601). */
       resubmissionDeadline?: string;
+    };
+    FileDisputeDto: {
+      /** @description Specific milestone being disputed (optional). */
+      milestoneId?: string;
+      /** @enum {string} */
+      reason:
+        | 'MILESTONE_NOT_DELIVERED'
+        | 'POOR_QUALITY_WORK'
+        | 'DEADLINE_MISSED'
+        | 'MISUSE_OF_FUNDS'
+        | 'COMMUNICATION_ISSUES'
+        | 'SCOPE_CHANGE'
+        | 'OTHER';
+      description: string;
+      /** @description Links to supporting evidence (max 10). */
+      evidenceLinks?: string[];
+      /** @description Uploaded evidence file references (max 10). */
+      evidenceFiles?: string[];
+    };
+    DisputeResponseDto: {
+      id: string;
+      campaignId: string;
+      milestoneId: string | null;
+      reason: string;
+      status: string;
+      description: string;
+      /** @description ISO timestamp the dispute was filed */
+      createdAt: string;
     };
     ReclaimDormantDto: {
       /**
@@ -17715,20 +19064,9 @@ export interface components {
       notes?: string;
     };
     RejectMilestoneDto: {
-      /**
-       * @description Rejection reason
-       * @example Incomplete deliverables
-       */
-      reason: string;
-      /**
-       * @description Detailed feedback for rejection
-       * @example The submitted work does not meet the project requirements. Please revise and resubmit.
-       */
-      feedback: string;
-      /**
-       * @description Deadline for resubmission
-       * @example 2025-02-01
-       */
+      /** @description Feedback shown to the builder; what needs to change. */
+      rejectionFeedback: string;
+      /** @description Optional ISO date by which the builder must resubmit. */
       resubmissionDeadline?: string;
     };
     RequestMilestoneResubmissionDto: {
@@ -17774,11 +19112,8 @@ export interface components {
       recipientAddress?: string;
     };
     AssignDisputeDto: {
-      /**
-       * @description Admin user ID to assign dispute to
-       * @example 550e8400-e29b-41d4-a716-446655440000
-       */
-      adminId: string;
+      /** @description staff_users id to assign the dispute to, or null to unassign. */
+      assignedToStaffId: string | null;
     };
     AddDisputeNoteDto: {
       /**
@@ -17794,8 +19129,7 @@ export interface components {
     };
     ResolveDisputeDto: {
       /**
-       * @description Resolution type
-       * @example APPROVED_WITH_CONDITIONS
+       * @description Resolution outcome recorded on the dispute.
        * @enum {string}
        */
       resolution:
@@ -17805,17 +19139,11 @@ export interface components {
         | 'FULL_REFUND'
         | 'DISMISSED'
         | 'ARBITRATION';
-      /**
-       * @description Detailed notes explaining the resolution
-       * @example Approved with condition that milestone is completed by next week
-       */
+      /** @description Resolution notes shown to the reporter and campaign creator. */
       resolutionNotes: string;
     };
     EscalateDisputeDto: {
-      /**
-       * @description Reason for escalation to arbitration
-       * @example Parties cannot agree on resolution terms
-       */
+      /** @description Why this dispute is being escalated to arbitration. Recorded in the audit log. */
       reason: string;
     };
     RejectManualProjectDto: Record<string, never>;
@@ -17906,7 +19234,6 @@ export interface components {
       /** @description Decline details. Present only when state === "declined". */
       decline?: components['schemas']['DeclineDetailsDto'];
     };
-    CreateDiditSessionDto: Record<string, never>;
     PricingPreviewResponseDto: {
       /** @description Effective rate applied to this preview. */
       feeBps: number;
@@ -17919,15 +19246,1178 @@ export interface components {
       /** @description Audit label for the rate choice: default | foundation-tier | sales-override:* | waiver:*. */
       reason: string;
     };
+    StaffPrincipalDto: {
+      id: string;
+      email: string;
+      name: string;
+      role: string;
+      /** @description Whether an authenticator (TOTP) is activated */
+      totpEnabled: boolean;
+      /** @description ISO timestamp of the last successful step-up */
+      lastStepUpAt: string | null;
+    };
+    MeResponseDto: {
+      staff: components['schemas']['StaffPrincipalDto'];
+    };
+    AnalyticsTotalsDto: {
+      users: number;
+      organizations: number;
+      /** @description All pillars combined */
+      programs: number;
+      disputes: number;
+      wallets: number;
+    };
+    ProgramsByPillarDto: {
+      hackathons: number;
+      bounties: number;
+      grants: number;
+      crowdfunding: number;
+    };
+    AnalyticsBucketDto: {
+      label: string;
+      count: number;
+    };
+    AnalyticsTrendPointDto: {
+      /** @description UTC day, YYYY-MM-DD */
+      date: string;
+      count: number;
+    };
+    AnalyticsDto: {
+      totals: components['schemas']['AnalyticsTotalsDto'];
+      /** @description New users in the last 30 days */
+      newUsers30d: number;
+      programsByPillar: components['schemas']['ProgramsByPillarDto'];
+      disputesByStatus: components['schemas']['AnalyticsBucketDto'][];
+      crowdfundingByStatus: components['schemas']['AnalyticsBucketDto'][];
+      /** @description New users per day, last 14 days */
+      newUsersTrend: components['schemas']['AnalyticsTrendPointDto'][];
+    };
+    OverviewDto: {
+      users: number;
+      organizations: number;
+      hackathons: number;
+      crowdfundingCampaigns: number;
+      /** @description Disputes in OPEN status */
+      openDisputes: number;
+    };
+    AdminUserListItemDto: {
+      id: string;
+      name: string;
+      email: string;
+      /** @description Profile photo URL, when set */
+      image: string | null;
+      username: string | null;
+      role: string | null;
+      /** @enum {string} */
+      status: 'active' | 'banned';
+      /** @description ISO timestamp the user joined */
+      joined: string;
+    };
+    PaginatedUsersDto: {
+      items: components['schemas']['AdminUserListItemDto'][];
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
+    };
+    AdminUserDetailDto: {
+      id: string;
+      name: string;
+      email: string;
+      /** @description Profile photo URL, when set */
+      image: string | null;
+      username: string | null;
+      role: string | null;
+      /** @enum {string} */
+      status: 'active' | 'banned';
+      /** @description Reason, when banned */
+      banReason: string | null;
+      /** @description Identity (KYC) verification status, when known */
+      verification: string | null;
+      /** @description Public key of the user's abstracted wallet, when one exists */
+      walletAddress: string | null;
+      /** @description Number of organizations the user belongs to */
+      organizations: number;
+      /** @description ISO timestamp the user joined */
+      joined: string;
+    };
+    AdminUserOrganizationDto: {
+      id: string;
+      name: string;
+      slug: string | null;
+      /** @description The user's role in this organization */
+      role: string;
+      /** @description ISO timestamp the user joined the organization */
+      joinedAt: string;
+    };
+    AdminUserWalletBalanceDto: {
+      /** @description On-chain balance, as a decimal string */
+      balance: string;
+      /** @description Asset code, e.g. XLM or USDC */
+      assetCode: string;
+      /** @description Asset issuer (null for native XLM) */
+      assetIssuer: string | null;
+      /** @description Stellar asset type, e.g. native or credit_alphanum4 */
+      assetType: string;
+      /** @description Estimated USD value, when priced */
+      usdValue: number | null;
+    };
+    AdminUserWalletDto: {
+      /** @description Whether the user has an abstracted wallet */
+      hasWallet: boolean;
+      /** @description Stellar public key (G-address) */
+      address: string | null;
+      /** @description Whether the on-chain account is activated */
+      isActivated: boolean;
+      /** @description ISO timestamp the wallet was created */
+      createdAt: string | null;
+      /** @description Live on-chain balances. Empty when the account is unfunded or Horizon is unreachable. */
+      balances: components['schemas']['AdminUserWalletBalanceDto'][];
+    };
+    BanUserDto: {
+      /** @description true to ban, false to lift the ban */
+      banned: boolean;
+      /** @description Reason for the ban (recorded in the audit log) */
+      reason?: string;
+    };
+    BanUserResponseDto: {
+      id: string;
+      banned: boolean;
+    };
+    AdminOrgListItemDto: {
+      id: string;
+      name: string;
+      slug: string | null;
+      /** @description Member count */
+      members: number;
+      /** @description Programs run by the org (hackathons + bounties) */
+      programs: number;
+      /** @description ISO timestamp the org was suspended, or null if active */
+      suspendedAt: string | null;
+      /** @description ISO timestamp the org was created */
+      created: string;
+    };
+    PaginatedOrganizationsDto: {
+      items: components['schemas']['AdminOrgListItemDto'][];
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
+    };
+    AdminOrgDetailDto: {
+      id: string;
+      name: string;
+      slug: string | null;
+      /** @description Member count */
+      members: number;
+      /** @description Hackathons run by the org */
+      hackathons: number;
+      /** @description Bounties run by the org */
+      bounties: number;
+      /** @description ISO timestamp the org was suspended, or null if active */
+      suspendedAt: string | null;
+      suspendedByEmail: string | null;
+      suspensionReason: string | null;
+      /** @description ISO timestamp the org was created */
+      created: string;
+    };
+    UpdateOrgDto: {
+      name?: string;
+      /** @description URL slug (lowercase letters, numbers, hyphens) */
+      slug?: string;
+      /** @description Logo URL */
+      logo?: string;
+      /** @description Whether org announcements are enabled */
+      announcementsEnabled?: boolean;
+    };
+    OrgActionResponseDto: {
+      id: string;
+      name: string;
+      slug: string | null;
+      announcementsEnabled: boolean;
+    };
+    SuspendOrgDto: {
+      /** @description Why the organization is being suspended (shown in audit log) */
+      reason: string;
+    };
+    OrgSuspensionResponseDto: {
+      id: string;
+      name: string;
+      slug: string | null;
+      /** @description ISO timestamp the org was suspended, or null if active */
+      suspendedAt: string | null;
+      suspensionReason: string | null;
+    };
+    ReinstateOrgDto: {
+      /** @description Optional note recorded with the reinstatement */
+      note?: string;
+    };
+    AdminProgramListItemDto: {
+      id: string;
+      /** @enum {string} */
+      type: 'hackathon' | 'bounty' | 'grant' | 'crowdfunding';
+      title: string;
+      /** @description Pillar-specific lifecycle status */
+      status: string;
+      /** @description Owning organization name, when the pillar has one */
+      organization: string | null;
+      /** @description Marketplace featured boost (always false for pillars without it) */
+      isFeatured: boolean;
+      /** @description ISO timestamp the program was created */
+      created: string;
+    };
+    PaginatedProgramsDto: {
+      items: components['schemas']['AdminProgramListItemDto'][];
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
+    };
+    AdminProgramDetailDto: {
+      id: string;
+      /** @enum {string} */
+      type: 'hackathon' | 'bounty' | 'grant' | 'crowdfunding';
+      title: string;
+      status: string;
+      organization: string | null;
+      description: string | null;
+      /** @description ISO timestamp the program was created */
+      created: string;
+    };
+    SetFeaturedDto: {
+      /**
+       * @description Which pillar the id is in.
+       * @enum {string}
+       */
+      type: 'hackathon' | 'bounty' | 'grant' | 'crowdfunding';
+      /** @description Feature (true) or unfeature (false) the program. */
+      featured: boolean;
+    };
+    ProgramActionResponseDto: {
+      id: string;
+      /** @enum {string} */
+      type: 'hackathon' | 'bounty' | 'grant' | 'crowdfunding';
+      /** @description Status after the action */
+      status: string;
+      /** @description Whether the program is featured (false if unsupported) */
+      isFeatured: boolean;
+    };
+    SetProgramStatusDto: {
+      /**
+       * @description Which pillar the id is in.
+       * @enum {string}
+       */
+      type: 'hackathon' | 'bounty' | 'grant' | 'crowdfunding';
+      /** @description Target lifecycle status. Must be one of the admin-settable states for the pillar (archive/suspend/cancel-type). */
+      status: string;
+    };
+    AdminDisputeListItemDto: {
+      id: string;
+      /** @description Title of the campaign the dispute is against */
+      campaign: string | null;
+      /** @description Reported reason */
+      reason: string;
+      /** @description Dispute lifecycle status */
+      status: string;
+      /** @description Reporter name */
+      reportedBy: string | null;
+      /** @description Assigned staff name, when assigned */
+      assignedTo: string | null;
+      /** @description ISO timestamp the dispute was opened */
+      created: string;
+    };
+    PaginatedDisputesDto: {
+      items: components['schemas']['AdminDisputeListItemDto'][];
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
+    };
+    AdminDisputeDetailDto: {
+      id: string;
+      campaign: string | null;
+      reason: string;
+      status: string;
+      description: string;
+      /** @description Title of the disputed milestone, if the dispute names one */
+      milestone: string | null;
+      /** @description Evidence links the reporter provided */
+      evidenceLinks: string[];
+      /** @description Evidence file references the reporter provided */
+      evidenceFiles: string[];
+      reportedBy: string | null;
+      /** @description Assigned staff email, when assigned */
+      assignedTo: string | null;
+      /** @description Assigned staff id (for pre-selecting the assignee) */
+      assignedToStaffId: string | null;
+      /** @description Resolution outcome */
+      resolution: string | null;
+      resolutionNotes: string | null;
+      /** @description ISO timestamp the dispute was opened */
+      created: string;
+    };
+    DisputeAssignmentResponseDto: {
+      id: string;
+      /** @description Assigned staff email, or null when unassigned */
+      assignedTo: string | null;
+      assignedAt: string | null;
+    };
+    NoteDisputeDto: {
+      /** @description Internal note recorded on the dispute audit trail. */
+      note: string;
+    };
+    DisputeNoteResponseDto: {
+      id: string;
+      note: string;
+      /** @description ISO timestamp the note was recorded */
+      createdAt: string;
+    };
+    DisputeActionResponseDto: {
+      id: string;
+      /** @description New dispute lifecycle status */
+      status: string;
+      /** @description Resolution outcome, when resolved */
+      resolution: string | null;
+      /** @description Whether the dispute is escalated to arbitration */
+      escalatedToArbitration: boolean;
+    };
+    AdminMoneyEntryDto: {
+      id: string;
+      /** @enum {string} */
+      kind: 'escrow' | 'payout';
+      /** @description On-chain reference: tx hash or destination key */
+      reference: string;
+      /** @description What the movement is (tx type, or "Payout") */
+      label: string;
+      /** @description Amount, as a precise string */
+      amount: string;
+      /** @description Currency, if known */
+      currency: string | null;
+      /** @description Settlement status */
+      status: string;
+      /** @description ISO timestamp the movement was created */
+      created: string;
+    };
+    PaginatedMoneyDto: {
+      items: components['schemas']['AdminMoneyEntryDto'][];
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
+    };
+    EscrowRequestDto: {
+      id: string;
+      /** @enum {string} */
+      kind: 'release' | 'refund';
+      campaignId: string;
+      milestoneId: string | null;
+      /** @description Amount as a string (decimal-safe) */
+      amount: string;
+      currency: string;
+      toAddress: string | null;
+      reason: string | null;
+      /** @description PROPOSED | APPROVED | REJECTED | EXECUTED */
+      status: string;
+      /** @description Maker email */
+      proposedBy: string;
+      /** @description Checker email */
+      decidedBy: string | null;
+      decidedAt: string | null;
+      decisionNote: string | null;
+      /** @description Settled tx hash */
+      txHash: string | null;
+      executedBy: string | null;
+      executedAt: string | null;
+      created: string;
+    };
+    EscrowRequestListResponseDto: {
+      items: components['schemas']['EscrowRequestDto'][];
+    };
+    ProposeEscrowRequestDto: {
+      /** @enum {string} */
+      kind: 'release' | 'refund';
+      /** @description Campaign whose escrow is being acted on */
+      campaignId: string;
+      /** @description Milestone id, for a milestone release */
+      milestoneId?: string;
+      /** @description Amount to move */
+      amount: number;
+      /** @default USDC */
+      currency: string;
+      /** @description Destination address (for a release) */
+      toAddress?: string;
+      /** @description Why the funds are being moved */
+      reason?: string;
+    };
+    DecideEscrowRequestDto: {
+      /** @enum {string} */
+      decision: 'approve' | 'reject';
+      /** @description Note recorded with the decision */
+      note?: string;
+    };
+    ExecuteEscrowRequestDto: {
+      /** @description Hash of the settled, offline-signed release/refund tx */
+      txHash: string;
+    };
+    PayoutRequestDto: {
+      id: string;
+      destinationPublicKey: string;
+      /** @description Amount as a string (decimal-safe) */
+      amount: string;
+      currency: string;
+      memo: string | null;
+      memoType: string | null;
+      reason: string | null;
+      /** @description PROPOSED | APPROVED | AWAITING_SIGNATURE | REJECTED | EXECUTED */
+      status: string;
+      /** @description Platform source address the payout is sent from */
+      sourcePublicKey: string | null;
+      /** @description Unsigned XDR awaiting an offline signature (when AWAITING_SIGNATURE) */
+      unsignedXdr: string | null;
+      /** @description Maker email */
+      proposedBy: string;
+      /** @description Checker email */
+      decidedBy: string | null;
+      decidedAt: string | null;
+      decisionNote: string | null;
+      /** @description Settled tx hash */
+      txHash: string | null;
+      executedBy: string | null;
+      executedAt: string | null;
+      created: string;
+    };
+    PayoutRequestListResponseDto: {
+      items: components['schemas']['PayoutRequestDto'][];
+    };
+    ProposePayoutRequestDto: {
+      /** @description Stellar destination address (G…) */
+      destinationPublicKey: string;
+      /** @description Platform Stellar source address (G…) the payout is sent FROM. Defaults to the configured platform payout wallet (PLATFORM_ADDRESS). */
+      sourcePublicKey?: string;
+      /** @description Amount to send */
+      amount: number;
+      /** @default USDC */
+      currency: string;
+      /** @description Optional memo (required by some exchanges) */
+      memo?: string;
+      /** @enum {string} */
+      memoType?: 'text' | 'id';
+      /** @description Why the payout is being sent */
+      reason?: string;
+    };
+    DecidePayoutRequestDto: {
+      /** @enum {string} */
+      decision: 'approve' | 'reject';
+      /** @description Note recorded with the decision */
+      note?: string;
+    };
+    BuildXdrResponseDto: {
+      /** @description Unsigned transaction XDR to sign offline (Stellar Lab / hardware / multisig). */
+      unsignedXdr: string;
+      /**
+       * @description Network the transaction targets.
+       * @enum {string}
+       */
+      network: 'public' | 'testnet';
+      /** @description Network passphrase to select when signing. */
+      passphrase: string;
+      /** @description Source G-address that must sign this transaction. */
+      source: string;
+      /** @description Deep-link to the Stellar Lab Sign Transaction page. Paste the copied XDR there. */
+      labUrl: string;
+    };
+    SubmitPayoutSignedXdrDto: {
+      /** @description Fully-signed payout XDR returned by the wallet / multisig coordinator. Verified against the built unsigned XDR before broadcast. */
+      signedXdr: string;
+    };
+    ExecutePayoutRequestDto: {
+      /** @description Hash of the settled, offline-signed payout tx */
+      txHash: string;
+    };
+    AdminContentListItemDto: {
+      id: string;
+      title: string;
+      slug: string;
+      /** @description Publishing status */
+      status: string;
+      /** @description Author name */
+      author: string;
+      /** @description View count */
+      views: number;
+      /** @description Whether the post is archived (soft-deleted) */
+      archived: boolean;
+      /** @description ISO timestamp the post was created */
+      created: string;
+    };
+    PaginatedContentDto: {
+      items: components['schemas']['AdminContentListItemDto'][];
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
+    };
+    AdminContentDetailDto: {
+      id: string;
+      title: string;
+      slug: string;
+      /** @description Post body in MDX (markdown + JSX) */
+      content: string;
+      excerpt: string | null;
+      coverImage: string | null;
+      /** @description Publishing status */
+      status: string;
+      categories: string[];
+      /** @description Tag names */
+      tags: string[];
+      isFeatured: boolean;
+      isPinned: boolean;
+      seoTitle: string | null;
+      seoDescription: string | null;
+      seoKeywords: string[];
+      /** @description ISO timestamp for a scheduled publish */
+      scheduledFor: string | null;
+      /** @description Whether the post is archived (soft-deleted) */
+      archived: boolean;
+      created: string;
+      updated: string;
+    };
+    ContentMutationResponseDto: {
+      id: string;
+      /** @description Generated (or existing) URL slug */
+      slug: string;
+      /** @description Publishing status */
+      status: string;
+    };
+    UpdateContentDto: {
+      /**
+       * @description Blog post title
+       * @example Getting Started with Stellar Smart Contracts
+       */
+      title?: string;
+      /**
+       * @description Blog post content in markdown format
+       * @example # Introduction
+       *
+       *     This tutorial will teach you...
+       */
+      content?: string;
+      /**
+       * @description Short excerpt or summary
+       * @example Learn how to build your first smart contract on Stellar
+       */
+      excerpt?: string;
+      /**
+       * @description Cover image URL
+       * @example https://res.cloudinary.com/demo/image/upload/v1234567890/post-cover.jpg
+       */
+      coverImage?: string;
+      /**
+       * @description Post status
+       * @default DRAFT
+       * @example DRAFT
+       * @enum {string}
+       */
+      status: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED' | 'SCHEDULED';
+      /**
+       * @description Post tags
+       * @example [
+       *       "smart-contracts",
+       *       "soroban",
+       *       "tutorial"
+       *     ]
+       */
+      tags?: string[];
+      /**
+       * @description Post categories
+       * @example [
+       *       "tutorials"
+       *     ]
+       */
+      categories?: string[];
+      /**
+       * @description Mark as featured post
+       * @default false
+       * @example false
+       */
+      isFeatured: boolean;
+      /**
+       * @description Pin post to top
+       * @default false
+       * @example false
+       */
+      isPinned: boolean;
+      /**
+       * @description Reading time in minutes (auto-calculated if not provided)
+       * @example 5
+       */
+      readingTime?: number;
+      /** @description SEO title (overrides post title) */
+      seoTitle?: string;
+      /** @description SEO meta description */
+      seoDescription?: string;
+      /**
+       * @description SEO keywords
+       * @example [
+       *       "stellar",
+       *       "blockchain",
+       *       "smart contracts"
+       *     ]
+       */
+      seoKeywords?: string[];
+      /**
+       * @description Schedule publication date (for SCHEDULED status)
+       * @example 2025-12-31T10:00:00Z
+       */
+      scheduledFor?: string;
+      /**
+       * @description Generate AI content (excerpt, reading time, SEO, tags, category) if not provided
+       * @default false
+       * @example true
+       */
+      generateAI: boolean;
+    };
+    SetPublishedDto: {
+      /** @description true publishes the post; false unpublishes (back to draft). */
+      published: boolean;
+    };
+    ContentActionResponseDto: {
+      id: string;
+      /** @description Publishing status after the action */
+      status: string;
+      /** @description Whether the post is currently published */
+      published: boolean;
+      /** @description Whether the post is archived (soft-deleted) */
+      archived: boolean;
+    };
+    ArchiveContentDto: {
+      /** @description Why the post is being archived. Recorded in the audit log. */
+      reason?: string;
+    };
+    ChecklistItemDto: {
+      id: string;
+      /** @description What the reviewer should verify */
+      label: string;
+      /** @description Optional help text */
+      description: string | null;
+      /** @description Whether this is a required check */
+      required: boolean;
+      /** @description Position in the list */
+      orderIndex: number;
+    };
+    CreateChecklistItemDto: {
+      label: string;
+      description?: string;
+      /** @default false */
+      required: boolean;
+    };
+    ReorderChecklistDto: {
+      /** @description All active item ids in the desired order (a permutation). */
+      orderedIds: string[];
+    };
+    UpdateChecklistItemDto: {
+      label?: string;
+      /** @description Pass an empty string to clear the help text */
+      description?: string | null;
+      required?: boolean;
+    };
+    AdminCrowdfundingListItemDto: {
+      id: string;
+      title: string;
+      /** @description v2 lifecycle status */
+      status: string;
+      /** @description Creator name */
+      creator: string | null;
+      /** @description Funding goal */
+      fundingGoal: number;
+      /** @description ISO timestamp the campaign was submitted for review */
+      submittedForReviewAt: string | null;
+      /** @description ISO timestamp the campaign was created */
+      created: string;
+    };
+    PaginatedCrowdfundingDto: {
+      items: components['schemas']['AdminCrowdfundingListItemDto'][];
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
+    };
+    AdminCrowdfundingProjectDto: {
+      description: string | null;
+      summary: string | null;
+      /** @description Vision statement */
+      vision: string | null;
+      /** @description Markdown details / pitch */
+      details: string | null;
+      category: string | null;
+      tags: string[];
+      /** @description Tech stack */
+      techStack: string[];
+      /** @description Team members ({ name?, role, ... }) */
+      teamMembers: {
+        [key: string]: unknown;
+      }[];
+      /** @description Social links ({ platform, url }) */
+      socialLinks:
+        | {
+            [key: string]: unknown;
+          }[]
+        | null;
+      /** @description Contact ({ primary, backup }) */
+      contact: {
+        [key: string]: unknown;
+      } | null;
+      githubUrl: string | null;
+      gitlabUrl: string | null;
+      bitbucketUrl: string | null;
+      projectWebsite: string | null;
+      liveUrl: string | null;
+      docsUrl: string | null;
+      demoVideo: string | null;
+      pitchVideoUrl: string | null;
+      whitepaperUrl: string | null;
+      logo: string | null;
+      banner: string | null;
+      thumbnail: string | null;
+      screenshots: string[];
+    };
+    AdminCrowdfundingReviewDto: {
+      /** @description NOTE | REQUEST_REVISION | APPROVED | REJECTED */
+      action: string;
+      reason: string | null;
+      /** @description Reviewer name (User) or null when a staff member reviewed */
+      reviewer: string | null;
+      /** @description Staff email when a staff member reviewed */
+      reviewerStaffEmail: string | null;
+      createdAt: string;
+    };
+    AdminCrowdfundingMilestoneDto: {
+      id: string;
+      title: string;
+      /** @description Position in the release sequence */
+      orderIndex: number;
+      /** @description Planned share of the goal (percent) */
+      fundingPercentage: number;
+      /** @description Planned amount */
+      amount: number;
+      /** @description Off-chain review status */
+      reviewStatus: string;
+      /** @description What the milestone delivers */
+      description: string;
+      /** @description Concrete deliverable */
+      deliverable: string | null;
+      /** @description Acceptance / success criteria */
+      successCriteria: string | null;
+      /** @description Expected delivery date */
+      expectedDeliveryDate: string | null;
+      submittedAt: string | null;
+      /** @description On-chain claim anchor: pending_confirm | confirmed | failed */
+      escrowAnchorStatus: string | null;
+      escrowClaimTxHash: string | null;
+      claimedAt: string | null;
+    };
+    AdminCrowdfundingDetailDto: {
+      id: string;
+      title: string;
+      tagline: string | null;
+      /** @description v2 lifecycle status */
+      status: string;
+      /** @description Creator name */
+      creator: string | null;
+      /** @description Full submitted project content for review */
+      project: components['schemas']['AdminCrowdfundingProjectDto'];
+      fundingGoal: number;
+      fundingRaised: number;
+      fundingCurrency: string;
+      /** @description Funding deadline */
+      fundingEndDate: string | null;
+      /** @description Total released to the builder so far (across milestones) */
+      totalDisbursed: number;
+      /** @description Per-campaign voting quorum */
+      voteGoal: number;
+      /** @description Builder's wallet (escrow owner) */
+      builderAddress: string | null;
+      /** @description Number of milestones */
+      nMilestones: number | null;
+      /** @description On-chain event id once the escrow is live (FUNDING) */
+      escrowEventId: string | null;
+      /** @description create_event tx hash */
+      escrowTxHash: string | null;
+      escrowSettledLedger: number | null;
+      escrowToken: string | null;
+      /** @description Total escrow budget (stroops/decimal) */
+      escrowBudget: string | null;
+      /** @description Escrow failure code if create_event failed (FAILED) */
+      escrowFailureCode: string | null;
+      escrowFailedAt: string | null;
+      completedAt: string | null;
+      cancelledAt: string | null;
+      /** @description Assigned delegated reviewer (User id), set at approval */
+      assignedReviewerId: string | null;
+      submittedForReviewAt: string | null;
+      reviewedAt: string | null;
+      /** @description ISO timestamp the campaign was created */
+      created: string;
+      /** @description Review history */
+      reviews: components['schemas']['AdminCrowdfundingReviewDto'][];
+      /** @description Milestones with review + on-chain claim status */
+      milestones: components['schemas']['AdminCrowdfundingMilestoneDto'][];
+    };
+    ApproveCampaignDto: {
+      /** @description StaffUser id of the delegated reviewer who signs off milestones for this campaign. Must be an active staff member. */
+      delegatedReviewerId: string;
+      /** @description Per-campaign voting quorum. Defaults to the contract default. */
+      voteGoal?: number;
+      /**
+       * @description Bypass community voting and approve straight to launch-ready (REVIEW_APPROVED). Default false: the campaign enters community voting.
+       * @default false
+       */
+      bypassVoting: boolean;
+    };
+    CrowdfundingActionResponseDto: {
+      id: string;
+      /** @description New v2 lifecycle status */
+      status: string;
+    };
+    RejectCampaignDto: {
+      /** @description Reason shown to the builder in the review history. */
+      reason?: string;
+    };
+    RequestRevisionDto: {
+      /** @description What the builder needs to change. Shown in the review history. */
+      reason: string;
+    };
+    TotpEnrollResponseDto: {
+      /** @description Base32 secret, shown once for manual entry */
+      secret: string;
+      /** @description otpauth:// URI for QR enrollment */
+      otpauthUri: string;
+    };
+    TotpCodeDto: {
+      /** @description Six-digit code from the authenticator app */
+      code: string;
+    };
+    OkResponseDto: {
+      /** @default true */
+      ok: boolean;
+    };
+    AdminAuditListItemDto: {
+      id: string;
+      /** @description Email of the staff member who acted */
+      actor: string;
+      /** @description Dotted action name, e.g. "users.ban" */
+      action: string;
+      /** @description Permission resource the action belongs to */
+      resource: string;
+      /** @description Affected entity id */
+      targetId: string | null;
+      /** @description Human note captured with the action (e.g. ban reason) */
+      details: string | null;
+      /** @description ISO timestamp the action was recorded */
+      created: string;
+    };
+    PaginatedAuditDto: {
+      items: components['schemas']['AdminAuditListItemDto'][];
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
+    };
+    FeatureFlagDto: {
+      /** @description Stable flag key, e.g. "crowdfunding.public_launch" */
+      key: string;
+      /** @description Human description of what the flag gates */
+      description: string;
+      enabled: boolean;
+      /** @description ISO timestamp the flag was last changed */
+      updated: string;
+    };
+    FeatureFlagsResponseDto: {
+      items: components['schemas']['FeatureFlagDto'][];
+    };
+    ToggleFeatureFlagDto: {
+      /** @description Desired enabled state */
+      enabled: boolean;
+    };
+    StaffListItemDto: {
+      id: string;
+      name: string;
+      email: string;
+      /** @description Staff role token, e.g. "operations" */
+      role: string;
+      /** @description active | disabled */
+      status: string;
+      /** @description Whether the staff has an activated authenticator */
+      totpEnabled: boolean;
+      /** @description ISO timestamp the staff record was created */
+      created: string;
+    };
+    StaffListResponseDto: {
+      items: components['schemas']['StaffListItemDto'][];
+    };
+    SetRoleDto: {
+      /**
+       * @description The role to assign
+       * @enum {string}
+       */
+      role:
+        | 'super_admin'
+        | 'operations'
+        | 'finance'
+        | 'compliance'
+        | 'content'
+        | 'support';
+    };
+    GovernanceProposalDto: {
+      id: string;
+      title: string;
+      description: string | null;
+      /** @description Target contract, e.g. "boundless-events" */
+      contract: string;
+      /** @description Contract action, e.g. "upgrade" */
+      action: string;
+      /** @description Action parameters for the offline signers */
+      params?: {
+        [key: string]: unknown;
+      } | null;
+      /** @description PROPOSED | APPROVED | REJECTED | EXECUTED */
+      status: string;
+      /** @description Email of the maker who proposed */
+      proposedBy: string;
+      /** @description Checker email */
+      decidedBy: string | null;
+      decidedAt: string | null;
+      decisionNote: string | null;
+      /** @description Offline-signed tx hash */
+      txHash: string | null;
+      executedBy: string | null;
+      executedAt: string | null;
+      created: string;
+    };
+    GovernanceListResponseDto: {
+      items: components['schemas']['GovernanceProposalDto'][];
+    };
+    CreateProposalDto: {
+      title: string;
+      description?: string;
+      /** @description Target contract */
+      contract: string;
+      /** @description Contract action */
+      action: string;
+      params?: {
+        [key: string]: unknown;
+      };
+    };
+    DecideProposalDto: {
+      /** @enum {string} */
+      decision: 'approve' | 'reject';
+      /** @description Note recorded with the decision */
+      note?: string;
+    };
+    ExecuteProposalDto: {
+      /** @description Hash of the offline-signed, executed transaction */
+      txHash: string;
+    };
+    AdminKycListItemDto: {
+      /** @description User id */
+      id: string;
+      name: string;
+      email: string;
+      /** @enum {string} */
+      status: 'in_review' | 'approved' | 'declined';
+      /** @description Decline reason from Didit, when declined */
+      declineReason: string | null;
+      /** @description ISO timestamp of the last verification activity */
+      reviewedAt: string;
+      /** @description ISO timestamp the user became verified */
+      verifiedAt: string | null;
+    };
+    PaginatedKycDto: {
+      items: components['schemas']['AdminKycListItemDto'][];
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
+    };
+    DiditConnectionDto: {
+      /** @description DIDIT_API_KEY is configured */
+      apiKey: boolean;
+      /** @description DIDIT_WORKFLOW_ID is configured */
+      workflowId: boolean;
+      /** @description DIDIT_WEBHOOK_SECRET is configured */
+      webhookSecret: boolean;
+      /** @description API key + workflow present: live calls (sync, re-trigger) work */
+      connected: boolean;
+    };
+    KycSyncResponseDto: {
+      userId: string;
+      /** @description Raw Didit status after the sync */
+      status: string;
+      /** @description Whether the user record status changed */
+      changed: boolean;
+      /** @description False if no Boundless user could be linked to the session */
+      userResolved: boolean;
+    };
+    KycRetriggerResponseDto: {
+      userId: string;
+      /** @description The new Didit session id */
+      sessionId: string;
+      /** @description Hosted verification URL to share with the user */
+      verificationUrl: string;
+      /** @description Initial Didit session status */
+      status: string;
+      /** @description Whether the user was notified (in-app + email) with the link. If false, share the URL manually. */
+      notified: boolean;
+    };
+    KycOverrideDto: {
+      /**
+       * @description The decision to force onto the user record.
+       * @enum {string}
+       */
+      decision: 'approved' | 'declined';
+      /** @description Why the automated Didit decision is being overridden. Recorded in the audit log. */
+      reason: string;
+    };
+    KycOverrideResponseDto: {
+      userId: string;
+      /**
+       * @description The resulting normalized state
+       * @enum {string}
+       */
+      status: 'approved' | 'declined';
+    };
+    AdminMilestoneListItemDto: {
+      id: string;
+      /** @enum {string} */
+      type: 'crowdfunding' | 'grant';
+      /** @description Parent program title */
+      program: string | null;
+      title: string;
+      /** @description Milestone amount */
+      amount: number;
+      /** @description Review/lifecycle status */
+      status: string;
+      /** @description ISO timestamp the milestone was submitted, if any */
+      submitted: string | null;
+      /**
+       * @description Crowdfunding only: on-chain payout release state (derived from the escrow anchor status). Null for grant milestones.
+       * @enum {string|null}
+       */
+      releaseStatus:
+        | 'NOT_RELEASED'
+        | 'RELEASING'
+        | 'RELEASED'
+        | 'FAILED'
+        | null;
+    };
+    PaginatedMilestonesDto: {
+      items: components['schemas']['AdminMilestoneListItemDto'][];
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
+    };
+    AdminMilestoneDetailDto: {
+      id: string;
+      title: string;
+      description: string;
+      deliverable: string | null;
+      successCriteria: string | null;
+      expectedDeliveryDate: string | null;
+      reviewStatus: string;
+      completedAt: string | null;
+      submittedAt: string | null;
+      campaignId: string;
+      proofOfWorkFiles: string[];
+      proofOfWorkLinks: string[];
+      submissionNotes: string | null;
+      fundingPercentage: number;
+      orderIndex: number;
+      rejectionReason: string | null;
+      rejectionFeedback: string | null;
+      resubmissionDeadline: string | null;
+      releaseTransactionHash: string | null;
+      claimedAt: string | null;
+      /** @description Derived payout release state. */
+      releaseStatus: string;
+    };
+    MilestoneActionResponseDto: {
+      id: string;
+      /** @description New milestone review status */
+      status: string;
+    };
+    MilestoneReleaseXdrDto: {
+      /** @description EscrowOp row id tracking this release. */
+      opId: string;
+      milestoneId: string;
+      /** @description On-chain contract admin G-address. This is the transaction source and the account that must sign at the Lab. */
+      source: string;
+      /** @description Unsigned transaction XDR (the builder managed auth entry is already signed server-side; the admin signs the envelope offline). */
+      unsignedXdr: string;
+      /** @description Stellar Lab "Sign Transaction" deep link. */
+      labUrl: string;
+      /** @enum {string} */
+      network: 'public' | 'testnet';
+      /** @description Network passphrase the signer must use. */
+      passphrase: string;
+    };
+    SubmitMilestoneReleaseDto: {
+      /** @description Base64 transaction XDR signed offline by the admin at the Stellar Lab. Must be the exact transaction returned by build-xdr (hash-checked). */
+      signedXdr: string;
+    };
+    MilestoneReleaseResultDto: {
+      opId: string;
+      milestoneId: string;
+      /** @description EscrowOp status after submission. */
+      status: string;
+      txHash: string | null;
+    };
+    AdminWalletUserPreviewDto: {
+      id: string;
+      name: string;
+      /** @description Profile photo URL, when set */
+      image: string | null;
+    };
+    AdminWalletRowDto: {
+      id: string;
+      /** @description Stellar public key (G-address) */
+      address: string;
+      /**
+       * @description Activation state
+       * @enum {string}
+       */
+      status: 'active' | 'inactive';
+      /** @description Number of users linked to this wallet */
+      users: number;
+      /** @description A capped preview of the linked users, for avatars in the list */
+      userPreviews: components['schemas']['AdminWalletUserPreviewDto'][];
+      /** @description ISO timestamp the wallet was created */
+      created: string;
+    };
+    PaginatedWalletsDto: {
+      items: components['schemas']['AdminWalletRowDto'][];
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
+    };
     Function: Record<string, never>;
     BountyScopeSectionDto: {
       /** @description Bounty title */
       title: string;
       /** @description Bounty description */
       description: string;
-      /** Format: uri */
+      /**
+       * @description Discipline the bounty falls under. DEVELOPMENT requires githubIssueUrl.
+       * @enum {string}
+       */
+      category?: 'DESIGN' | 'DEVELOPMENT' | 'CONTENT' | 'GROWTH' | 'COMMUNITY';
+      /** @description Country where the bounty is created. */
+      country?: string | null;
+      /**
+       * Format: uri
+       * @description Required when category = DEVELOPMENT.
+       */
       githubIssueUrl?: string | null;
-      githubIssueNumber?: number | null;
       projectId?: string | null;
       bountyWindowId?: string | null;
     };
@@ -17963,11 +20453,26 @@ export interface components {
       /** @description 1 tier for single claim; 1-3 tiers for a competition (multiple winners). */
       prizeTiers: components['schemas']['BountyPrizeTierInputDto'][];
     };
+    BountyResourceItemDto: {
+      /** @description Client-generated resource id */
+      id: string;
+      link?: string;
+      description?: string;
+      /** @description Uploaded file metadata */
+      file?: {
+        url?: string;
+        name?: string;
+      };
+    };
+    BountyResourcesSectionDto: {
+      resources: components['schemas']['BountyResourceItemDto'][];
+    };
     BountyDraftDataDto: {
       scope?: components['schemas']['BountyScopeSectionDto'];
       mode?: components['schemas']['BountyModeSectionDto'];
       submission?: components['schemas']['BountySubmissionSectionDto'];
       reward?: components['schemas']['BountyRewardSectionDto'];
+      resources?: components['schemas']['BountyResourcesSectionDto'];
     };
     BountyDraftPrizeTierDto: {
       position: number;
@@ -18004,6 +20509,7 @@ export interface components {
       mode?: components['schemas']['BountyModeSectionDto'];
       submission?: components['schemas']['BountySubmissionSectionDto'];
       reward?: components['schemas']['BountyRewardSectionDto'];
+      resources?: components['schemas']['BountyResourcesSectionDto'];
       /** @description Hint that this is an autosave (no completion side effects). */
       autoSave?: boolean;
     };
@@ -18057,6 +20563,8 @@ export interface components {
        * @enum {string}
        */
       fundingMode: 'EXTERNAL' | 'MANAGED';
+      /** @description For MANAGED funding, the organization treasury wallet to fund from. When set, the backend signs with that treasury (managed) wallet instead of the caller's personal wallet; ownerAddress must match the treasury wallet address. Omit to fund from the personal managed wallet. */
+      sourceWalletId?: string;
     };
     BountyEscrowOpResponseDto: {
       /** @description Internal EscrowOp uuid. */
@@ -18232,6 +20740,44 @@ export interface components {
       /** @description Optional video intro URL (APPLICATION_FULL). */
       videoIntroUrl?: string;
     };
+    BountyApplicationResponseDto: {
+      id: string;
+      bountyId: string;
+      /** @description G-address that receives payout if selected. */
+      applicantAddress: string;
+      /** @description Escrow lifecycle: pending_confirm | active | withdrawn | failed. */
+      status: string;
+      /**
+       * @description Application lifecycle (SUBMITTED/SHORTLISTED/SELECTED/DECLINED/WITHDRAWN). Null for legacy OPEN + SINGLE_CLAIM rows.
+       * @enum {string|null}
+       */
+      applicationStatus?:
+        | 'SUBMITTED'
+        | 'SHORTLISTED'
+        | 'SELECTED'
+        | 'DECLINED'
+        | 'WITHDRAWN'
+        | null;
+      proposalShort?: string | null;
+      proposalFull?: string | null;
+      portfolioLinks: string[];
+      estimatedDays?: number | null;
+      qualifications?: string | null;
+      videoIntroUrl?: string | null;
+      declineReason?: string | null;
+      /** Format: date-time */
+      shortlistedAt?: string | null;
+      /** Format: date-time */
+      selectedAt?: string | null;
+      /** Format: date-time */
+      declinedAt?: string | null;
+      /** Format: date-time */
+      withdrawnAt?: string | null;
+      /** Format: date-time */
+      createdAt: string;
+      /** Format: date-time */
+      updatedAt: string;
+    };
     EditBountyApplicationDto: {
       /** @description Light proposal text. */
       proposalShort?: string;
@@ -18260,6 +20806,121 @@ export interface components {
        * @example GBXNQFDSBDPOIA3Q4LYIWBOJFFPCCV6IEDHBSJZEAYFKIKZVUO4QEDVS
        */
       applicantAddress: string;
+    };
+    BountySummaryDto: {
+      id: string;
+      title: string;
+      /** @description Pillar lifecycle state (lowercase). */
+      status: string;
+      /** @enum {string|null} */
+      entryType?: 'OPEN' | 'APPLICATION_LIGHT' | 'APPLICATION_FULL' | null;
+      /** @enum {string|null} */
+      claimType?: 'SINGLE_CLAIM' | 'COMPETITION' | null;
+      rewardCurrency: string;
+      /**
+       * Format: date-time
+       * @description Work/submission deadline (published value, falling back to the draft).
+       */
+      deadline?: string | null;
+    };
+    MyBountyApplicationRowDto: {
+      id: string;
+      /**
+       * @description SUBMITTED / SHORTLISTED / SELECTED / DECLINED / WITHDRAWN.
+       * @enum {string|null}
+       */
+      applicationStatus?:
+        | 'SUBMITTED'
+        | 'SHORTLISTED'
+        | 'SELECTED'
+        | 'DECLINED'
+        | 'WITHDRAWN'
+        | null;
+      /** @description Escrow lifecycle: pending_confirm | active | withdrawn | failed. */
+      status: string;
+      /** Format: date-time */
+      createdAt: string;
+      /** Format: date-time */
+      updatedAt: string;
+      bounty: components['schemas']['BountySummaryDto'];
+    };
+    MyBountyApplicationListDto: {
+      items: components['schemas']['MyBountyApplicationRowDto'][];
+      total: number;
+      page: number;
+      limit: number;
+    };
+    MyBountySubmissionRowDto: {
+      id: string;
+      /** @description Off-chain review state. */
+      status: string;
+      escrowAnchorStatus?: string | null;
+      githubPullRequestUrl?: string | null;
+      tierPosition?: number | null;
+      /** @description Won amount in token-native units (decimal string). */
+      tierAmount?: string | null;
+      rewardTransactionHash?: string | null;
+      /** Format: date-time */
+      paidAt?: string | null;
+      /** Format: date-time */
+      createdAt: string;
+      /** Format: date-time */
+      updatedAt: string;
+      bounty: components['schemas']['BountySummaryDto'];
+    };
+    MyBountySubmissionListDto: {
+      items: components['schemas']['MyBountySubmissionRowDto'][];
+      total: number;
+      page: number;
+      limit: number;
+    };
+    BountyWinnerDto: {
+      submissionId: string;
+      /** @description 1 = 1st place. */
+      tierPosition: number;
+      /** @description Won amount (token-native units, decimal string). */
+      tierAmount: string;
+      /** @description User id of the winner. */
+      submittedBy: string;
+      applicantAddress?: string | null;
+      githubPullRequestUrl?: string | null;
+      contentUri?: string | null;
+      rewardTransactionHash?: string | null;
+      /** Format: date-time */
+      paidAt?: string | null;
+    };
+    BountyResultsDto: {
+      bountyId: string;
+      /** @description Pillar lifecycle state (lowercase). */
+      status: string;
+      /** @description True once the bounty has completed. */
+      isComplete: boolean;
+      rewardCurrency: string;
+      /** @description Winners, by tier. */
+      winners: components['schemas']['BountyWinnerDto'][];
+    };
+    BountySubmissionViewDto: {
+      id: string;
+      submittedBy: string;
+      /** @description True when this is the caller’s own submission. */
+      isOwn: boolean;
+      /** @description Off-chain review state. */
+      status: string;
+      escrowAnchorStatus?: string | null;
+      applicantAddress?: string | null;
+      githubPullRequestUrl?: string | null;
+      contentUri?: string | null;
+      tierPosition?: number | null;
+      tierAmount?: string | null;
+      /** Format: date-time */
+      createdAt: string;
+    };
+    BountySubmissionListDto: {
+      items: components['schemas']['BountySubmissionViewDto'][];
+      /** @enum {string} */
+      visibility: 'ORGANIZER_ONLY' | 'HIDDEN_UNTIL_DEADLINE';
+      /** @description Whether peer submissions are visible to the caller (organizer, or HIDDEN_UNTIL_DEADLINE past the deadline). When false, only the caller’s own submission is returned. */
+      peersVisible: boolean;
     };
     BountyPrizeTierPublicDto: {
       position: number;
@@ -21543,29 +24204,6 @@ export interface operations {
       };
     };
   };
-  BuilderCrowdfundingV2Controller_claimMilestone: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        id: string;
-      };
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['ClaimCrowdfundingMilestoneDto'];
-      };
-    };
-    responses: {
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-    };
-  };
   BackerCrowdfundingV2Controller_contribute: {
     parameters: {
       query?: never;
@@ -21850,6 +24488,52 @@ export interface operations {
           [name: string]: unknown;
         };
         content?: never;
+      };
+    };
+  };
+  CrowdfundingDisputesController_file: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['FileDisputeDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['DisputeResponseDto'];
+        };
+      };
+    };
+  };
+  CrowdfundingDisputesController_mine: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['DisputeResponseDto'][];
+        };
       };
     };
   };
@@ -31941,11 +34625,7 @@ export interface operations {
       path?: never;
       cookie?: never;
     };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['CreateDiditSessionDto'];
-      };
-    };
+    requestBody?: never;
     responses: {
       /** @description Session created */
       200: {
@@ -31988,7 +34668,7 @@ export interface operations {
         };
         content?: never;
       };
-      /** @description Invalid signature */
+      /** @description Invalid or missing signature */
       400: {
         headers: {
           [name: string]: unknown;
@@ -32073,6 +34753,1877 @@ export interface operations {
           [name: string]: unknown;
         };
         content?: never;
+      };
+    };
+  };
+  AccessController_me: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['MeResponseDto'];
+        };
+      };
+    };
+  };
+  AccessController_roles: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  AnalyticsController_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['AnalyticsDto'];
+        };
+      };
+    };
+  };
+  OverviewController_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['OverviewDto'];
+        };
+      };
+    };
+  };
+  UsersController_list: {
+    parameters: {
+      query?: {
+        /** @description Field to sort by (whitelisted per resource; ignored otherwise) */
+        sort?: string;
+        dir?: 'asc' | 'desc';
+        page?: number;
+        limit?: number;
+        /** @description Match against name, email, or username */
+        search?: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PaginatedUsersDto'];
+        };
+      };
+    };
+  };
+  UsersController_getById: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['AdminUserDetailDto'];
+        };
+      };
+    };
+  };
+  UsersController_getEarnings: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['EarningsResponseDto'];
+        };
+      };
+    };
+  };
+  UsersController_getOrganizations: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['AdminUserOrganizationDto'][];
+        };
+      };
+    };
+  };
+  UsersController_getWallet: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['AdminUserWalletDto'];
+        };
+      };
+    };
+  };
+  UsersController_setBanned: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['BanUserDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['BanUserResponseDto'];
+        };
+      };
+    };
+  };
+  OrganizationsController_list: {
+    parameters: {
+      query?: {
+        /** @description Field to sort by (whitelisted per resource; ignored otherwise) */
+        sort?: string;
+        dir?: 'asc' | 'desc';
+        page?: number;
+        limit?: number;
+        /** @description Match against name or slug */
+        search?: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PaginatedOrganizationsDto'];
+        };
+      };
+    };
+  };
+  OrganizationsController_getById: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['AdminOrgDetailDto'];
+        };
+      };
+    };
+  };
+  OrganizationsController_update: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateOrgDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['OrgActionResponseDto'];
+        };
+      };
+    };
+  };
+  OrganizationsController_suspend: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['SuspendOrgDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['OrgSuspensionResponseDto'];
+        };
+      };
+    };
+  };
+  OrganizationsController_reinstate: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ReinstateOrgDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['OrgSuspensionResponseDto'];
+        };
+      };
+    };
+  };
+  ProgramsController_list: {
+    parameters: {
+      query?: {
+        /** @description Field to sort by (whitelisted per resource; ignored otherwise) */
+        sort?: string;
+        dir?: 'asc' | 'desc';
+        /** @description Which pillar to list. Defaults to hackathons. */
+        type?: 'hackathon' | 'bounty' | 'grant' | 'crowdfunding';
+        page?: number;
+        limit?: number;
+        /** @description Match against the program title */
+        search?: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PaginatedProgramsDto'];
+        };
+      };
+    };
+  };
+  ProgramsController_getById: {
+    parameters: {
+      query: {
+        /** @description Which pillar the id belongs to */
+        type: 'hackathon' | 'bounty' | 'grant' | 'crowdfunding';
+      };
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['AdminProgramDetailDto'];
+        };
+      };
+    };
+  };
+  ProgramsController_setFeatured: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['SetFeaturedDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ProgramActionResponseDto'];
+        };
+      };
+    };
+  };
+  ProgramsController_setStatus: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['SetProgramStatusDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ProgramActionResponseDto'];
+        };
+      };
+    };
+  };
+  DisputesController_list: {
+    parameters: {
+      query?: {
+        /** @description Field to sort by (whitelisted per resource; ignored otherwise) */
+        sort?: string;
+        dir?: 'asc' | 'desc';
+        page?: number;
+        limit?: number;
+        /** @description Match against the dispute description or campaign title */
+        search?: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PaginatedDisputesDto'];
+        };
+      };
+    };
+  };
+  DisputesController_getById: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['AdminDisputeDetailDto'];
+        };
+      };
+    };
+  };
+  DisputesController_assign: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['AssignDisputeDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['DisputeAssignmentResponseDto'];
+        };
+      };
+    };
+  };
+  DisputesController_note: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['NoteDisputeDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['DisputeNoteResponseDto'];
+        };
+      };
+    };
+  };
+  DisputesController_resolve: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ResolveDisputeDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['DisputeActionResponseDto'];
+        };
+      };
+    };
+  };
+  DisputesController_escalate: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['EscalateDisputeDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['DisputeActionResponseDto'];
+        };
+      };
+    };
+  };
+  EscrowController_list: {
+    parameters: {
+      query?: {
+        /** @description Field to sort by (whitelisted per resource; ignored otherwise) */
+        sort?: string;
+        dir?: 'asc' | 'desc';
+        page?: number;
+        limit?: number;
+        /** @description Match against the on-chain reference (hash or address) */
+        search?: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PaginatedMoneyDto'];
+        };
+      };
+    };
+  };
+  EscrowController_listRequests: {
+    parameters: {
+      query?: {
+        /** @description Filter to a single request status */
+        status?: 'PROPOSED' | 'APPROVED' | 'REJECTED' | 'EXECUTED';
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['EscrowRequestListResponseDto'];
+        };
+      };
+    };
+  };
+  EscrowController_propose: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ProposeEscrowRequestDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['EscrowRequestDto'];
+        };
+      };
+    };
+  };
+  EscrowController_decide: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['DecideEscrowRequestDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['EscrowRequestDto'];
+        };
+      };
+    };
+  };
+  EscrowController_execute: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ExecuteEscrowRequestDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['EscrowRequestDto'];
+        };
+      };
+    };
+  };
+  PayoutsController_list: {
+    parameters: {
+      query?: {
+        /** @description Field to sort by (whitelisted per resource; ignored otherwise) */
+        sort?: string;
+        dir?: 'asc' | 'desc';
+        page?: number;
+        limit?: number;
+        /** @description Match against the on-chain reference (hash or address) */
+        search?: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PaginatedMoneyDto'];
+        };
+      };
+    };
+  };
+  PayoutsController_listRequests: {
+    parameters: {
+      query?: {
+        /** @description Filter to a single request status */
+        status?:
+          | 'PROPOSED'
+          | 'APPROVED'
+          | 'AWAITING_SIGNATURE'
+          | 'REJECTED'
+          | 'EXECUTED';
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PayoutRequestListResponseDto'];
+        };
+      };
+    };
+  };
+  PayoutsController_propose: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ProposePayoutRequestDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PayoutRequestDto'];
+        };
+      };
+    };
+  };
+  PayoutsController_decide: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['DecidePayoutRequestDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PayoutRequestDto'];
+        };
+      };
+    };
+  };
+  PayoutsController_buildXdr: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['BuildXdrResponseDto'];
+        };
+      };
+    };
+  };
+  PayoutsController_submitSigned: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['SubmitPayoutSignedXdrDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PayoutRequestDto'];
+        };
+      };
+    };
+  };
+  PayoutsController_execute: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ExecutePayoutRequestDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PayoutRequestDto'];
+        };
+      };
+    };
+  };
+  ContentController_list: {
+    parameters: {
+      query?: {
+        /** @description Field to sort by (whitelisted per resource; ignored otherwise) */
+        sort?: string;
+        dir?: 'asc' | 'desc';
+        page?: number;
+        limit?: number;
+        /** @description Match against the post title or slug */
+        search?: string;
+        /** @description Show archived (soft-deleted) posts instead of active ones. */
+        archived?: boolean;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PaginatedContentDto'];
+        };
+      };
+    };
+  };
+  ContentController_create: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateBlogPostDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ContentMutationResponseDto'];
+        };
+      };
+    };
+  };
+  ContentController_getById: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['AdminContentDetailDto'];
+        };
+      };
+    };
+  };
+  ContentController_update: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateContentDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ContentMutationResponseDto'];
+        };
+      };
+    };
+  };
+  ContentController_setPublished: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['SetPublishedDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ContentActionResponseDto'];
+        };
+      };
+    };
+  };
+  ContentController_archive: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ArchiveContentDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ContentActionResponseDto'];
+        };
+      };
+    };
+  };
+  ContentController_restore: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ContentActionResponseDto'];
+        };
+      };
+    };
+  };
+  CrowdfundingChecklistController_list: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ChecklistItemDto'][];
+        };
+      };
+    };
+  };
+  CrowdfundingChecklistController_create: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateChecklistItemDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ChecklistItemDto'];
+        };
+      };
+    };
+  };
+  CrowdfundingChecklistController_reorder: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ReorderChecklistDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ChecklistItemDto'][];
+        };
+      };
+    };
+  };
+  CrowdfundingChecklistController_archive: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        itemId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  CrowdfundingChecklistController_update: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        itemId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateChecklistItemDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ChecklistItemDto'];
+        };
+      };
+    };
+  };
+  CrowdfundingController_list: {
+    parameters: {
+      query?: {
+        /** @description Field to sort by (whitelisted per resource; ignored otherwise) */
+        sort?: string;
+        dir?: 'asc' | 'desc';
+        page?: number;
+        limit?: number;
+        /** @description Match against the project title */
+        search?: string;
+        /** @description v2Status filter. Omit to list the full lifecycle (all statuses). */
+        status?:
+          | 'DRAFT'
+          | 'SUBMITTED_FOR_REVIEW'
+          | 'REVIEW_REJECTED'
+          | 'REVIEW_APPROVED'
+          | 'VOTING'
+          | 'VOTE_FAILED'
+          | 'VOTE_PASSED'
+          | 'PUBLISHING'
+          | 'FUNDING'
+          | 'COMPLETED'
+          | 'CANCELLED'
+          | 'PAUSED'
+          | 'FAILED';
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PaginatedCrowdfundingDto'];
+        };
+      };
+    };
+  };
+  CrowdfundingController_getById: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['AdminCrowdfundingDetailDto'];
+        };
+      };
+    };
+  };
+  CrowdfundingController_approve: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ApproveCampaignDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CrowdfundingActionResponseDto'];
+        };
+      };
+    };
+  };
+  CrowdfundingController_reject: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['RejectCampaignDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CrowdfundingActionResponseDto'];
+        };
+      };
+    };
+  };
+  CrowdfundingController_requestRevision: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['RequestRevisionDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CrowdfundingActionResponseDto'];
+        };
+      };
+    };
+  };
+  SecurityController_enroll: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['TotpEnrollResponseDto'];
+        };
+      };
+    };
+  };
+  SecurityController_activate: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['TotpCodeDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['OkResponseDto'];
+        };
+      };
+    };
+  };
+  SecurityController_stepUp: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['TotpCodeDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['OkResponseDto'];
+        };
+      };
+    };
+  };
+  AuditController_list: {
+    parameters: {
+      query?: {
+        /** @description Field to sort by (whitelisted per resource; ignored otherwise) */
+        sort?: string;
+        dir?: 'asc' | 'desc';
+        page?: number;
+        limit?: number;
+        /** @description Match against the actor email, action, or target id */
+        search?: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PaginatedAuditDto'];
+        };
+      };
+    };
+  };
+  AuditController_stream: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  FeatureFlagsController_list: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['FeatureFlagsResponseDto'];
+        };
+      };
+    };
+  };
+  FeatureFlagsController_toggle: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        key: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ToggleFeatureFlagDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['FeatureFlagDto'];
+        };
+      };
+    };
+  };
+  StaffController_list: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['StaffListResponseDto'];
+        };
+      };
+    };
+  };
+  StaffController_setRole: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['SetRoleDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['StaffListItemDto'];
+        };
+      };
+    };
+  };
+  GovernanceController_list: {
+    parameters: {
+      query?: {
+        /** @description Filter to a single proposal status */
+        status?: 'PROPOSED' | 'APPROVED' | 'REJECTED' | 'EXECUTED';
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['GovernanceListResponseDto'];
+        };
+      };
+    };
+  };
+  GovernanceController_propose: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateProposalDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['GovernanceProposalDto'];
+        };
+      };
+    };
+  };
+  GovernanceController_decide: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['DecideProposalDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['GovernanceProposalDto'];
+        };
+      };
+    };
+  };
+  GovernanceController_execute: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ExecuteProposalDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['GovernanceProposalDto'];
+        };
+      };
+    };
+  };
+  KycController_list: {
+    parameters: {
+      query?: {
+        /** @description Field to sort by (whitelisted per resource; ignored otherwise) */
+        sort?: string;
+        dir?: 'asc' | 'desc';
+        /** @description Filter to one KYC state. Omit for all KYC-engaged users. */
+        status?: 'in_review' | 'approved' | 'declined';
+        page?: number;
+        limit?: number;
+        /** @description Match against the user name or email */
+        search?: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PaginatedKycDto'];
+        };
+      };
+    };
+  };
+  KycController_connection: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['DiditConnectionDto'];
+        };
+      };
+    };
+  };
+  KycController_sync: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        userId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['KycSyncResponseDto'];
+        };
+      };
+    };
+  };
+  KycController_retrigger: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        userId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['KycRetriggerResponseDto'];
+        };
+      };
+    };
+  };
+  KycController_override: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        userId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['KycOverrideDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['KycOverrideResponseDto'];
+        };
+      };
+    };
+  };
+  MilestonesController_list: {
+    parameters: {
+      query?: {
+        /** @description Field to sort by (whitelisted per resource; ignored otherwise) */
+        sort?: string;
+        dir?: 'asc' | 'desc';
+        /** @description Which pillar to list. Defaults to crowdfunding. */
+        type?: 'crowdfunding' | 'grant';
+        page?: number;
+        limit?: number;
+        /** @description Match against milestone or program title */
+        search?: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PaginatedMilestonesDto'];
+        };
+      };
+    };
+  };
+  MilestonesController_findOne: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['AdminMilestoneDetailDto'];
+        };
+      };
+    };
+  };
+  MilestonesController_approve: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['MilestoneActionResponseDto'];
+        };
+      };
+    };
+  };
+  MilestonesController_reject: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['RejectMilestoneDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['MilestoneActionResponseDto'];
+        };
+      };
+    };
+  };
+  MilestonesController_buildReleaseXdr: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['MilestoneReleaseXdrDto'];
+        };
+      };
+    };
+  };
+  MilestonesController_submitReleaseSigned: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['SubmitMilestoneReleaseDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['MilestoneReleaseResultDto'];
+        };
+      };
+    };
+  };
+  WalletsController_list: {
+    parameters: {
+      query?: {
+        /** @description Field to sort by (whitelisted per resource; ignored otherwise) */
+        sort?: string;
+        dir?: 'asc' | 'desc';
+        page?: number;
+        limit?: number;
+        /** @description Match against the public key (G-address) */
+        search?: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PaginatedWalletsDto'];
+        };
       };
     };
   };
@@ -32891,11 +37442,14 @@ export interface operations {
     };
     requestBody?: never;
     responses: {
+      /** @description The caller's application, or null when they have not applied. */
       200: {
         headers: {
           [name: string]: unknown;
         };
-        content?: never;
+        content: {
+          'application/json': components['schemas']['BountyApplicationResponseDto'];
+        };
       };
     };
   };
@@ -33083,6 +37637,121 @@ export interface operations {
           [name: string]: unknown;
         };
         content?: never;
+      };
+    };
+  };
+  BountyParticipantDashboardController_myApplications: {
+    parameters: {
+      query?: {
+        page?: number;
+        limit?: number;
+        status?:
+          | 'SUBMITTED'
+          | 'SHORTLISTED'
+          | 'SELECTED'
+          | 'DECLINED'
+          | 'WITHDRAWN';
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['MyBountyApplicationListDto'];
+        };
+      };
+    };
+  };
+  BountyParticipantDashboardController_mySubmissions: {
+    parameters: {
+      query?: {
+        page?: number;
+        limit?: number;
+        status?: unknown;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['MyBountySubmissionListDto'];
+        };
+      };
+    };
+  };
+  BountyParticipantDashboardController_mySubmissionForBounty: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        bountyId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description The caller's submission, or null when they have not submitted. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['MyBountySubmissionRowDto'];
+        };
+      };
+    };
+  };
+  BountyResultsController_getResults: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['BountyResultsDto'];
+        };
+      };
+    };
+  };
+  BountyResultsController_getSubmissions: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['BountySubmissionListDto'];
+        };
       };
     };
   };
