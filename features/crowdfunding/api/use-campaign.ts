@@ -71,6 +71,16 @@ export function useCampaign(idOrSlug: string | null | undefined) {
     queryFn: () =>
       isId ? fetchCampaignById(idOrSlug!) : fetchCampaignBySlug(idOrSlug!),
     staleTime: 30_000,
+    // Poll during transient states so the UI self-heals without a manual refresh:
+    // PUBLISHING — fast poll until the on-chain tx confirms and status flips to FUNDING.
+    // VOTING / FUNDING — slower poll to pick up vote counts and contributions from other users.
+    refetchInterval: query => {
+      const status = (query.state.data as CrowdfundingCampaign | undefined)
+        ?.v2Status;
+      if (status === 'PUBLISHING') return 5_000;
+      if (status === 'VOTING' || status === 'FUNDING') return 30_000;
+      return false;
+    },
   });
 }
 
@@ -106,10 +116,8 @@ export function useReviseAndResubmit() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => reviseAndResubmit(id),
-    onSuccess: (_data, id) => {
-      queryClient.invalidateQueries({
-        queryKey: crowdfundingKeys.campaign(id),
-      });
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: crowdfundingKeys.all });
     },
   });
 }
@@ -155,9 +163,11 @@ export function useContributeV2() {
   return useMutation({
     mutationFn: ({ id, body }: { id: string; body: ContributeV2Body }) =>
       contributeV2(id, body),
-    onSuccess: (_data, { id }) => {
+    // Invalidate all campaign entries (UUID-keyed AND slug-keyed) so both the
+    // builder page and the public page update without a manual refresh.
+    onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: crowdfundingKeys.campaign(id),
+        queryKey: crowdfundingKeys.campaignPrefix(),
       });
     },
   });
@@ -168,12 +178,11 @@ export function useCastVote() {
   return useMutation({
     mutationFn: ({ id, choice }: { id: string; choice: 'UP' | 'DOWN' }) =>
       castVote(id, choice),
-    onSuccess: (_data, { id }) => {
+    // campaignPrefix() covers ['crowdfunding','campaign'] which matches every
+    // per-campaign entry — slug-keyed, UUID-keyed, and my-vote sub-keys alike.
+    onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: crowdfundingKeys.campaign(id),
-      });
-      queryClient.invalidateQueries({
-        queryKey: [...crowdfundingKeys.campaign(id), 'my-vote'],
+        queryKey: crowdfundingKeys.campaignPrefix(),
       });
     },
   });

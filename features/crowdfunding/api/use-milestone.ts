@@ -75,11 +75,16 @@ export function useSubmitMilestoneEvidence(campaignId: string) {
       });
     },
     onSuccess: (_data, { milestoneId }) => {
+      // Bust the single-milestone entry and ALL campaign entries regardless of
+      // whether they were cached by UUID or by slug (public page uses slug).
       queryClient.invalidateQueries({
         queryKey: crowdfundingKeys.milestone(campaignId, milestoneId),
       });
       queryClient.invalidateQueries({
-        queryKey: crowdfundingKeys.campaign(campaignId),
+        queryKey: crowdfundingKeys.milestones(campaignId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: crowdfundingKeys.campaignPrefix(),
       });
     },
   });

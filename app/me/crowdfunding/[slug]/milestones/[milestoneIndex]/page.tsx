@@ -1,6 +1,7 @@
 'use client';
 
 import { use } from 'react';
+import { useRouter } from 'next/navigation';
 import { uploadMilestoneDocuments } from '@/lib/api/upload';
 import {
   useCampaign,
@@ -26,6 +27,7 @@ interface PageProps {
 export default function MilestoneDetailPage({ params }: PageProps) {
   const { slug, milestoneIndex: milestoneParam } = use(params);
 
+  const router = useRouter();
   const { data: campaign, isLoading, error } = useCampaign(slug);
 
   const milestones = campaign?.milestones ?? [];
@@ -77,6 +79,7 @@ export default function MilestoneDetailPage({ params }: PageProps) {
           toast.success(
             'Evidence submitted. The team will review your submission.'
           );
+          router.push(`/me/crowdfunding/${campaign!.slug}/milestones`);
         },
         onError: err => {
           toast.error(

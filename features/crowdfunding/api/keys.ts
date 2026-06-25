@@ -13,7 +13,11 @@ export const crowdfundingKeys = {
   mine: (page: number, limit: number) =>
     [...crowdfundingKeys.all, 'mine', { page, limit }] as const,
 
-  // Single campaign (by ID or slug - same cache slot since slug is unique)
+  // Covers ALL single-campaign entries regardless of whether they were keyed by
+  // UUID or slug. Use this for invalidation when you only have one form of the key.
+  campaignPrefix: () => [...crowdfundingKeys.all, 'campaign'] as const,
+
+  // Single campaign (by ID or slug — separate cache entries, same data)
   campaign: (idOrSlug: string) =>
     [...crowdfundingKeys.all, 'campaign', idOrSlug] as const,
 
