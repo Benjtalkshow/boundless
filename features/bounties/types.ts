@@ -129,3 +129,49 @@ export interface MyBountyApplication {
   createdAt: string;
   updatedAt: string;
 }
+
+/**
+ * Cross-bounty "my activity" dashboard rows (boundless-nestjs #332). These
+ * endpoints (`/bounties/me/applications`, `/bounties/me/submissions`) are not
+ * yet in the generated schema, so the rows are hand-typed to the backend DTOs.
+ * Swap to `Schemas[...]` once #332 lands and codegen runs.
+ */
+export interface BountyActivitySummary {
+  id: string;
+  title: string;
+  status: string;
+  entryType: BountyEntryType | null;
+  claimType: BountyClaimType | null;
+  rewardCurrency: string;
+  deadline: string | null;
+}
+
+export interface MyBountyApplicationRow {
+  id: string;
+  applicationStatus: BountyApplicationStatus | null;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+  bounty: BountyActivitySummary;
+}
+
+export interface MyBountySubmissionRow {
+  id: string;
+  status: string;
+  escrowAnchorStatus: string | null;
+  githubPullRequestUrl: string | null;
+  tierPosition: number | null;
+  tierAmount: string | null;
+  rewardTransactionHash: string | null;
+  paidAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+  bounty: BountyActivitySummary;
+}
+
+export interface BountyActivityPage<T> {
+  items: T[];
+  total: number;
+  page: number;
+  limit: number;
+}
