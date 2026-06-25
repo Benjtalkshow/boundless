@@ -86,3 +86,63 @@ export type {
   UseEscrowOpRunnerOptions,
   EscrowOpRunner,
 } from './api/use-escrow';
+
+// ── Builder / participant data layer (#621) ──────────────────────────────────
+
+// Participant types (aliased from the generated schema; MyBountyApplication is
+// hand-typed until boundless-nestjs #331 lands and codegen runs).
+export type {
+  BountyPublic,
+  BountyPublicList,
+  MyBountyApplication,
+  BountyApplicationStatus,
+  ApplyBountyRequest,
+  SubmitBountyRequest,
+  WithdrawApplicationRequest,
+  WithdrawSubmissionRequest,
+  ContributeBountyRequest,
+  CreateBountyApplicationRequest,
+  EditBountyApplicationRequest,
+  JoinCompetitionRequest,
+} from './types';
+
+// Participant REST client (public reads + v2 application records + competition).
+export {
+  listBounties,
+  getBounty,
+  getMyBountyApplication,
+  applyToBounty,
+  editBountyApplication,
+  withdrawBountyApplication,
+  joinCompetition,
+  leaveCompetition,
+} from './api/participant-client';
+export type { BountiesListParams } from './api/participant-client';
+
+// Participant escrow client (on-chain apply/submit/withdraw/contribute).
+export {
+  applyToBountyEscrow,
+  withdrawBountyApplicationEscrow,
+  submitBountyWorkEscrow,
+  withdrawBountySubmissionEscrow,
+  contributeToBountyEscrow,
+  getParticipantBountyOp,
+  submitSignedParticipantBounty,
+} from './api/participant-escrow-client';
+
+// Participant hooks (React Query).
+export {
+  useBountiesList,
+  useBounty,
+  useMyBountyApplication,
+  useApplyToBounty,
+  useEditApplication,
+  useWithdrawApplication,
+  useJoinCompetition,
+  useLeaveCompetition,
+  useSubmitBounty,
+  useWithdrawSubmission,
+  useApplyToBountyEscrow,
+  useWithdrawApplicationEscrow,
+  useContributeToBounty,
+} from './api/use-participant';

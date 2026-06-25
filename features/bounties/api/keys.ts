@@ -10,4 +10,13 @@ export const bountyKeys = {
     [...bountyKeys.all, 'draft', organizationId, id] as const,
   escrowOp: (scope: string, opRowId: string) =>
     [...bountyKeys.all, 'escrow-op', scope, opRowId] as const,
+
+  // Builder / participant reads.
+  list: (params: Record<string, unknown> = {}) =>
+    [...bountyKeys.all, 'list', params] as const,
+  detail: (bountyId: string) =>
+    [...bountyKeys.all, 'detail', bountyId] as const,
+  myApplication: (bountyId: string) =>
+    [...bountyKeys.all, 'my-application', bountyId] as const,
+  myActivity: () => [...bountyKeys.all, 'my-activity'] as const,
 };
