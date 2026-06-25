@@ -9,9 +9,14 @@ import {
 import { MilestoneDetailHeader } from '@/components/crowdfunding/milestone-detail-header';
 import { MilestoneDetailInfo } from '@/components/crowdfunding/milestone-detail-info';
 import { MilestoneDetailDescription } from '@/components/crowdfunding/milestone-detail-description';
-import { MilestoneDetailLinks } from '@/components/crowdfunding/milestone-detail-links';
 import { MilestoneSubmitForm } from '@/components/crowdfunding/MilestoneSubmitForm';
-import { AlertTriangle, CheckCircle2 } from 'lucide-react';
+import {
+  AlertTriangle,
+  CheckCircle2,
+  Clock,
+  ExternalLink,
+  FileText,
+} from 'lucide-react';
 import { toast } from 'sonner';
 
 interface PageProps {
@@ -23,8 +28,6 @@ export default function MilestoneDetailPage({ params }: PageProps) {
 
   const { data: campaign, isLoading, error } = useCampaign(slug);
 
-  // Milestone cards link by milestone id; fall back to array index for any
-  // legacy numeric links.
   const milestones = campaign?.milestones ?? [];
   let milestone = milestones.find(m => m.id === milestoneParam) ?? null;
   let milestoneIndex = milestones.findIndex(m => m.id === milestoneParam);
@@ -85,15 +88,13 @@ export default function MilestoneDetailPage({ params }: PageProps) {
   };
 
   if (isLoading) {
-    return (
-      <div className='text-muted-foreground py-12 text-center'>Loading...</div>
-    );
+    return <div className='py-12 text-center text-zinc-500'>Loading...</div>;
   }
 
   if (error || !campaign || !milestone) {
     return (
-      <div className='text-muted-foreground py-12 text-center'>
-        Milestone not found
+      <div className='py-12 text-center text-zinc-500'>
+        Milestone not found.
       </div>
     );
   }
@@ -101,16 +102,25 @@ export default function MilestoneDetailPage({ params }: PageProps) {
   const reviewStatus = milestone.reviewStatus?.toLowerCase();
   const canSubmit =
     reviewStatus === 'pending' || reviewStatus === 'resubmission_required';
+  const isInReview = reviewStatus === 'submitted';
   const isRejected =
     reviewStatus === 'rejected' || reviewStatus === 'resubmission_required';
   const isApproved = reviewStatus === 'approved';
 
+  const milestoneNumber = milestoneIndex + 1;
+  const totalMilestones = milestones.length;
+
+  const submittedLinks = milestone.proofOfWorkLinks ?? [];
+  const submittedFiles = milestone.proofOfWorkFiles ?? [];
+  const submittedNotes = milestone.submissionNotes ?? '';
+
   return (
-    <div className='mx-auto max-w-4xl space-y-8'>
+    <div className='mx-auto max-w-4xl space-y-6'>
       <MilestoneDetailHeader
-        title={campaign.project.title}
         milestone={milestone}
-        campaignSlug={campaign.slug}
+        milestoneNumber={milestoneNumber}
+        totalMilestones={totalMilestones}
+        campaignTitle={campaign.project.title}
         backLink={`/me/crowdfunding/${campaign.slug}/milestones`}
       />
 
@@ -118,30 +128,114 @@ export default function MilestoneDetailPage({ params }: PageProps) {
 
       <MilestoneDetailDescription
         content={milestone.description || ''}
-        title='Description'
+        title='What needs to be delivered'
       />
 
-      <MilestoneDetailLinks campaign={campaign} />
-
-      {/* Review feedback */}
+      {/* Rejection feedback */}
       {isRejected && (
-        <div className='flex items-start gap-3 rounded-xl border border-amber-800/50 bg-amber-950/20 p-4'>
-          <AlertTriangle className='mt-0.5 h-5 w-5 flex-shrink-0 text-amber-400' />
-          <div>
-            <p className='text-sm font-medium text-amber-300'>
+        <div className='space-y-3 rounded-xl border border-amber-800/50 bg-amber-950/20 p-5'>
+          <div className='flex items-center gap-2'>
+            <AlertTriangle className='h-4 w-4 flex-shrink-0 text-amber-400' />
+            <p className='text-sm font-semibold text-amber-300'>
               {reviewStatus === 'resubmission_required'
                 ? 'Resubmission required'
                 : 'Submission not accepted'}
             </p>
-            <p className='mt-1 text-sm text-amber-200/70'>
-              The review team has requested changes to your submission. Update
-              your evidence below and resubmit.
-            </p>
           </div>
+          {milestone.rejectionFeedback ? (
+            <p className='text-sm leading-relaxed text-amber-200/80'>
+              {milestone.rejectionFeedback}
+            </p>
+          ) : (
+            <p className='text-sm text-amber-200/60'>
+              The review team has requested changes. Update your evidence below
+              and resubmit.
+            </p>
+          )}
+          {milestone.resubmissionDeadline && (
+            <p className='text-xs text-amber-400/70'>
+              Resubmit by:{' '}
+              {new Date(milestone.resubmissionDeadline).toLocaleDateString(
+                'en-US',
+                { month: 'long', day: 'numeric', year: 'numeric' }
+              )}
+            </p>
+          )}
         </div>
       )}
 
-      {/* Inline evidence submission */}
+      {/* In-review: show what was submitted */}
+      {isInReview && (
+        <div className='space-y-4 rounded-xl border border-blue-800/40 bg-blue-950/15 p-5'>
+          <div className='flex items-center gap-2'>
+            <Clock className='h-4 w-4 text-blue-400' />
+            <p className='text-sm font-semibold text-blue-300'>
+              Under review — submission received
+            </p>
+          </div>
+          <p className='text-xs text-blue-200/60'>
+            The Boundless team is reviewing your evidence. You will be notified
+            of the outcome.
+          </p>
+
+          {submittedNotes && (
+            <div className='space-y-1'>
+              <p className='text-xs font-medium text-zinc-400'>
+                Your progress notes
+              </p>
+              <p className='rounded-lg bg-zinc-900/60 p-3 text-sm text-zinc-300'>
+                {submittedNotes}
+              </p>
+            </div>
+          )}
+
+          {submittedLinks.length > 0 && (
+            <div className='space-y-1'>
+              <p className='text-xs font-medium text-zinc-400'>
+                Proof of work links
+              </p>
+              <div className='space-y-1.5'>
+                {submittedLinks.map((link, i) => (
+                  <a
+                    key={i}
+                    href={link}
+                    target='_blank'
+                    rel='noreferrer'
+                    className='flex items-center gap-2 text-sm text-blue-400 hover:text-blue-300'
+                  >
+                    <ExternalLink className='h-3.5 w-3.5 flex-shrink-0' />
+                    <span className='truncate'>{link}</span>
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {submittedFiles.length > 0 && (
+            <div className='space-y-1'>
+              <p className='text-xs font-medium text-zinc-400'>
+                Supporting files
+              </p>
+              <div className='space-y-1.5'>
+                {submittedFiles.map((url, i) => (
+                  <a
+                    key={i}
+                    href={url}
+                    target='_blank'
+                    rel='noreferrer'
+                    className='flex items-center gap-2 text-sm text-blue-400 hover:text-blue-300'
+                  >
+                    <FileText className='h-3.5 w-3.5 flex-shrink-0' />
+                    <span className='truncate'>File {i + 1}</span>
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Evidence submission form */}
       {canSubmit && (
         <MilestoneSubmitForm
           milestoneName={milestone.title || milestone.name}
@@ -150,7 +244,7 @@ export default function MilestoneDetailPage({ params }: PageProps) {
         />
       )}
 
-      {/* Approved: payout is released by the Boundless team (no builder action) */}
+      {/* Approved: payout released by Boundless team */}
       {isApproved && (
         <div className='rounded-xl border border-emerald-800/50 bg-emerald-950/20 p-6'>
           <div className='flex items-start gap-3'>
@@ -160,11 +254,11 @@ export default function MilestoneDetailPage({ params }: PageProps) {
                 Milestone approved
               </h3>
               <p className='mt-1 text-sm text-emerald-200/70'>
-                This milestone is approved. The Boundless team releases the
-                payout to your wallet. No action is needed on your part.
+                Approved. The Boundless team will release the payout to your
+                wallet. No action needed on your part.
               </p>
               {milestone.amount != null && (
-                <p className='mt-2 text-lg font-bold text-white'>
+                <p className='mt-3 text-xl font-bold text-white'>
                   ${milestone.amount.toLocaleString()} USDC
                 </p>
               )}

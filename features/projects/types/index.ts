@@ -45,6 +45,9 @@ export interface Milestone {
   submittedAt?: string | null;
   rejectionFeedback?: string | null;
   resubmissionDeadline?: string | null;
+  submissionNotes?: string | null;
+  proofOfWorkLinks?: string[] | null;
+  proofOfWorkFiles?: string[] | null;
 }
 
 export interface User {
