@@ -3,21 +3,33 @@
 import React from 'react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
-import {
-  ArrowLeft,
-  Award,
-  Calendar,
-  Loader2,
-  Target,
-  Users,
-} from 'lucide-react';
+import Image from 'next/image';
+import { ArrowLeft, Award, Calendar, Info, Loader2, Users } from 'lucide-react';
 
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import EmptyState from '@/components/EmptyState';
-import { computeBountyModeLabel } from '@/components/organization/bounties/new/tabs/schemas/modeSchema';
-import { useBounty, useMyBountyApplication } from '@/features/bounties';
+import {
+  computeBountyModeLabel,
+  computeBountyModeDescription,
+} from '@/components/organization/bounties/new/tabs/schemas/modeSchema';
+import {
+  CATEGORY_LABELS,
+  type BountyCategory,
+} from '@/components/organization/bounties/new/tabs/schemas/scopeSchema';
+import {
+  useBounty,
+  useMyBountyApplication,
+  useMyBountySubmission,
+} from '@/features/bounties';
 import { BountyEntryCta } from './BountyEntryCta';
 import BountySubmitPanel from './submit/BountySubmitPanel';
+import { DueCountdown } from '../DueCountdown';
 
 // Markdown renderer (matches the wizard's editor package).
 const Markdown = dynamic(
@@ -42,6 +54,10 @@ const ordinal = (n: number): string => {
 export default function BountyDetail({ id }: { id: string }) {
   const { data: bounty, isLoading, error } = useBounty(id);
   const { data: myApplication } = useMyBountyApplication(id);
+  const { data: mySubmission } = useMyBountySubmission(id);
+  // An anchored (non-withdrawn) submission must be withdrawn before the
+  // application/claim can be withdrawn (the contract enforces this order).
+  const hasActiveSubmission = mySubmission?.escrowAnchorStatus === 'active';
 
   if (isLoading) {
     return (
@@ -75,7 +91,15 @@ export default function BountyDetail({ id }: { id: string }) {
     bounty.entryType && bounty.claimType
       ? computeBountyModeLabel(bounty.entryType, bounty.claimType)
       : 'Bounty';
+  const modeDescription =
+    bounty.entryType && bounty.claimType
+      ? computeBountyModeDescription(bounty.entryType, bounty.claimType)
+      : null;
   const currency = bounty.rewardCurrency;
+  const isUsdc = currency?.toUpperCase() === 'USDC';
+  const categoryLabel = bounty.category
+    ? (CATEGORY_LABELS[bounty.category as BountyCategory] ?? bounty.category)
+    : null;
 
   return (
     <div>
@@ -91,26 +115,61 @@ export default function BountyDetail({ id }: { id: string }) {
         {/* Main */}
         <div className='min-w-0'>
           <div className='mb-4 flex flex-wrap items-center gap-2'>
-            <Badge
-              variant='outline'
-              className='rounded-full border-zinc-700 bg-zinc-800/60 px-3 py-1 text-xs font-medium text-zinc-200'
-            >
-              {modeLabel}
-            </Badge>
+            {modeDescription ? (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Badge
+                    variant='outline'
+                    className='flex cursor-help items-center gap-1 rounded-full border-zinc-700 bg-zinc-800/60 px-3 py-1 text-xs font-medium text-zinc-200'
+                  >
+                    {modeLabel}
+                    <Info className='h-3 w-3 text-zinc-400' />
+                  </Badge>
+                </TooltipTrigger>
+                <TooltipContent className='max-w-xs text-xs leading-relaxed'>
+                  {modeDescription}
+                </TooltipContent>
+              </Tooltip>
+            ) : (
+              <Badge
+                variant='outline'
+                className='rounded-full border-zinc-700 bg-zinc-800/60 px-3 py-1 text-xs font-medium text-zinc-200'
+              >
+                {modeLabel}
+              </Badge>
+            )}
             <Badge
               variant='outline'
               className='rounded-full border-zinc-700 bg-zinc-800/60 px-3 py-1 text-xs font-medium text-zinc-300 capitalize'
             >
               {bounty.status.replace(/_/g, ' ')}
             </Badge>
+            {categoryLabel && (
+              <Badge
+                variant='outline'
+                className='rounded-full border-zinc-700 bg-zinc-800/40 px-3 py-1 text-xs font-medium text-zinc-300'
+              >
+                {categoryLabel}
+              </Badge>
+            )}
           </div>
 
           <h1 className='text-2xl font-bold tracking-tight text-white sm:text-3xl'>
             {bounty.title}
           </h1>
-          <p className='mt-2 text-sm text-zinc-400'>
-            by <span className='text-zinc-200'>{bounty.organization.name}</span>
-          </p>
+          <div className='mt-2 flex items-center gap-2 text-sm text-zinc-400'>
+            <span>by</span>
+            <Avatar className='h-5 w-5'>
+              <AvatarImage
+                src={bounty.organization.logo ?? undefined}
+                alt={bounty.organization.name}
+              />
+              <AvatarFallback className='text-[10px]'>
+                {bounty.organization.name.charAt(0).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+            <span className='text-zinc-200'>{bounty.organization.name}</span>
+          </div>
 
           {/* Description (markdown) */}
           <div className='boundless-markdown mt-8' data-color-mode='dark'>
@@ -154,9 +213,20 @@ export default function BountyDetail({ id }: { id: string }) {
           {/* Reward */}
           <div className='rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5'>
             <div className='flex items-center gap-3'>
-              <div className='bg-primary/10 flex h-11 w-11 items-center justify-center rounded-xl'>
-                <Target className='text-primary h-5 w-5' />
-              </div>
+              {isUsdc ? (
+                <Image
+                  src='/assets/usdc.svg'
+                  alt='USDC'
+                  width={44}
+                  height={44}
+                  unoptimized
+                  className='h-11 w-11'
+                />
+              ) : (
+                <div className='bg-primary/10 flex h-11 w-11 items-center justify-center rounded-xl'>
+                  <Award className='text-primary h-5 w-5' />
+                </div>
+              )}
               <div>
                 <p className='text-primary text-xl font-bold'>
                   {bounty.rewardAmount > 0
@@ -169,6 +239,17 @@ export default function BountyDetail({ id }: { id: string }) {
 
             {/* Eligibility / mode facts */}
             <dl className='mt-4 space-y-2 border-t border-zinc-800 pt-4 text-sm'>
+              {bounty.submissionDeadline && (
+                <div className='flex items-center justify-between gap-3'>
+                  <dt className='text-zinc-400'>Deadline</dt>
+                  <dd className='text-right'>
+                    <DueCountdown
+                      deadline={bounty.submissionDeadline}
+                      className='flex items-center gap-1.5 text-xs font-medium text-zinc-200'
+                    />
+                  </dd>
+                </div>
+              )}
               {bounty.entryType === 'OPEN' &&
                 bounty.claimType === 'SINGLE_CLAIM' &&
                 bounty.reputationMinimum != null && (
@@ -204,12 +285,14 @@ export default function BountyDetail({ id }: { id: string }) {
           <BountyEntryCta
             bounty={bounty}
             myApplication={myApplication ?? null}
+            hasActiveSubmission={hasActiveSubmission}
           />
 
           {/* Submit work (shown when the builder is eligible) */}
           <BountySubmitPanel
             bounty={bounty}
             myApplication={myApplication ?? null}
+            hasActiveSubmission={hasActiveSubmission}
           />
         </aside>
       </div>
