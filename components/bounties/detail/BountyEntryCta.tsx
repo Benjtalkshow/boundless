@@ -1,32 +1,26 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { CheckCircle2, Lock } from 'lucide-react';
+import { CheckCircle2, Loader2, Lock } from 'lucide-react';
 
 import { BoundlessButton } from '@/components/buttons';
 import { Badge } from '@/components/ui/badge';
-import type { BountyPublic, MyBountyApplication } from '@/features/bounties';
+import { useWalletContext } from '@/components/providers/wallet-provider';
+import {
+  useLeaveCompetition,
+  useWithdrawApplication,
+  useWithdrawApplicationEscrow,
+  type BountyPublic,
+  type MyBountyApplication,
+} from '@/features/bounties';
+import BountyEntryDialog from './entry/BountyEntryDialog';
 
-/** Statuses where a bounty still accepts new entries. */
 const ACCEPTING_STATUSES = new Set([
   'open',
   'open_for_applications',
   'upcoming',
 ]);
-
-type EntryKind = 'claim' | 'join' | 'apply' | 'view';
-
-function entryKind(b: BountyPublic): { kind: EntryKind; label: string } {
-  const open = b.entryType === 'OPEN';
-  const application =
-    b.entryType === 'APPLICATION_LIGHT' || b.entryType === 'APPLICATION_FULL';
-  if (open && b.claimType === 'SINGLE_CLAIM')
-    return { kind: 'claim', label: 'Claim this bounty' };
-  if (open && b.claimType === 'COMPETITION')
-    return { kind: 'join', label: 'Join competition' };
-  if (application) return { kind: 'apply', label: 'Apply' };
-  return { kind: 'view', label: 'View' };
-}
 
 const STATUS_LABEL: Record<string, string> = {
   SUBMITTED: 'Application submitted',
@@ -51,27 +45,78 @@ export function BountyEntryCta({
   bounty: BountyPublic;
   myApplication: MyBountyApplication | null;
 }) {
-  const { label } = entryKind(bounty);
+  const { walletAddress } = useWalletContext();
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [confirmWithdraw, setConfirmWithdraw] = useState(false);
+
+  const withdrawApp = useWithdrawApplication(bounty.id);
+  const leave = useLeaveCompetition(bounty.id);
+  const withdrawClaim = useWithdrawApplicationEscrow(bounty.id);
+
+  const isApplication =
+    bounty.entryType === 'APPLICATION_LIGHT' ||
+    bounty.entryType === 'APPLICATION_FULL';
+  const isCompetition =
+    bounty.entryType === 'OPEN' && bounty.claimType === 'COMPETITION';
+
+  const primaryLabel = isApplication
+    ? 'Apply'
+    : isCompetition
+      ? 'Join competition'
+      : 'Claim this bounty';
 
   const deadlinePassed =
     !!bounty.applicationWindowCloseAt &&
     new Date(bounty.applicationWindowCloseAt).getTime() < Date.now();
   const accepting = ACCEPTING_STATUSES.has(bounty.status);
 
-  // An active (non-withdrawn) application means the caller is already in.
-  const activeStatus =
-    myApplication && myApplication.applicationStatus !== 'WITHDRAWN'
-      ? myApplication.applicationStatus
-      : null;
+  const withdrawn =
+    !!myApplication &&
+    (myApplication.applicationStatus === 'WITHDRAWN' ||
+      myApplication.status === 'withdrawn');
+  const isActive = !!myApplication && !withdrawn;
+  // Application records are only mutable while SUBMITTED.
+  const editable =
+    isApplication && myApplication?.applicationStatus === 'SUBMITTED';
 
-  // The real entry flow (forms / on-chain op) ships in #624; the CTA here is
-  // mode-aware and correctly gated, and hands off to that flow.
-  const onEntry = () =>
-    toast.info('The entry flow is coming in the next step (apply/join/claim).');
+  useEffect(() => {
+    if (withdrawClaim.isCompleted) toast.success('Claim withdrawn.');
+    else if (withdrawClaim.isFailed)
+      toast.error(withdrawClaim.error || 'Withdraw failed.');
+  }, [withdrawClaim.isCompleted, withdrawClaim.isFailed, withdrawClaim.error]);
+
+  const handleWithdraw = () => {
+    if (isApplication) {
+      if (!myApplication) return;
+      withdrawApp.mutate(myApplication.id, {
+        onSuccess: () => toast.success('Application withdrawn.'),
+        onError: e =>
+          toast.error((e as Error).message || 'Failed to withdraw.'),
+      });
+    } else if (isCompetition) {
+      if (!walletAddress) return toast.error('Connect a wallet to leave.');
+      leave.mutate(
+        { applicantAddress: walletAddress },
+        {
+          onSuccess: () => toast.success('You left the competition.'),
+          onError: e => toast.error((e as Error).message || 'Failed to leave.'),
+        }
+      );
+    } else {
+      if (!walletAddress) return toast.error('Connect a wallet to withdraw.');
+      void withdrawClaim.run({ applicantAddress: walletAddress });
+    }
+    setConfirmWithdraw(false);
+  };
+
+  const withdrawPending =
+    withdrawApp.isPending || leave.isPending || withdrawClaim.isRunning;
+  const withdrawLabel = isCompetition ? 'Leave competition' : 'Withdraw';
 
   return (
     <div className='rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5'>
-      {activeStatus ? (
+      {isActive ? (
         <div className='space-y-3'>
           <div className='flex items-center gap-2'>
             <CheckCircle2 className='text-primary h-4 w-4' />
@@ -79,15 +124,66 @@ export function BountyEntryCta({
               You&apos;re in this bounty
             </span>
           </div>
-          <Badge
-            variant='outline'
-            className={`rounded-full px-3 py-1 text-xs font-medium ${
-              STATUS_CLASS[activeStatus] ??
-              'border-zinc-700 bg-zinc-800/60 text-zinc-300'
-            }`}
-          >
-            {STATUS_LABEL[activeStatus] ?? activeStatus}
-          </Badge>
+          {myApplication?.applicationStatus && (
+            <Badge
+              variant='outline'
+              className={`rounded-full px-3 py-1 text-xs font-medium ${
+                STATUS_CLASS[myApplication.applicationStatus] ??
+                'border-zinc-700 bg-zinc-800/60 text-zinc-300'
+              }`}
+            >
+              {STATUS_LABEL[myApplication.applicationStatus] ??
+                myApplication.applicationStatus}
+            </Badge>
+          )}
+
+          {/* Edit (application, while SUBMITTED) */}
+          {editable && (
+            <BoundlessButton
+              variant='outline'
+              className='w-full'
+              onClick={() => {
+                setEditing(true);
+                setDialogOpen(true);
+              }}
+            >
+              Edit application
+            </BoundlessButton>
+          )}
+
+          {/* Withdraw / leave (two-step confirm) */}
+          {(editable || isCompetition || !isApplication) &&
+            (confirmWithdraw ? (
+              <div className='flex gap-2'>
+                <BoundlessButton
+                  variant='outline'
+                  className='flex-1'
+                  onClick={() => setConfirmWithdraw(false)}
+                  disabled={withdrawPending}
+                >
+                  Cancel
+                </BoundlessButton>
+                <BoundlessButton
+                  className='flex-1 bg-red-500 text-white hover:bg-red-600'
+                  onClick={handleWithdraw}
+                  disabled={withdrawPending}
+                >
+                  {withdrawPending ? (
+                    <Loader2 className='h-4 w-4 animate-spin' />
+                  ) : (
+                    'Confirm'
+                  )}
+                </BoundlessButton>
+              </div>
+            ) : (
+              <BoundlessButton
+                variant='outline'
+                className='w-full text-red-400 hover:bg-red-500/10 hover:text-red-300'
+                onClick={() => setConfirmWithdraw(true)}
+              >
+                {withdrawLabel}
+              </BoundlessButton>
+            ))}
         </div>
       ) : (
         <>
@@ -95,9 +191,12 @@ export function BountyEntryCta({
             size='lg'
             className='w-full'
             disabled={!accepting || deadlinePassed}
-            onClick={onEntry}
+            onClick={() => {
+              setEditing(false);
+              setDialogOpen(true);
+            }}
           >
-            {label}
+            {primaryLabel}
           </BoundlessButton>
           <p className='mt-2 flex items-center justify-center gap-1.5 text-center text-xs text-zinc-500'>
             {!accepting ? (
@@ -110,7 +209,7 @@ export function BountyEntryCta({
                 <Lock className='h-3.5 w-3.5' />
                 Applications have closed.
               </>
-            ) : myApplication?.applicationStatus === 'WITHDRAWN' ? (
+            ) : withdrawn ? (
               'You withdrew earlier — you can enter again.'
             ) : (
               'Funds are held in escrow and paid on-chain to winners.'
@@ -118,6 +217,14 @@ export function BountyEntryCta({
           </p>
         </>
       )}
+
+      <BountyEntryDialog
+        bounty={bounty}
+        existingApplication={myApplication}
+        editing={editing}
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+      />
     </div>
   );
 }
