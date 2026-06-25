@@ -20437,6 +20437,14 @@ export interface components {
       reputationMinimum?: number | null;
       /** @enum {string} */
       submissionVisibility?: 'ORGANIZER_ONLY' | 'HIDDEN_UNTIL_DEADLINE';
+      /** @description Require a documentation link when submitting work. */
+      requireDocumentation?: boolean;
+      /** @description Require a tweet link when submitting work. */
+      requireTweet?: boolean;
+      /** @description Require a demo video link when submitting work. */
+      requireDemoVideo?: boolean;
+      /** @description Require at least one media image when submitting work. */
+      requireMedia?: boolean;
       /** @description Credits required to apply (anti-spam). Supplied to the contract at publish via PublishBountyEscrowDto; not a Bounty column. */
       applicationCreditCost?: number | null;
     };
@@ -20689,6 +20697,14 @@ export interface components {
        * @example https://github.com/me/boundless-fix/pull/1
        */
       contentUri: string;
+      /** @description Documentation / setup / API reference URL. */
+      documentationUrl?: string;
+      /** @description Tweet / X post URL. */
+      tweetUrl?: string;
+      /** @description Demo video URL. */
+      demoVideoUrl?: string;
+      /** @description Media image URLs (uploaded screenshots / assets). */
+      mediaUrls?: string[];
     };
     WithdrawSubmissionDto: {
       /**
@@ -20935,6 +20951,19 @@ export interface components {
       slug?: string | null;
       logo?: string | null;
     };
+    BountySubmissionRequirementsDto: {
+      documentation: boolean;
+      tweet: boolean;
+      demoVideo: boolean;
+      media: boolean;
+    };
+    BountyClaimantPublicDto: {
+      /** @description Display handle (username, falling back to name). */
+      username: string;
+      /** @description Claimant wallet address. */
+      address: string;
+      avatarUrl?: string | null;
+    };
     BountyPublicDto: {
       id: string;
       title: string;
@@ -20960,8 +20989,19 @@ export interface components {
       /** @description On-chain event id once published; null while in draft. */
       escrowEventId?: string | null;
       escrowTxHash?: string | null;
+      /** @description Bounty discipline (DESIGN, DEVELOPMENT, CONTENT, GROWTH, COMMUNITY). */
+      category?: string | null;
+      /**
+       * Format: date-time
+       * @description Work/submission deadline (set at publish); null while in draft.
+       */
+      submissionDeadline?: string | null;
+      /** @description Which submission metadata fields the organizer requires. */
+      submissionRequirements: components['schemas']['BountySubmissionRequirementsDto'];
       /** Format: date-time */
       createdAt: string;
+      /** @description Active claimant of a single-claim bounty once claimed; null otherwise. */
+      claimedBy?: components['schemas']['BountyClaimantPublicDto'] | null;
     };
     BountyPublicListDto: {
       bounties: components['schemas']['BountyPublicDto'][];
@@ -37761,6 +37801,7 @@ export interface operations {
         page?: number;
         limit?: number;
         search?: unknown;
+        category?: unknown;
         status?: unknown;
         organizationId?: unknown;
       };

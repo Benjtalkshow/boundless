@@ -61,6 +61,29 @@ export function computeBountyModeLabel(
   return base;
 }
 
+/**
+ * Plain-language explanation of a bounty mode, shown in the detail-page tooltip
+ * so participants understand how entry and payout work before engaging.
+ */
+export function computeBountyModeDescription(
+  entryType: BountyEntryType,
+  claimType: BountyClaimType
+): string {
+  const single = claimType === 'SINGLE_CLAIM';
+  if (entryType === 'OPEN') {
+    return single
+      ? 'Anyone eligible can claim this bounty directly. The first to claim locks it, does the work, and gets paid. One worker, one reward.'
+      : 'Anyone can join and work in parallel. Submissions stay hidden until the deadline, then the organizer picks the winner(s).';
+  }
+  const depth =
+    entryType === 'APPLICATION_LIGHT'
+      ? 'a short application'
+      : 'a full application (proposal, portfolio, and more)';
+  return single
+    ? `Submit ${depth}. The organizer selects one applicant to do the work and get paid.`
+    : `Submit ${depth}. The organizer shortlists several applicants who then compete, and picks the winner(s) at the deadline.`;
+}
+
 export type FieldRule = 'required' | 'optional' | 'hidden';
 
 export interface ModeFields {

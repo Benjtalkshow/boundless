@@ -139,11 +139,13 @@ export type {
 export {
   listMyBountyApplications,
   listMyBountySubmissions,
+  getMyBountySubmission,
 } from './api/participant-dashboard-client';
 export type { MyActivityParams } from './api/participant-dashboard-client';
 export {
   useMyBountyApplications,
   useMyBountySubmissions,
+  useMyBountySubmission,
 } from './api/use-participant-dashboard';
 
 // Participant hooks (React Query).

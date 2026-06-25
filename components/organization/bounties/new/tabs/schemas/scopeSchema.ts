@@ -23,15 +23,19 @@ export const CATEGORY_LABELS: Record<BountyCategory, string> = {
 
 /**
  * Baseline minimum reputation a claimant needs, per category. The organizer can
- * raise this in the Submission step but not drop below it. Development is the
- * highest bar (it carries the most risk of low-quality / AI-generated work).
+ * raise this in the Submission step but not drop below it.
+ *
+ * Temporarily flattened to 0 across all categories while the builder lifecycle
+ * is in testing, so the open-claim reputation gate (completedBountyCount >=
+ * reputationMinimum) doesn't block testers with no completed bounties yet.
+ * Restore the tiered values (Development highest) before launch.
  */
 export const CATEGORY_REPUTATION_BASELINE: Record<BountyCategory, number> = {
-  DEVELOPMENT: 50,
-  DESIGN: 25,
-  GROWTH: 20,
-  CONTENT: 15,
-  COMMUNITY: 10,
+  DEVELOPMENT: 0,
+  DESIGN: 0,
+  GROWTH: 0,
+  CONTENT: 0,
+  COMMUNITY: 0,
 };
 
 /**

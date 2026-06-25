@@ -50,3 +50,11 @@ export const listMyBountySubmissions = async (
   params: MyActivityParams = {}
 ): Promise<BountyActivityPage<MyBountySubmissionRow>> =>
   unwrap(await api.get(withQuery('/bounties/me/submissions', params)));
+
+/** The caller's own submission for a single bounty, or null if none. */
+export const getMyBountySubmission = async (
+  bountyId: string
+): Promise<MyBountySubmissionRow | null> =>
+  unwrap<MyBountySubmissionRow | null>(
+    await api.get(`/bounties/me/submissions/${bountyId}`)
+  ) ?? null;
