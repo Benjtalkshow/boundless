@@ -95,80 +95,25 @@ export type CreateBountyApplicationRequest =
 export type EditBountyApplicationRequest = Schemas['EditBountyApplicationDto'];
 export type JoinCompetitionRequest = Schemas['JoinCompetitionDto'];
 
-/**
- * The caller's own application for a bounty (GET …/v2/applications/me).
- *
- * The backend `BountyApplicationResponseDto` (boundless-nestjs #331) is not yet
- * in the generated schema, so this is hand-typed to its shape. Replace with
- * `Schemas['BountyApplicationResponseDto']` after that lands and codegen runs.
- */
-export type BountyApplicationStatus =
-  | 'SUBMITTED'
-  | 'SHORTLISTED'
-  | 'SELECTED'
-  | 'DECLINED'
-  | 'WITHDRAWN';
+/** The caller's own application for a bounty (GET …/v2/applications/me). */
+export type MyBountyApplication = Schemas['BountyApplicationResponseDto'];
 
-export interface MyBountyApplication {
-  id: string;
-  bountyId: string;
-  applicantAddress: string;
-  status: string;
-  applicationStatus: BountyApplicationStatus | null;
-  proposalShort: string | null;
-  proposalFull: string | null;
-  portfolioLinks: string[];
-  estimatedDays: number | null;
-  qualifications: string | null;
-  videoIntroUrl: string | null;
-  declineReason: string | null;
-  shortlistedAt: string | null;
-  selectedAt: string | null;
-  declinedAt: string | null;
-  withdrawnAt: string | null;
-  createdAt: string;
-  updatedAt: string;
-}
+/** Application lifecycle status (derived from the generated DTO enum). */
+export type BountyApplicationStatus = NonNullable<
+  MyBountyApplication['applicationStatus']
+>;
 
-/**
- * Cross-bounty "my activity" dashboard rows (boundless-nestjs #332). These
- * endpoints (`/bounties/me/applications`, `/bounties/me/submissions`) are not
- * yet in the generated schema, so the rows are hand-typed to the backend DTOs.
- * Swap to `Schemas[...]` once #332 lands and codegen runs.
- */
-export interface BountyActivitySummary {
-  id: string;
-  title: string;
-  status: string;
-  entryType: BountyEntryType | null;
-  claimType: BountyClaimType | null;
-  rewardCurrency: string;
-  deadline: string | null;
-}
+// ── Cross-bounty "my activity" dashboard ──────────────────────────────────────
+// GET /bounties/me/applications and /bounties/me/submissions.
 
-export interface MyBountyApplicationRow {
-  id: string;
-  applicationStatus: BountyApplicationStatus | null;
-  status: string;
-  createdAt: string;
-  updatedAt: string;
-  bounty: BountyActivitySummary;
-}
+/** Compact bounty summary embedded in each activity row. */
+export type BountyActivitySummary = Schemas['BountySummaryDto'];
+/** A row in the "my applications" activity list. */
+export type MyBountyApplicationRow = Schemas['MyBountyApplicationRowDto'];
+/** A row in the "my submissions" activity list. */
+export type MyBountySubmissionRow = Schemas['MyBountySubmissionRowDto'];
 
-export interface MyBountySubmissionRow {
-  id: string;
-  status: string;
-  escrowAnchorStatus: string | null;
-  githubPullRequestUrl: string | null;
-  tierPosition: number | null;
-  tierAmount: string | null;
-  rewardTransactionHash: string | null;
-  paidAt: string | null;
-  createdAt: string;
-  updatedAt: string;
-  bounty: BountyActivitySummary;
-}
-
+/** Generic paginated activity envelope (items + page meta). */
 export interface BountyActivityPage<T> {
   items: T[];
   total: number;

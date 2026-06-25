@@ -1,11 +1,11 @@
 /**
  * Builder "my bounties" dashboard reads (boundless-nestjs #332).
  *
- * These endpoints aren't in the generated OpenAPI schema yet, so they go through
- * the legacy axios `api` (cookie auth, `{ success, data }` envelope) rather than
- * the typed openapi-fetch client. Swap to the typed client + generated types once
- * #332 lands and `npm run codegen` runs. Until the backend ships, calls 404 and
- * the hooks degrade to empty.
+ * The row/page shapes are now generated from the OpenAPI schema (see
+ * `MyBountyApplicationRow` / `MyBountySubmissionRow` in ../types). Transport
+ * still goes through the legacy axios `api` (cookie auth, `{ success, data }`
+ * envelope) because these routes return the enveloped payload; the hooks degrade
+ * to empty if the backend is unreachable.
  */
 import { api } from '@/lib/api/api';
 

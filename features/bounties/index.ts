@@ -89,8 +89,7 @@ export type {
 
 // ── Builder / participant data layer (#621) ──────────────────────────────────
 
-// Participant types (aliased from the generated schema; MyBountyApplication is
-// hand-typed until boundless-nestjs #331 lands and codegen runs).
+// Participant types (all aliased from the generated schema).
 export type {
   BountyPublic,
   BountyPublicList,
