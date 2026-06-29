@@ -11,6 +11,7 @@ import { BountyCard } from './BountyCard';
 import BountiesFiltersHeader, {
   type ModeFilter,
 } from './BountiesFiltersHeader';
+import { CategoryTabs, type CategoryFilter } from './CategoryTabs';
 import { useInfiniteBounties } from './use-bounties-marketplace';
 
 /** Client-side mode narrowing (the public list endpoint doesn't filter on mode). */
@@ -34,6 +35,7 @@ export default function BountiesPage() {
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [status, setStatus] = useState('all');
+  const [category, setCategory] = useState<CategoryFilter>('all');
   const [mode, setMode] = useState<ModeFilter>('all');
 
   // Debounce the search so we don't refetch on every keystroke.
@@ -52,6 +54,7 @@ export default function BountiesPage() {
     loadMore,
   } = useInfiniteBounties({
     status: status === 'all' ? undefined : status,
+    category: category === 'all' ? undefined : category,
     search: debouncedSearch || undefined,
   });
 
@@ -68,10 +71,15 @@ export default function BountiesPage() {
     rootMargin: '0px 0px 1200px 0px',
   });
 
-  const hasFilters = !!debouncedSearch || status !== 'all' || mode !== 'all';
+  const hasFilters =
+    !!debouncedSearch ||
+    status !== 'all' ||
+    category !== 'all' ||
+    mode !== 'all';
   const clearFilters = () => {
     setSearch('');
     setStatus('all');
+    setCategory('all');
     setMode('all');
   };
 
@@ -86,6 +94,8 @@ export default function BountiesPage() {
         onStatus={setStatus}
         onMode={setMode}
       />
+
+      <CategoryTabs value={category} onChange={setCategory} />
 
       {loading && (
         <div className='flex items-center justify-center py-24'>

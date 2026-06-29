@@ -18,6 +18,11 @@ const submissionModelBase = z.object({
   submissionDeadline: z.string().min(1, 'Submission deadline is required'),
   submissionVisibility: z.enum(SUBMISSION_VISIBILITIES),
   reputationMinimum: z.union([z.number().int().min(0), z.null()]).optional(),
+  // Organizer-required submission fields (the primary link is always required).
+  requireDocumentation: z.boolean().optional(),
+  requireTweet: z.boolean().optional(),
+  requireDemoVideo: z.boolean().optional(),
+  requireMedia: z.boolean().optional(),
   applicationWindowCloseAt: z.union([z.string().min(1), z.null()]).optional(),
   maxApplicants: z.union([z.number().int().min(1), z.null()]).optional(),
   shortlistSize: z.union([z.number().int().min(1), z.null()]).optional(),

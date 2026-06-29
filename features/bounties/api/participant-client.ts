@@ -22,6 +22,7 @@ import type {
 export interface BountiesListParams {
   organizationId?: string;
   status?: string;
+  category?: string;
   search?: string;
   page?: number;
   limit?: number;

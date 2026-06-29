@@ -24644,6 +24644,12 @@
             "schema": {}
           },
           {
+            "name": "category",
+            "required": false,
+            "in": "query",
+            "schema": {}
+          },
+          {
             "name": "status",
             "required": false,
             "in": "query",
@@ -49972,6 +49978,22 @@
             "type": "string",
             "enum": ["ORGANIZER_ONLY", "HIDDEN_UNTIL_DEADLINE"]
           },
+          "requireDocumentation": {
+            "type": "boolean",
+            "description": "Require a documentation link when submitting work."
+          },
+          "requireTweet": {
+            "type": "boolean",
+            "description": "Require a tweet link when submitting work."
+          },
+          "requireDemoVideo": {
+            "type": "boolean",
+            "description": "Require a demo video link when submitting work."
+          },
+          "requireMedia": {
+            "type": "boolean",
+            "description": "Require at least one media image when submitting work."
+          },
           "applicationCreditCost": {
             "type": "number",
             "nullable": true,
@@ -50472,6 +50494,28 @@
             "example": "https://github.com/me/boundless-fix/pull/1",
             "minLength": 1,
             "maxLength": 1024
+          },
+          "documentationUrl": {
+            "type": "string",
+            "description": "Documentation / setup / API reference URL.",
+            "maxLength": 1024
+          },
+          "tweetUrl": {
+            "type": "string",
+            "description": "Tweet / X post URL.",
+            "maxLength": 1024
+          },
+          "demoVideoUrl": {
+            "type": "string",
+            "description": "Demo video URL.",
+            "maxLength": 1024
+          },
+          "mediaUrls": {
+            "description": "Media image URLs (uploaded screenshots / assets).",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": ["applicantAddress", "contentUri"]
@@ -51071,6 +51115,42 @@
         },
         "required": ["id", "name"]
       },
+      "BountySubmissionRequirementsDto": {
+        "type": "object",
+        "properties": {
+          "documentation": {
+            "type": "boolean"
+          },
+          "tweet": {
+            "type": "boolean"
+          },
+          "demoVideo": {
+            "type": "boolean"
+          },
+          "media": {
+            "type": "boolean"
+          }
+        },
+        "required": ["documentation", "tweet", "demoVideo", "media"]
+      },
+      "BountyClaimantPublicDto": {
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string",
+            "description": "Display handle (username, falling back to name)."
+          },
+          "address": {
+            "type": "string",
+            "description": "Claimant wallet address."
+          },
+          "avatarUrl": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": ["username", "address"]
+      },
       "BountyPublicDto": {
         "type": "object",
         "properties": {
@@ -51143,9 +51223,37 @@
             "type": "string",
             "nullable": true
           },
+          "category": {
+            "type": "string",
+            "nullable": true,
+            "description": "Bounty discipline (DESIGN, DEVELOPMENT, CONTENT, GROWTH, COMMUNITY)."
+          },
+          "submissionDeadline": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Work/submission deadline (set at publish); null while in draft."
+          },
+          "submissionRequirements": {
+            "description": "Which submission metadata fields the organizer requires.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BountySubmissionRequirementsDto"
+              }
+            ]
+          },
           "createdAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "claimedBy": {
+            "nullable": true,
+            "description": "Active claimant of a single-claim bounty once claimed; null otherwise.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BountyClaimantPublicDto"
+              }
+            ]
           }
         },
         "required": [
@@ -51159,6 +51267,7 @@
           "submissionVisibility",
           "prizeTiers",
           "organization",
+          "submissionRequirements",
           "createdAt"
         ]
       },

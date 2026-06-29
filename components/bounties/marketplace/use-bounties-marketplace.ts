@@ -9,15 +9,17 @@ const PAGE_SIZE = 12;
 export interface MarketplaceFilters {
   /** Server-side: bounty lifecycle status (e.g. 'open'). */
   status?: string;
+  /** Server-side: discipline (DESIGN, DEVELOPMENT, CONTENT, GROWTH, COMMUNITY). */
+  category?: string;
   /** Server-side: free-text title/description search. */
   search?: string;
 }
 
 /**
  * Infinite (page-accumulating) public bounty list for the marketplace. Wraps the
- * `listBounties` client; status + search are applied server-side, pagination via
- * `getNextPageParam` off the response total. Mode/category narrowing is done
- * client-side in the page (the public list endpoint doesn't filter on them).
+ * `listBounties` client; status + category + search are applied server-side,
+ * pagination via `getNextPageParam` off the response total. Mode narrowing is
+ * still client-side in the page (the list endpoint doesn't filter on mode).
  */
 export function useInfiniteBounties(filters: MarketplaceFilters) {
   const query = useInfiniteQuery({

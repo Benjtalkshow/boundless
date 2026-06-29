@@ -1,10 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { toast } from 'sonner';
-import { CheckCircle2, Loader2, Lock } from 'lucide-react';
+import { CheckCircle2, ChevronRight, Loader2, Lock } from 'lucide-react';
 
 import { BoundlessButton } from '@/components/buttons';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { useWalletContext } from '@/components/providers/wallet-provider';
 import {
@@ -41,9 +43,12 @@ const STATUS_CLASS: Record<string, string> = {
 export function BountyEntryCta({
   bounty,
   myApplication,
+  hasActiveSubmission = false,
 }: {
   bounty: BountyPublic;
   myApplication: MyBountyApplication | null;
+  /** An anchored submission blocks application/claim withdrawal until pulled. */
+  hasActiveSubmission?: boolean;
 }) {
   const { walletAddress } = useWalletContext();
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -76,6 +81,10 @@ export function BountyEntryCta({
     (myApplication.applicationStatus === 'WITHDRAWN' ||
       myApplication.status === 'withdrawn');
   const isActive = !!myApplication && !withdrawn;
+  // A single-claim bounty taken by someone else. The claimant themselves sees
+  // the "you're in this bounty" branch, so this is the locked view for others.
+  const claimant = bounty.claimedBy ?? null;
+  const claimedByOther = !isActive && !!claimant;
   // Application records are only mutable while SUBMITTED.
   const editable =
     isApplication && myApplication?.applicationStatus === 'SUBMITTED';
@@ -175,6 +184,20 @@ export function BountyEntryCta({
                   )}
                 </BoundlessButton>
               </div>
+            ) : hasActiveSubmission ? (
+              <div className='space-y-1.5'>
+                <BoundlessButton
+                  variant='outline'
+                  className='w-full text-zinc-500'
+                  disabled
+                >
+                  {withdrawLabel}
+                </BoundlessButton>
+                <p className='flex items-center gap-1.5 text-xs text-zinc-500'>
+                  <Lock className='h-3.5 w-3.5' />
+                  Withdraw your submission first.
+                </p>
+              </div>
             ) : (
               <BoundlessButton
                 variant='outline'
@@ -184,6 +207,35 @@ export function BountyEntryCta({
                 {withdrawLabel}
               </BoundlessButton>
             ))}
+        </div>
+      ) : claimedByOther ? (
+        <div className='space-y-3'>
+          <div className='flex items-center gap-2'>
+            <Lock className='h-4 w-4 text-zinc-400' />
+            <span className='text-sm font-medium text-white'>Claimed</span>
+          </div>
+          <Link
+            href={`/profile/${claimant!.username}`}
+            target='_blank'
+            className='group flex items-center gap-3 rounded-xl border border-zinc-800 bg-zinc-900/60 p-3 transition-colors hover:border-zinc-700 hover:bg-zinc-800/60'
+          >
+            <Avatar className='h-9 w-9'>
+              <AvatarImage
+                src={claimant!.avatarUrl ?? undefined}
+                alt={claimant!.username}
+              />
+              <AvatarFallback className='text-xs'>
+                {claimant!.username.charAt(0).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+            <div className='min-w-0 flex-1'>
+              <p className='truncate text-sm font-medium text-white group-hover:underline'>
+                @{claimant!.username}
+              </p>
+              <p className='text-xs text-zinc-500'>View profile</p>
+            </div>
+            <ChevronRight className='h-4 w-4 shrink-0 text-zinc-500 transition-transform group-hover:translate-x-0.5 group-hover:text-zinc-300' />
+          </Link>
         </div>
       ) : (
         <>
