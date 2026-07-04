@@ -28,3 +28,29 @@ export const getBountyOverview = async (
       { params: { path: { organizationId, bountyId } } }
     )
   );
+
+// ── Organizer submissions review (#337 / #632) ────────────────────────────────
+
+export type OrganizerBountySubmission = Schemas['OrganizerBountySubmissionDto'];
+export type OrganizerBountySubmissionList =
+  Schemas['OrganizerBountySubmissionListDto'];
+export type OrganizerSubmissionUser = Schemas['OrganizerSubmissionUserDto'];
+
+export interface OrganizerSubmissionsParams {
+  status?: string;
+  page?: number;
+  limit?: number;
+}
+
+/** List the submitted work on a bounty for the reviewing organizer. */
+export const listBountySubmissions = async (
+  organizationId: string,
+  bountyId: string,
+  params: OrganizerSubmissionsParams = {}
+): Promise<OrganizerBountySubmissionList> =>
+  unwrapData(
+    await apiClient.GET(
+      '/api/organizations/{organizationId}/bounties/{bountyId}/submissions',
+      { params: { path: { organizationId, bountyId }, query: params } }
+    )
+  );

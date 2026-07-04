@@ -23,4 +23,16 @@ export const bountyKeys = {
   myActivity: () => [...bountyKeys.all, 'my-activity'] as const,
   overview: (organizationId: string, bountyId: string) =>
     [...bountyKeys.all, 'overview', organizationId, bountyId] as const,
+  orgSubmissions: (
+    organizationId: string,
+    bountyId: string,
+    params: Record<string, unknown> = {}
+  ) =>
+    [
+      ...bountyKeys.all,
+      'org-submissions',
+      organizationId,
+      bountyId,
+      params,
+    ] as const,
 };

@@ -23,6 +23,7 @@ import {
   type BountyOperateOverview,
 } from '@/features/bounties';
 import { ordinal } from '@/lib/utils';
+import BountySubmissionsPanel from './BountySubmissionsPanel';
 
 export default function BountyManagementDashboard() {
   const params = useParams<{ id: string; bountyId: string }>();
@@ -144,7 +145,12 @@ export default function BountyManagementDashboard() {
           </TabsContent>
         )}
         <TabsContent value='submissions'>
-          <TabPlaceholder title='Submissions review' issue='#632' />
+          <BountySubmissionsPanel
+            organizationId={organizationId}
+            bountyId={bountyId}
+            submissionVisibility={overview.submissionVisibility ?? ''}
+            submissionDeadline={overview.submissionDeadline ?? null}
+          />
         </TabsContent>
         <TabsContent value='payout'>
           <TabPlaceholder title='Winner selection & payout' issue='#633' />
