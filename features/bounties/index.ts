@@ -183,6 +183,18 @@ export {
   useMyBountySubmission,
 } from './api/use-participant-dashboard';
 
+// ── Organizer operate dashboard (#338 / #630) ─────────────────────────────────
+export { getBountyOverview } from './api/organizer-dashboard-client';
+export type {
+  BountyOperateOverview,
+  BountyOperateIntake,
+  BountyOperateApplicationStats,
+  BountyOperateSubmissionStats,
+  BountyOperateContributionStats,
+  BountyOverviewPrizeTier,
+} from './api/organizer-dashboard-client';
+export { useBountyOverview } from './api/use-organizer-dashboard';
+
 // Participant hooks (React Query).
 export {
   useBountiesList,
