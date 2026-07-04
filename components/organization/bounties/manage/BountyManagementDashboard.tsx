@@ -22,6 +22,7 @@ import {
   type BountyOperateOverview,
 } from '@/features/bounties';
 import BountySubmissionsPanel from './BountySubmissionsPanel';
+import BountyPayoutPanel from './BountyPayoutPanel';
 
 const STATUS_CLASS: Record<string, string> = {
   open: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400',
@@ -164,7 +165,11 @@ export default function BountyManagementDashboard() {
           />
         </TabsContent>
         <TabsContent value='payout'>
-          <TabPlaceholder title='Winner selection & payout' issue='#633' />
+          <BountyPayoutPanel
+            organizationId={organizationId}
+            bountyId={bountyId}
+            overview={overview}
+          />
         </TabsContent>
         <TabsContent value='settings'>
           <TabPlaceholder title='Settings & cancel / refund' issue='#634' />
