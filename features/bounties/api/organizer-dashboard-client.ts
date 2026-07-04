@@ -39,3 +39,40 @@ export const getBountyOverview = async (
       `/organizations/${organizationId}/bounties/${bountyId}/overview`
     )
   );
+
+// ── Organizer submissions review (#337 / #632) ────────────────────────────────
+
+export type OrganizerBountySubmission = Schemas['OrganizerBountySubmissionDto'];
+export type OrganizerBountySubmissionList =
+  Schemas['OrganizerBountySubmissionListDto'];
+export type OrganizerSubmissionUser = Schemas['OrganizerSubmissionUserDto'];
+
+export interface OrganizerSubmissionsParams {
+  status?: string;
+  page?: number;
+  limit?: number;
+}
+
+function withQuery(path: string, params: OrganizerSubmissionsParams): string {
+  const q = new URLSearchParams();
+  if (params.status) q.set('status', params.status);
+  if (params.page != null) q.set('page', String(params.page));
+  if (params.limit != null) q.set('limit', String(params.limit));
+  const s = q.toString();
+  return s ? `${path}?${s}` : path;
+}
+
+/** List the submitted work on a bounty for the reviewing organizer. */
+export const listBountySubmissions = async (
+  organizationId: string,
+  bountyId: string,
+  params: OrganizerSubmissionsParams = {}
+): Promise<OrganizerBountySubmissionList> =>
+  unwrap<OrganizerBountySubmissionList>(
+    await api.get(
+      withQuery(
+        `/organizations/${organizationId}/bounties/${bountyId}/submissions`,
+        params
+      )
+    )
+  );

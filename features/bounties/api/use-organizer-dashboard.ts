@@ -5,7 +5,10 @@ import { useQuery } from '@tanstack/react-query';
 import { bountyKeys } from './keys';
 import {
   getBountyOverview,
+  listBountySubmissions,
   type BountyOperateOverview,
+  type OrganizerBountySubmissionList,
+  type OrganizerSubmissionsParams,
 } from './organizer-dashboard-client';
 
 /**
@@ -22,6 +25,34 @@ export function useBountyOverview(
     queryFn: () =>
       getBountyOverview(organizationId as string, bountyId as string),
     enabled: !!organizationId && !!bountyId,
+    retry: false,
+  });
+}
+
+/**
+ * Submitted work on a bounty, for the reviewing organizer (#337 / #632).
+ * Pass `enabled: false` to keep sealed competition work unfetched until the
+ * deadline (the FE gate) so it never reaches the browser early.
+ */
+export function useBountySubmissions(
+  organizationId: string | undefined,
+  bountyId: string | undefined,
+  params: OrganizerSubmissionsParams = {},
+  options: { enabled?: boolean } = {}
+) {
+  return useQuery<OrganizerBountySubmissionList>({
+    queryKey: bountyKeys.orgSubmissions(
+      organizationId ?? '',
+      bountyId ?? '',
+      params as Record<string, unknown>
+    ),
+    queryFn: () =>
+      listBountySubmissions(
+        organizationId as string,
+        bountyId as string,
+        params
+      ),
+    enabled: !!organizationId && !!bountyId && (options.enabled ?? true),
     retry: false,
   });
 }

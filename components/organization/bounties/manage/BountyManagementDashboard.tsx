@@ -21,6 +21,7 @@ import {
   useBountyOverview,
   type BountyOperateOverview,
 } from '@/features/bounties';
+import BountySubmissionsPanel from './BountySubmissionsPanel';
 
 const STATUS_CLASS: Record<string, string> = {
   open: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400',
@@ -155,7 +156,12 @@ export default function BountyManagementDashboard() {
           </TabsContent>
         )}
         <TabsContent value='submissions'>
-          <TabPlaceholder title='Submissions review' issue='#632' />
+          <BountySubmissionsPanel
+            organizationId={organizationId}
+            bountyId={bountyId}
+            submissionVisibility={overview.submissionVisibility ?? ''}
+            submissionDeadline={overview.submissionDeadline ?? null}
+          />
         </TabsContent>
         <TabsContent value='payout'>
           <TabPlaceholder title='Winner selection & payout' issue='#633' />
