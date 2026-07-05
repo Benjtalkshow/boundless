@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { toast } from 'sonner';
 
 import { useWalletContext } from '@/components/providers/wallet-provider';
@@ -10,10 +10,6 @@ import {
   type FundingMode,
   type SelectBountyWinnersRequest,
 } from '@/features/bounties';
-
-export interface BountyPayoutResponse {
-  txHash: string | null;
-}
 
 interface UseBountyPayoutProps {
   organizationId: string;
@@ -30,6 +26,14 @@ interface UseBountyPayoutProps {
  * EXTERNAL returns an unsigned XDR the connected wallet signs. On settle the
  * backend subscriber pushes USDC, marks winning submissions, and flips the
  * bounty to COMPLETED automatically.
+ *
+ * LIMITATION: `ownerAddress` must match the bounty's on-chain owner, but
+ * SelectBountyWinnersDto has no `sourceWalletId`, so bounties published from
+ * an org treasury wallet cannot be paid through this endpoint yet; the MANAGED
+ * default only works for bounties funded from the caller's personal managed
+ * wallet. The backend stores `escrowOwnerAddress` per bounty; resolving the
+ * owner server-side (as the hackathon select-winners flow does) is tracked as
+ * backend work.
  */
 export const useBountyPayout = ({
   organizationId,
@@ -49,46 +53,31 @@ export const useBountyPayout = ({
     isExternal ? { signXdr: signXdrWithKit } : undefined
   );
 
-  const [hasStarted, setHasStarted] = useState(false);
-  const [payoutResponse, setPayoutResponse] =
-    useState<BountyPayoutResponse | null>(null);
+  // Toast each settle exactly once; the runner keeps its terminal flags set
+  // after a run, so this ref is what arms the next run's notifications.
   const finalizedRef = useRef(false);
 
   useEffect(() => {
-    if (!hasStarted || finalizedRef.current) return;
-
+    if (finalizedRef.current) return;
     if (runner.isCompleted) {
       finalizedRef.current = true;
-      setPayoutResponse({ txHash: runner.txHash });
       toast.success('Winners paid out!', { duration: 3000 });
-      setHasStarted(false);
     } else if (runner.isFailed) {
       finalizedRef.current = true;
       toast.error(runner.error || 'Failed to pay out winners');
-      setHasStarted(false);
     }
-  }, [
-    hasStarted,
-    runner.isCompleted,
-    runner.isFailed,
-    runner.error,
-    runner.txHash,
-  ]);
+  }, [runner.isCompleted, runner.isFailed, runner.error]);
 
   const selectWinners = async (
     selections: BountyWinnerSelection[]
   ): Promise<void> => {
-    if (!organizationId || !bountyId) return;
+    if (!organizationId || !bountyId || selections.length === 0) return;
     if (!ownerAddress) {
       toast.error(
         isExternal
           ? 'Connect a wallet to sign the payout.'
           : 'Please connect your wallet first'
       );
-      return;
-    }
-    if (selections.length === 0) {
-      toast.error('Assign at least one winner before paying out.');
       return;
     }
 
@@ -99,8 +88,6 @@ export const useBountyPayout = ({
     };
 
     finalizedRef.current = false;
-    setHasStarted(true);
-    setPayoutResponse(null);
     toast.info('Submitting winner selection…');
 
     await runner.run(() => selectMutation.mutateAsync(body));
@@ -108,7 +95,6 @@ export const useBountyPayout = ({
 
   return {
     selectWinners,
-    payoutResponse,
     phase: runner.phase,
     isRunning: runner.isRunning,
     isCompleted: runner.isCompleted,

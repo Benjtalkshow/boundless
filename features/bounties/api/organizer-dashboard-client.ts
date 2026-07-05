@@ -54,3 +54,23 @@ export const listBountySubmissions = async (
       { params: { path: { organizationId, bountyId }, query: params } }
     )
   );
+
+/**
+ * Every submission on a bounty, across all pages. The backend caps `limit`
+ * at 50, so reads that need the COMPLETE set (winner selection must never
+ * pick from a truncated pool) page until `total` is reached.
+ */
+export const listAllBountySubmissions = async (
+  organizationId: string,
+  bountyId: string
+): Promise<OrganizerBountySubmission[]> => {
+  const items: OrganizerBountySubmission[] = [];
+  for (let page = 1; ; page++) {
+    const res = await listBountySubmissions(organizationId, bountyId, {
+      page,
+      limit: 50,
+    });
+    items.push(...res.items);
+    if (items.length >= res.total || res.items.length === 0) return items;
+  }
+};

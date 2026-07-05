@@ -5,8 +5,10 @@ import { useQuery } from '@tanstack/react-query';
 import { bountyKeys } from './keys';
 import {
   getBountyOverview,
+  listAllBountySubmissions,
   listBountySubmissions,
   type BountyOperateOverview,
+  type OrganizerBountySubmission,
   type OrganizerBountySubmissionList,
   type OrganizerSubmissionsParams,
 } from './organizer-dashboard-client';
@@ -53,6 +55,27 @@ export function useBountySubmissions(
         bountyId as string,
         params
       ),
+    enabled: !!organizationId && !!bountyId && (options.enabled ?? true),
+  });
+}
+
+/**
+ * The COMPLETE submission set for a bounty (pages through the capped list
+ * endpoint). Winner selection reads this so the payout pool is never a
+ * truncated page. Same UX-only caveat as useBountySubmissions.
+ */
+export function useAllBountySubmissions(
+  organizationId: string | undefined,
+  bountyId: string | undefined,
+  options: { enabled?: boolean } = {}
+) {
+  return useQuery<OrganizerBountySubmission[]>({
+    queryKey: bountyKeys.orgSubmissionsAll(
+      organizationId ?? '',
+      bountyId ?? ''
+    ),
+    queryFn: () =>
+      listAllBountySubmissions(organizationId as string, bountyId as string),
     enabled: !!organizationId && !!bountyId && (options.enabled ?? true),
   });
 }

@@ -176,6 +176,7 @@ export default function BountyManagementDashboard() {
             organizationId={organizationId}
             bountyId={bountyId}
             overview={overview}
+            staged={stagedWinners}
           />
         </TabsContent>
         <TabsContent value='settings'>

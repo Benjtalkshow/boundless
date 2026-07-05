@@ -1,12 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import {
   CheckCircle2,
   ExternalLink,
-  EyeOff,
   FileText,
   Github,
   Loader2,
@@ -20,8 +19,9 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { BoundlessButton } from '@/components/buttons';
 import EmptyState from '@/components/EmptyState';
-import { DueCountdown } from '@/components/bounties/DueCountdown';
+import { SealedUntilDeadline } from '@/components/bounties/SealedUntilDeadline';
 import { submissionStatusClass } from '@/components/bounties/statusClass';
+import { useDeadlinePassed } from '@/components/bounties/use-deadline-passed';
 import {
   useBountySubmissions,
   type BountyOperateOverview,
@@ -66,22 +66,7 @@ export default function BountySubmissionsPanel({
   onToggleStage: (id: string) => void;
 }) {
   const [page, setPage] = useState(1);
-  const [deadlinePassed, setDeadlinePassed] = useState(() =>
-    submissionDeadline
-      ? new Date(submissionDeadline).getTime() <= Date.now()
-      : false
-  );
-
-  // Re-check on the same cadence as DueCountdown so the gate opens while the
-  // organizer is sitting on the tab, instead of only on remount.
-  useEffect(() => {
-    if (!submissionDeadline || deadlinePassed) return;
-    const target = new Date(submissionDeadline).getTime();
-    const interval = setInterval(() => {
-      if (Date.now() >= target) setDeadlinePassed(true);
-    }, 30_000);
-    return () => clearInterval(interval);
-  }, [submissionDeadline, deadlinePassed]);
+  const deadlinePassed = useDeadlinePassed(submissionDeadline);
 
   // Keep competition work out of the UI until the deadline. Publish validation
   // guarantees a deadline for live competitions; without one there is nothing
@@ -99,23 +84,13 @@ export default function BountySubmissionsPanel({
     { params: { page, limit: PAGE_SIZE }, enabled: !gated }
   );
 
-  if (gated) {
+  if (gated && submissionDeadline) {
     return (
-      <div className='rounded-2xl border border-zinc-800 bg-zinc-900/40 py-16 text-center'>
-        <EyeOff className='mx-auto mb-3 h-6 w-6 text-zinc-500' />
-        <p className='text-sm font-medium text-zinc-200'>
-          Submissions are hidden until the deadline
-        </p>
-        <p className='mt-1 text-xs text-zinc-500'>
-          This is a competition. Work stays sealed so review stays fair.
-        </p>
-        <div className='mt-3 flex justify-center'>
-          <DueCountdown
-            deadline={submissionDeadline}
-            className='flex items-center gap-1.5 text-xs font-medium text-zinc-300'
-          />
-        </div>
-      </div>
+      <SealedUntilDeadline
+        deadline={submissionDeadline}
+        title='Submissions are hidden until the deadline'
+        description='This is a competition. Work stays sealed so review stays fair.'
+      />
     );
   }
 
