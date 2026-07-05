@@ -54,12 +54,9 @@ export default function BountyPayoutPanel({
     overview.submissionVisibility === 'HIDDEN_UNTIL_DEADLINE' &&
     !deadlinePassed;
 
-  const { data, isLoading } = useBountySubmissions(
-    organizationId,
-    bountyId,
-    {},
-    { enabled: !gated }
-  );
+  const { data, isLoading } = useBountySubmissions(organizationId, bountyId, {
+    enabled: !gated,
+  });
   const submissions = useMemo(() => data?.items ?? [], [data]);
 
   const payout = useBountyPayout({ organizationId, bountyId });

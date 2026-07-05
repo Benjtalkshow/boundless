@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, Info, Loader2, Lock } from 'lucide-react';
@@ -13,6 +14,7 @@ import {
 } from '@/components/ui/tooltip';
 import EmptyState from '@/components/EmptyState';
 import { DueCountdown } from '@/components/bounties/DueCountdown';
+import { bountyStatusClass } from '@/components/bounties/statusClass';
 import {
   computeBountyModeLabel,
   computeBountyModeDescription,
@@ -21,24 +23,28 @@ import {
   useBountyOverview,
   type BountyOperateOverview,
 } from '@/features/bounties';
+import { ordinal } from '@/lib/utils';
 import BountySubmissionsPanel from './BountySubmissionsPanel';
 import BountyPayoutPanel from './BountyPayoutPanel';
 
-const STATUS_CLASS: Record<string, string> = {
-  open: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400',
-  in_progress: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400',
-  ready_to_shortlist: 'border-amber-500/30 bg-amber-500/10 text-amber-400',
-  submitted: 'border-blue-500/30 bg-blue-500/10 text-blue-400',
-  under_review: 'border-blue-500/30 bg-blue-500/10 text-blue-400',
-  completed: 'border-primary/30 bg-primary/10 text-primary',
-  cancelled: 'border-zinc-700 bg-zinc-800/60 text-zinc-300',
-  disputed: 'border-red-500/30 bg-red-500/10 text-red-400',
-};
-
 export default function BountyManagementDashboard() {
-  const params = useParams();
-  const organizationId = params.id as string;
-  const bountyId = params.bountyId as string;
+  const params = useParams<{ id: string; bountyId: string }>();
+  const organizationId = params?.id ?? '';
+  const bountyId = params?.bountyId ?? '';
+
+  // Winner staging lives here (above the tab boundary) so it survives tab
+  // switches and is reachable by the Payout tab (#633).
+  const [stagedWinners, setStagedWinners] = useState<Set<string>>(new Set());
+  const toggleStagedWinner = (id: string) =>
+    setStagedWinners(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
 
   const {
     data: overview,
@@ -85,9 +91,7 @@ export default function BountyManagementDashboard() {
     overview.entryType && overview.claimType
       ? computeBountyModeDescription(overview.entryType, overview.claimType)
       : null;
-  const statusClass =
-    STATUS_CLASS[overview.status] ??
-    'border-zinc-700 bg-zinc-800/60 text-zinc-300';
+  const statusClass = bountyStatusClass(overview.status);
 
   return (
     <div>
@@ -160,8 +164,11 @@ export default function BountyManagementDashboard() {
           <BountySubmissionsPanel
             organizationId={organizationId}
             bountyId={bountyId}
-            submissionVisibility={overview.submissionVisibility ?? ''}
+            submissionVisibility={overview.submissionVisibility}
             submissionDeadline={overview.submissionDeadline ?? null}
+            rewardCurrency={overview.rewardCurrency}
+            staged={stagedWinners}
+            onToggleStage={toggleStagedWinner}
           />
         </TabsContent>
         <TabsContent value='payout'>
@@ -353,9 +360,3 @@ function TabPlaceholder({ title, issue }: { title: string; issue: string }) {
     </div>
   );
 }
-
-const ordinal = (n: number): string => {
-  const s = ['th', 'st', 'nd', 'rd'];
-  const v = n % 100;
-  return `${n}${s[(v - 20) % 10] ?? s[v] ?? s[0]}`;
-};

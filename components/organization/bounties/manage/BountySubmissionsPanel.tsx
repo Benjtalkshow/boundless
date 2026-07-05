@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import {
@@ -21,17 +21,16 @@ import { Badge } from '@/components/ui/badge';
 import { BoundlessButton } from '@/components/buttons';
 import EmptyState from '@/components/EmptyState';
 import { DueCountdown } from '@/components/bounties/DueCountdown';
+import { submissionStatusClass } from '@/components/bounties/statusClass';
 import {
   useBountySubmissions,
+  type BountyOperateOverview,
   type OrganizerBountySubmission,
 } from '@/features/bounties';
+import { ordinal } from '@/lib/utils';
 
-const STATUS_CLASS: Record<string, string> = {
-  pending: 'border-blue-500/30 bg-blue-500/10 text-blue-400',
-  accepted: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400',
-  rejected: 'border-red-500/30 bg-red-500/10 text-red-400',
-  disputed: 'border-amber-500/30 bg-amber-500/10 text-amber-400',
-};
+/** Matches the backend's default page size (organizer submissions endpoint). */
+const PAGE_SIZE = 20;
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString(undefined, {
@@ -41,33 +40,63 @@ function formatDate(iso: string): string {
   });
 }
 
+/** Token amounts arrive as decimal strings; show full Stellar precision. */
+function formatTierAmount(amount: string): string {
+  const n = Number(amount);
+  return Number.isFinite(n)
+    ? n.toLocaleString(undefined, { maximumFractionDigits: 7 })
+    : amount;
+}
+
 export default function BountySubmissionsPanel({
   organizationId,
   bountyId,
   submissionVisibility,
   submissionDeadline,
+  rewardCurrency,
+  staged,
+  onToggleStage,
 }: {
   organizationId: string;
   bountyId: string;
-  submissionVisibility: string;
+  submissionVisibility: BountyOperateOverview['submissionVisibility'];
   submissionDeadline: string | null;
+  rewardCurrency: string;
+  staged: Set<string>;
+  onToggleStage: (id: string) => void;
 }) {
-  const [staged, setStaged] = useState<Set<string>>(new Set());
+  const [page, setPage] = useState(1);
+  const [deadlinePassed, setDeadlinePassed] = useState(() =>
+    submissionDeadline
+      ? new Date(submissionDeadline).getTime() <= Date.now()
+      : false
+  );
 
-  const deadlinePassed = submissionDeadline
-    ? new Date(submissionDeadline).getTime() <= Date.now()
-    : false;
-  // Competition submissions stay hidden until the deadline so the organizer
-  // cannot play favorites mid-flight.
+  // Re-check on the same cadence as DueCountdown so the gate opens while the
+  // organizer is sitting on the tab, instead of only on remount.
+  useEffect(() => {
+    if (!submissionDeadline || deadlinePassed) return;
+    const target = new Date(submissionDeadline).getTime();
+    const interval = setInterval(() => {
+      if (Date.now() >= target) setDeadlinePassed(true);
+    }, 30_000);
+    return () => clearInterval(interval);
+  }, [submissionDeadline, deadlinePassed]);
+
+  // Keep competition work out of the UI until the deadline. Publish validation
+  // guarantees a deadline for live competitions; without one there is nothing
+  // to count down to, so we do not gate. NOTE: this is a UX gate only, the
+  // organizer endpoint itself returns submissions regardless of visibility.
   const gated =
-    submissionVisibility === 'HIDDEN_UNTIL_DEADLINE' && !deadlinePassed;
+    submissionVisibility === 'HIDDEN_UNTIL_DEADLINE' &&
+    submissionDeadline != null &&
+    !deadlinePassed;
 
-  // Don't even fetch sealed competition work until the deadline.
+  // Don't fetch sealed competition work until the deadline.
   const { data, isLoading, error } = useBountySubmissions(
     organizationId,
     bountyId,
-    {},
-    { enabled: !gated }
+    { params: { page, limit: PAGE_SIZE }, enabled: !gated }
   );
 
   if (gated) {
@@ -80,14 +109,12 @@ export default function BountySubmissionsPanel({
         <p className='mt-1 text-xs text-zinc-500'>
           This is a competition. Work stays sealed so review stays fair.
         </p>
-        {submissionDeadline && (
-          <div className='mt-3 flex justify-center'>
-            <DueCountdown
-              deadline={submissionDeadline}
-              className='flex items-center gap-1.5 text-xs font-medium text-zinc-300'
-            />
-          </div>
-        )}
+        <div className='mt-3 flex justify-center'>
+          <DueCountdown
+            deadline={submissionDeadline}
+            className='flex items-center gap-1.5 text-xs font-medium text-zinc-300'
+          />
+        </div>
       </div>
     );
   }
@@ -113,6 +140,8 @@ export default function BountySubmissionsPanel({
   }
 
   const submissions = data?.items ?? [];
+  const total = data?.total ?? submissions.length;
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   if (submissions.length === 0) {
     return (
@@ -126,13 +155,8 @@ export default function BountySubmissionsPanel({
     );
   }
 
-  const toggleStage = (id: string) =>
-    setStaged(prev => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
+  const rangeStart = (page - 1) * PAGE_SIZE + 1;
+  const rangeEnd = rangeStart + submissions.length - 1;
 
   return (
     <div className='space-y-4'>
@@ -150,27 +174,76 @@ export default function BountySubmissionsPanel({
         <SubmissionCard
           key={s.id}
           submission={s}
+          rewardCurrency={rewardCurrency}
           staged={staged.has(s.id)}
-          onToggleStage={() => toggleStage(s.id)}
+          onToggleStage={() => onToggleStage(s.id)}
         />
       ))}
+
+      {totalPages > 1 && (
+        <div className='flex items-center justify-between border-t border-zinc-800 pt-4'>
+          <span className='text-xs text-zinc-500'>
+            Showing {rangeStart}-{rangeEnd} of {total} submissions
+          </span>
+          <div className='flex items-center gap-2'>
+            <BoundlessButton
+              variant='outline'
+              size='sm'
+              disabled={page <= 1}
+              onClick={() => setPage(p => Math.max(1, p - 1))}
+            >
+              Previous
+            </BoundlessButton>
+            <span className='text-xs text-zinc-400'>
+              Page {page} of {totalPages}
+            </span>
+            <BoundlessButton
+              variant='outline'
+              size='sm'
+              disabled={page >= totalPages}
+              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+            >
+              Next
+            </BoundlessButton>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
 function SubmissionCard({
   submission: s,
+  rewardCurrency,
   staged,
   onToggleStage,
 }: {
   submission: OrganizerBountySubmission;
+  rewardCurrency: string;
   staged: boolean;
   onToggleStage: () => void;
 }) {
   const user = s.submittedBy;
-  const statusClass =
-    STATUS_CLASS[s.status] ?? 'border-zinc-700 bg-zinc-800/60 text-zinc-300';
   const awarded = s.tierPosition != null;
+
+  const submitter = (
+    <>
+      <Avatar className='h-8 w-8'>
+        <AvatarImage src={user.avatarUrl ?? undefined} alt={user.name} />
+        <AvatarFallback className='text-xs'>
+          {user.name.charAt(0).toUpperCase()}
+        </AvatarFallback>
+      </Avatar>
+      <div>
+        <p className='group-hover:text-primary text-sm font-medium text-white'>
+          {user.name}
+        </p>
+        {user.username && (
+          <p className='text-xs text-zinc-500'>@{user.username}</p>
+        )}
+      </div>
+    </>
+  );
 
   return (
     <div
@@ -182,25 +255,16 @@ function SubmissionCard({
     >
       <div className='flex items-start justify-between gap-3'>
         {/* Submitter */}
-        <Link
-          href={user.username ? `/profile/${user.username}` : '#'}
-          className='group flex items-center gap-2.5'
-        >
-          <Avatar className='h-8 w-8'>
-            <AvatarImage src={user.avatarUrl ?? undefined} alt={user.name} />
-            <AvatarFallback className='text-xs'>
-              {user.name.charAt(0).toUpperCase()}
-            </AvatarFallback>
-          </Avatar>
-          <div>
-            <p className='group-hover:text-primary text-sm font-medium text-white'>
-              {user.name}
-            </p>
-            {user.username && (
-              <p className='text-xs text-zinc-500'>@{user.username}</p>
-            )}
-          </div>
-        </Link>
+        {user.username ? (
+          <Link
+            href={`/profile/${user.username}`}
+            className='group flex items-center gap-2.5'
+          >
+            {submitter}
+          </Link>
+        ) : (
+          <div className='flex items-center gap-2.5'>{submitter}</div>
+        )}
 
         <div className='flex items-center gap-2'>
           {awarded && (
@@ -211,13 +275,13 @@ function SubmissionCard({
               <Trophy className='h-3 w-3' />
               {ordinal(s.tierPosition as number)}
               {s.tierAmount
-                ? ` · ${Number(s.tierAmount).toLocaleString()}`
+                ? ` · ${formatTierAmount(s.tierAmount)} ${rewardCurrency}`
                 : ''}
             </Badge>
           )}
           <Badge
             variant='outline'
-            className={`rounded-full px-2.5 py-0.5 text-xs font-medium capitalize ${statusClass}`}
+            className={`rounded-full px-2.5 py-0.5 text-xs font-medium capitalize ${submissionStatusClass(s.status)}`}
           >
             {s.status}
           </Badge>
@@ -260,9 +324,9 @@ function SubmissionCard({
       {/* Media */}
       {s.mediaUrls.length > 0 && (
         <div className='mt-3 flex flex-wrap gap-2'>
-          {s.mediaUrls.map(url => (
+          {s.mediaUrls.map((url, i) => (
             <a
-              key={url}
+              key={`${url}-${i}`}
               href={url}
               target='_blank'
               rel='noreferrer'
@@ -272,7 +336,11 @@ function SubmissionCard({
                 src={url}
                 alt='Submission media'
                 fill
-                unoptimized
+                sizes='96px'
+                // Uploads go to Cloudinary (whitelisted in next.config), where
+                // the optimizer serves resized thumbs; stray hosts bypass the
+                // optimizer instead of throwing on an unconfigured hostname.
+                unoptimized={!url.startsWith('https://res.cloudinary.com/')}
                 className='object-cover'
               />
             </a>
@@ -341,9 +409,3 @@ function LinkChip({
     </a>
   );
 }
-
-const ordinal = (n: number): string => {
-  const s = ['th', 'st', 'nd', 'rd'];
-  const v = n % 100;
-  return `${n}${s[(v - 20) % 10] ?? s[v] ?? s[0]}`;
-};
