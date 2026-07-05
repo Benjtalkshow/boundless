@@ -228,6 +228,28 @@ export {
   useDeclineApplication,
 } from './api/use-organizer-applications';
 
+// ── Wrap: results, announcement, archive (#635) ──────────────────────────────
+export {
+  publishBountyResults,
+  archiveBounty,
+  restoreBounty,
+  getBountyResults,
+  getBountyAnnouncement,
+} from './api/organizer-wrap-client';
+export type {
+  BountyResults,
+  BountyResultsWinner,
+  BountyAnnouncement,
+  PublishBountyResultsBody,
+} from './api/organizer-wrap-client';
+export {
+  useBountyResults,
+  useBountyAnnouncement,
+  usePublishBountyResults,
+  useArchiveBounty,
+  useRestoreBounty,
+} from './api/use-organizer-wrap';
+
 // Participant hooks (React Query).
 export {
   useBountiesList,

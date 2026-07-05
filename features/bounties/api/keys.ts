@@ -56,4 +56,10 @@ export const bountyKeys = {
       bountyId,
       params,
     ] as const,
+
+  // Wrap: public results + winner announcement (#635).
+  results: (bountyId: string) =>
+    [...bountyKeys.all, 'results', bountyId] as const,
+  announcement: (bountyId: string) =>
+    [...bountyKeys.all, 'announcement', bountyId] as const,
 };

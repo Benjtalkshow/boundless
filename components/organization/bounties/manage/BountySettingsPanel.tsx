@@ -1,11 +1,14 @@
 'use client';
 
 import { useState } from 'react';
+import { toast } from 'sonner';
 import {
   AlertTriangle,
+  Archive,
   CheckCircle2,
   ExternalLink,
   Loader2,
+  RotateCcw,
 } from 'lucide-react';
 
 import {
@@ -20,6 +23,8 @@ import { Input } from '@/components/ui/input';
 import { BoundlessButton } from '@/components/buttons';
 import {
   ESCROW_PHASE_LABEL,
+  useArchiveBounty,
+  useRestoreBounty,
   type BountyOperateOverview,
 } from '@/features/bounties';
 import { useBountyCancel } from '@/hooks/use-bounty-cancel';
@@ -49,11 +54,43 @@ export default function BountySettingsPanel({
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [confirmText, setConfirmText] = useState('');
 
+  const archiveMutation = useArchiveBounty(organizationId, bountyId);
+  const restoreMutation = useRestoreBounty(organizationId, bountyId);
+  // The overview read doesn't carry an archived flag, so we track the last
+  // action locally for immediate feedback; it resets to active on reload.
+  const [archived, setArchived] = useState(false);
+
   const isCancelled = overview.status === 'cancelled';
   const isTerminal = TERMINAL_STATUSES.has(overview.status);
   // A draft has no on-chain escrow to refund; cancel only applies once funded.
   const isPublished = !!overview.escrowEventId;
   const running = cancelOp.isRunning;
+
+  const onArchive = () =>
+    archiveMutation.mutate(undefined, {
+      onSuccess: () => {
+        setArchived(true);
+        toast.success('Bounty archived.');
+      },
+      onError: err =>
+        toast.error(
+          err instanceof Error ? err.message : 'Failed to archive the bounty'
+        ),
+    });
+
+  const onRestore = () =>
+    restoreMutation.mutate(undefined, {
+      onSuccess: () => {
+        setArchived(false);
+        toast.success('Bounty restored.');
+      },
+      onError: err =>
+        toast.error(
+          err instanceof Error ? err.message : 'Failed to restore the bounty'
+        ),
+    });
+
+  const archiveBusy = archiveMutation.isPending || restoreMutation.isPending;
 
   return (
     <div className='max-w-2xl space-y-6'>
@@ -118,6 +155,64 @@ export default function BountySettingsPanel({
           </div>
         </div>
       </div>
+
+      {/* Archive / restore — only for closed-out bounties. Never a hard delete. */}
+      {isTerminal && (
+        <div className='rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5'>
+          <div className='flex items-start gap-3'>
+            <Archive className='mt-0.5 h-5 w-5 shrink-0 text-zinc-400' />
+            <div className='min-w-0 flex-1'>
+              <h3 className='text-sm font-semibold text-white'>
+                {archived ? 'Bounty archived' : 'Archive this bounty'}
+              </h3>
+              <p className='mt-1 text-sm text-zinc-400'>
+                {archived
+                  ? 'This bounty is hidden from your active list. Restore it to bring it back. Its records are never deleted.'
+                  : 'Move this closed-out bounty out of your active list. It stays fully recoverable and is never deleted.'}
+              </p>
+              {archived ? (
+                <BoundlessButton
+                  variant='outline'
+                  className='mt-4'
+                  disabled={archiveBusy}
+                  onClick={onRestore}
+                >
+                  {restoreMutation.isPending ? (
+                    <>
+                      <Loader2 className='h-4 w-4 animate-spin' />
+                      Restoring…
+                    </>
+                  ) : (
+                    <>
+                      <RotateCcw className='h-4 w-4' />
+                      Restore bounty
+                    </>
+                  )}
+                </BoundlessButton>
+              ) : (
+                <BoundlessButton
+                  variant='outline'
+                  className='mt-4'
+                  disabled={archiveBusy}
+                  onClick={onArchive}
+                >
+                  {archiveMutation.isPending ? (
+                    <>
+                      <Loader2 className='h-4 w-4 animate-spin' />
+                      Archiving…
+                    </>
+                  ) : (
+                    <>
+                      <Archive className='h-4 w-4' />
+                      Archive bounty
+                    </>
+                  )}
+                </BoundlessButton>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Explicit-confirm gate before the irreversible on-chain refund. */}
       <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
