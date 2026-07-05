@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Info, Loader2, Lock } from 'lucide-react';
+import { ArrowLeft, Info, Loader2 } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -27,6 +27,7 @@ import { ordinal } from '@/lib/utils';
 import BountySubmissionsPanel from './BountySubmissionsPanel';
 import BountyPayoutPanel from './BountyPayoutPanel';
 import BountyApplicationsPanel from './BountyApplicationsPanel';
+import BountySettingsPanel from './BountySettingsPanel';
 
 export default function BountyManagementDashboard() {
   const params = useParams<{ id: string; bountyId: string }>();
@@ -183,7 +184,11 @@ export default function BountyManagementDashboard() {
           />
         </TabsContent>
         <TabsContent value='settings'>
-          <TabPlaceholder title='Settings & cancel / refund' issue='#634' />
+          <BountySettingsPanel
+            organizationId={organizationId}
+            bountyId={bountyId}
+            overview={overview}
+          />
         </TabsContent>
       </Tabs>
     </div>
@@ -351,16 +356,6 @@ function Row({
       >
         {value}
       </dd>
-    </div>
-  );
-}
-
-function TabPlaceholder({ title, issue }: { title: string; issue: string }) {
-  return (
-    <div className='rounded-2xl border border-dashed border-zinc-800 bg-zinc-900/20 py-16 text-center'>
-      <Lock className='mx-auto mb-3 h-5 w-5 text-zinc-600' />
-      <p className='text-sm font-medium text-zinc-300'>{title}</p>
-      <p className='mt-1 text-xs text-zinc-600'>Coming soon ({issue}).</p>
     </div>
   );
 }
