@@ -3,7 +3,15 @@
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
-import { Calendar, FileText, Plus, Search, Target, Trash2 } from 'lucide-react';
+import {
+  ArrowRight,
+  Calendar,
+  FileText,
+  Plus,
+  Search,
+  Target,
+  Trash2,
+} from 'lucide-react';
 
 import { BoundlessButton } from '@/components/buttons';
 import { Badge } from '@/components/ui/badge';
@@ -66,6 +74,26 @@ function statusDisplay(status: string) {
       className: 'border-zinc-700 bg-zinc-800/60 text-zinc-300',
     }
   );
+}
+
+/**
+ * Status-aware manage CTA: deep-links into the dashboard tab that matches where
+ * the organizer's attention is needed next.
+ */
+function manageCta(status: string): { label: string; tab: string } {
+  switch (status) {
+    case 'submitted':
+    case 'under_review':
+      return { label: 'Review submissions', tab: 'submissions' };
+    case 'in_progress':
+      return { label: 'Review & pay', tab: 'payout' };
+    case 'completed':
+      return { label: 'View results', tab: 'results' };
+    case 'cancelled':
+      return { label: 'View bounty', tab: 'overview' };
+    default:
+      return { label: 'Manage', tab: 'overview' };
+  }
 }
 
 const draftPrizePool = (draft: BountyDraft): number =>
@@ -279,6 +307,25 @@ export default function OrganizationBountiesPage() {
                           {bounty._count?.submissions ?? 0}
                         </span>
                       </div>
+                      {(() => {
+                        const cta = manageCta(bounty.status);
+                        return (
+                          <BoundlessButton
+                            variant='outline'
+                            size='sm'
+                            className='mt-4 w-full gap-1.5'
+                            onClick={e => {
+                              e.stopPropagation();
+                              router.push(
+                                `/organizations/${organizationId}/bounties/${bounty.id}?tab=${cta.tab}`
+                              );
+                            }}
+                          >
+                            {cta.label}
+                            <ArrowRight className='h-3.5 w-3.5' />
+                          </BoundlessButton>
+                        );
+                      })()}
                     </div>
                   );
                 })}

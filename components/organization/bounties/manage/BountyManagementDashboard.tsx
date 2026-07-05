@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, Info, Loader2 } from 'lucide-react';
 
@@ -30,10 +30,22 @@ import BountyApplicationsPanel from './BountyApplicationsPanel';
 import BountySettingsPanel from './BountySettingsPanel';
 import BountyResultsPanel from './BountyResultsPanel';
 
+/** Tabs the org bounty list can deep-link into via `?tab=`. */
+const LINKABLE_TABS = new Set([
+  'overview',
+  'applications',
+  'submissions',
+  'payout',
+  'results',
+  'settings',
+]);
+
 export default function BountyManagementDashboard() {
   const params = useParams<{ id: string; bountyId: string }>();
+  const searchParams = useSearchParams();
   const organizationId = params?.id ?? '';
   const bountyId = params?.bountyId ?? '';
+  const requestedTab = searchParams?.get('tab') ?? '';
 
   // Winner staging lives here (above the tab boundary) so it survives tab
   // switches and is reachable by the Payout tab (#633).
@@ -87,6 +99,14 @@ export default function BountyManagementDashboard() {
     overview.entryType === 'APPLICATION_LIGHT' ||
     overview.entryType === 'APPLICATION_FULL';
   const isCompleted = overview.status === 'completed';
+
+  // Honor a deep-linked ?tab= only when that tab is actually available for this
+  // bounty (applications need an application mode; results need completion).
+  const tabAvailable =
+    LINKABLE_TABS.has(requestedTab) &&
+    (requestedTab !== 'applications' || isApplication) &&
+    (requestedTab !== 'results' || isCompleted);
+  const initialTab = tabAvailable ? requestedTab : 'overview';
   const modeLabel =
     overview.entryType && overview.claimType
       ? computeBountyModeLabel(overview.entryType, overview.claimType)
@@ -145,7 +165,7 @@ export default function BountyManagementDashboard() {
         </h1>
       </div>
 
-      <Tabs defaultValue='overview'>
+      <Tabs defaultValue={initialTab}>
         <TabsList className='mb-6 flex flex-wrap'>
           <TabsTrigger value='overview'>Overview</TabsTrigger>
           {isApplication && (
