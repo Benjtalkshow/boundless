@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, Info, Loader2, Lock } from 'lucide-react';
@@ -29,6 +30,20 @@ export default function BountyManagementDashboard() {
   const params = useParams<{ id: string; bountyId: string }>();
   const organizationId = params?.id ?? '';
   const bountyId = params?.bountyId ?? '';
+
+  // Winner staging lives here (above the tab boundary) so it survives tab
+  // switches and is reachable by the Payout tab (#633).
+  const [stagedWinners, setStagedWinners] = useState<Set<string>>(new Set());
+  const toggleStagedWinner = (id: string) =>
+    setStagedWinners(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
 
   const {
     data: overview,
@@ -148,8 +163,11 @@ export default function BountyManagementDashboard() {
           <BountySubmissionsPanel
             organizationId={organizationId}
             bountyId={bountyId}
-            submissionVisibility={overview.submissionVisibility ?? ''}
+            submissionVisibility={overview.submissionVisibility}
             submissionDeadline={overview.submissionDeadline ?? null}
+            rewardCurrency={overview.rewardCurrency}
+            staged={stagedWinners}
+            onToggleStage={toggleStagedWinner}
           />
         </TabsContent>
         <TabsContent value='payout'>

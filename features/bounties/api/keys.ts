@@ -1,3 +1,5 @@
+import type { OrganizerSubmissionsParams } from './organizer-dashboard-client';
+
 /**
  * React Query key factory for the bounties feature. Co-locating the keys keeps
  * the hooks and any imperative `queryClient.invalidateQueries` calls in sync.
@@ -26,7 +28,7 @@ export const bountyKeys = {
   orgSubmissions: (
     organizationId: string,
     bountyId: string,
-    params: Record<string, unknown> = {}
+    params: OrganizerSubmissionsParams = {}
   ) =>
     [
       ...bountyKeys.all,

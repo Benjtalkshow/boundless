@@ -30,20 +30,22 @@ export function useBountyOverview(
 
 /**
  * Submitted work on a bounty, for the reviewing organizer (#337 / #632).
- * Pass `enabled: false` to keep sealed competition work unfetched until the
- * deadline (the FE gate) so it never reaches the browser early.
+ * Pass `enabled: false` to keep the Submissions tab from fetching sealed
+ * competition work before the deadline. This is a UX gate only: the API
+ * returns the organizer's submissions regardless of visibility, so the
+ * actual seal (if required) must be enforced server-side.
  */
 export function useBountySubmissions(
   organizationId: string | undefined,
   bountyId: string | undefined,
-  params: OrganizerSubmissionsParams = {},
-  options: { enabled?: boolean } = {}
+  options: { params?: OrganizerSubmissionsParams; enabled?: boolean } = {}
 ) {
+  const params = options.params ?? {};
   return useQuery<OrganizerBountySubmissionList>({
     queryKey: bountyKeys.orgSubmissions(
       organizationId ?? '',
       bountyId ?? '',
-      params as Record<string, unknown>
+      params
     ),
     queryFn: () =>
       listBountySubmissions(
@@ -52,6 +54,5 @@ export function useBountySubmissions(
         params
       ),
     enabled: !!organizationId && !!bountyId && (options.enabled ?? true),
-    retry: false,
   });
 }
