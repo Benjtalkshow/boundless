@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/tooltip';
 import EmptyState from '@/components/EmptyState';
 import { DueCountdown } from '@/components/bounties/DueCountdown';
+import { bountyStatusClass } from '@/components/bounties/statusClass';
 import {
   computeBountyModeLabel,
   computeBountyModeDescription,
@@ -21,22 +22,12 @@ import {
   useBountyOverview,
   type BountyOperateOverview,
 } from '@/features/bounties';
-
-const STATUS_CLASS: Record<string, string> = {
-  open: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400',
-  in_progress: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400',
-  ready_to_shortlist: 'border-amber-500/30 bg-amber-500/10 text-amber-400',
-  submitted: 'border-blue-500/30 bg-blue-500/10 text-blue-400',
-  under_review: 'border-blue-500/30 bg-blue-500/10 text-blue-400',
-  completed: 'border-primary/30 bg-primary/10 text-primary',
-  cancelled: 'border-zinc-700 bg-zinc-800/60 text-zinc-300',
-  disputed: 'border-red-500/30 bg-red-500/10 text-red-400',
-};
+import { ordinal } from '@/lib/utils';
 
 export default function BountyManagementDashboard() {
-  const params = useParams();
-  const organizationId = params.id as string;
-  const bountyId = params.bountyId as string;
+  const params = useParams<{ id: string; bountyId: string }>();
+  const organizationId = params?.id ?? '';
+  const bountyId = params?.bountyId ?? '';
 
   const {
     data: overview,
@@ -83,9 +74,7 @@ export default function BountyManagementDashboard() {
     overview.entryType && overview.claimType
       ? computeBountyModeDescription(overview.entryType, overview.claimType)
       : null;
-  const statusClass =
-    STATUS_CLASS[overview.status] ??
-    'border-zinc-700 bg-zinc-800/60 text-zinc-300';
+  const statusClass = bountyStatusClass(overview.status);
 
   return (
     <div>
@@ -342,9 +331,3 @@ function TabPlaceholder({ title, issue }: { title: string; issue: string }) {
     </div>
   );
 }
-
-const ordinal = (n: number): string => {
-  const s = ['th', 'st', 'nd', 'rd'];
-  const v = n % 100;
-  return `${n}${s[(v - 20) % 10] ?? s[v] ?? s[0]}`;
-};

@@ -10,8 +10,8 @@ import {
 
 /**
  * Operate-dashboard overview for the organizer management surface (#338 / #630).
- * `retry: false` keeps a not-yet-deployed endpoint from spamming retries; the
- * shell renders an error/empty state on failure.
+ * Global query defaults apply: 4xx never retries, transient errors retry twice;
+ * the shell renders an error/empty state on failure.
  */
 export function useBountyOverview(
   organizationId: string | undefined,
@@ -22,6 +22,5 @@ export function useBountyOverview(
     queryFn: () =>
       getBountyOverview(organizationId as string, bountyId as string),
     enabled: !!organizationId && !!bountyId,
-    retry: false,
   });
 }
