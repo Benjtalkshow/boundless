@@ -208,6 +208,26 @@ export {
   useAllBountySubmissions,
 } from './api/use-organizer-dashboard';
 
+// ── Organizer applications review (#631) ──────────────────────────────────────
+export {
+  listBountyApplications,
+  selectBountyApplication,
+  shortlistBountyApplications,
+  declineBountyApplication,
+} from './api/organizer-applications-client';
+export type {
+  OrganizerApplication,
+  SelectApplicationBody,
+  ShortlistApplicationsBody,
+  DeclineApplicationBody,
+} from './api/organizer-applications-client';
+export {
+  useBountyApplications,
+  useSelectApplication,
+  useShortlistApplications,
+  useDeclineApplication,
+} from './api/use-organizer-applications';
+
 // Participant hooks (React Query).
 export {
   useBountiesList,
