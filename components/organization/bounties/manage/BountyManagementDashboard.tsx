@@ -26,6 +26,7 @@ import {
 import { ordinal } from '@/lib/utils';
 import BountySubmissionsPanel from './BountySubmissionsPanel';
 import BountyPayoutPanel from './BountyPayoutPanel';
+import BountyApplicationsPanel from './BountyApplicationsPanel';
 
 export default function BountyManagementDashboard() {
   const params = useParams<{ id: string; bountyId: string }>();
@@ -157,7 +158,11 @@ export default function BountyManagementDashboard() {
         </TabsContent>
         {isApplication && (
           <TabsContent value='applications'>
-            <TabPlaceholder title='Applications review' issue='#631' />
+            <BountyApplicationsPanel
+              organizationId={organizationId}
+              bountyId={bountyId}
+              overview={overview}
+            />
           </TabsContent>
         )}
         <TabsContent value='submissions'>

@@ -44,4 +44,16 @@ export const bountyKeys = {
       organizationId,
       bountyId,
     ] as const,
+  orgApplications: (
+    organizationId: string,
+    bountyId: string,
+    params: Record<string, unknown> = {}
+  ) =>
+    [
+      ...bountyKeys.all,
+      'org-applications',
+      organizationId,
+      bountyId,
+      params,
+    ] as const,
 };
