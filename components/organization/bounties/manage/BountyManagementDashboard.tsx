@@ -25,6 +25,7 @@ import {
 } from '@/features/bounties';
 import { ordinal } from '@/lib/utils';
 import BountySubmissionsPanel from './BountySubmissionsPanel';
+import BountyPayoutPanel from './BountyPayoutPanel';
 
 export default function BountyManagementDashboard() {
   const params = useParams<{ id: string; bountyId: string }>();
@@ -171,7 +172,12 @@ export default function BountyManagementDashboard() {
           />
         </TabsContent>
         <TabsContent value='payout'>
-          <TabPlaceholder title='Winner selection & payout' issue='#633' />
+          <BountyPayoutPanel
+            organizationId={organizationId}
+            bountyId={bountyId}
+            overview={overview}
+            staged={stagedWinners}
+          />
         </TabsContent>
         <TabsContent value='settings'>
           <TabPlaceholder title='Settings & cancel / refund' issue='#634' />

@@ -37,4 +37,11 @@ export const bountyKeys = {
       bountyId,
       params,
     ] as const,
+  orgSubmissionsAll: (organizationId: string, bountyId: string) =>
+    [
+      ...bountyKeys.all,
+      'org-submissions-all',
+      organizationId,
+      bountyId,
+    ] as const,
 };
