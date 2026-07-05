@@ -28,6 +28,7 @@ import BountySubmissionsPanel from './BountySubmissionsPanel';
 import BountyPayoutPanel from './BountyPayoutPanel';
 import BountyApplicationsPanel from './BountyApplicationsPanel';
 import BountySettingsPanel from './BountySettingsPanel';
+import BountyResultsPanel from './BountyResultsPanel';
 
 export default function BountyManagementDashboard() {
   const params = useParams<{ id: string; bountyId: string }>();
@@ -85,6 +86,7 @@ export default function BountyManagementDashboard() {
   const isApplication =
     overview.entryType === 'APPLICATION_LIGHT' ||
     overview.entryType === 'APPLICATION_FULL';
+  const isCompleted = overview.status === 'completed';
   const modeLabel =
     overview.entryType && overview.claimType
       ? computeBountyModeLabel(overview.entryType, overview.claimType)
@@ -151,6 +153,7 @@ export default function BountyManagementDashboard() {
           )}
           <TabsTrigger value='submissions'>Submissions</TabsTrigger>
           <TabsTrigger value='payout'>Payout &amp; Winners</TabsTrigger>
+          {isCompleted && <TabsTrigger value='results'>Results</TabsTrigger>}
           <TabsTrigger value='settings'>Settings</TabsTrigger>
         </TabsList>
 
@@ -183,6 +186,15 @@ export default function BountyManagementDashboard() {
             staged={stagedWinners}
           />
         </TabsContent>
+        {isCompleted && (
+          <TabsContent value='results'>
+            <BountyResultsPanel
+              organizationId={organizationId}
+              bountyId={bountyId}
+              overview={overview}
+            />
+          </TabsContent>
+        )}
         <TabsContent value='settings'>
           <BountySettingsPanel
             organizationId={organizationId}

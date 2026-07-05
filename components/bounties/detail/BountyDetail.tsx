@@ -30,6 +30,7 @@ import {
 import { ordinal } from '@/lib/utils';
 import { BountyEntryCta } from './BountyEntryCta';
 import BountySubmitPanel from './submit/BountySubmitPanel';
+import { BountyResults } from './BountyResults';
 import { DueCountdown } from '../DueCountdown';
 
 // Markdown renderer (matches the wizard's editor package).
@@ -200,6 +201,11 @@ export default function BountyDetail({ id }: { id: string }) {
                   ))}
               </div>
             </div>
+          )}
+
+          {/* Results (winners + announcement) once the bounty is completed. */}
+          {bounty.status === 'completed' && (
+            <BountyResults bountyId={bounty.id} currency={currency} />
           )}
         </div>
 
