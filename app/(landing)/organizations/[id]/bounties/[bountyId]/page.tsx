@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import { Metadata } from 'next';
 
 import { AuthGuard } from '@/components/auth';
@@ -11,7 +12,10 @@ export default function BountyManagePageRoute() {
   return (
     <AuthGuard redirectTo='/auth?mode=signin' fallback={<Loading />}>
       <div className='mx-auto max-w-6xl px-6 py-8'>
-        <BountyManagementDashboard />
+        {/* Dashboard reads ?tab= via useSearchParams; needs a suspense boundary. */}
+        <Suspense fallback={<Loading />}>
+          <BountyManagementDashboard />
+        </Suspense>
       </div>
     </AuthGuard>
   );
