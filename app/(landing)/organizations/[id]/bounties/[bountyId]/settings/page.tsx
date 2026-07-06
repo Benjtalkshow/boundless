@@ -16,8 +16,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AuthGuard } from '@/components/auth';
 import Loading from '@/components/Loading';
 import EmptyState from '@/components/EmptyState';
-import { DueCountdown } from '@/components/bounties/DueCountdown';
 import BountyGeneralSettingsTab from '@/components/organization/bounties/settings/BountyGeneralSettingsTab';
+import BountyTimelineSettingsTab from '@/components/organization/bounties/settings/BountyTimelineSettingsTab';
 import BountySettingsPanel from '@/components/organization/bounties/manage/BountySettingsPanel';
 import {
   useBountyOverview,
@@ -177,52 +177,13 @@ function BountySettingsContent({
         </div>
       </TabsContent>
 
-      {/* Timeline — on-chain deadline, immutable once funded. */}
+      {/* Timeline — on-chain submission deadline (read-only) + editable
+          off-chain application window. */}
       <TabsContent value='timeline' className='mt-0'>
-        <div className='space-y-4'>
-          <OnChainNotice />
-          <div className='rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5'>
-            <h3 className='mb-3 text-sm font-semibold text-white'>Timeline</h3>
-            <dl className='space-y-2.5 text-sm'>
-              {overview.submissionDeadline ? (
-                <div className='flex items-center justify-between gap-3'>
-                  <dt className='text-zinc-400'>Submission deadline</dt>
-                  <dd>
-                    <DueCountdown
-                      deadline={overview.submissionDeadline}
-                      className='flex items-center gap-1.5 text-xs font-medium text-zinc-200'
-                    />
-                  </dd>
-                </div>
-              ) : (
-                <Row label='Submission deadline' value='Not set' />
-              )}
-              {overview.applicationWindowCloseAt && (
-                <div className='flex items-center justify-between gap-3'>
-                  <dt className='text-zinc-400'>Applications close</dt>
-                  <dd>
-                    <DueCountdown
-                      deadline={overview.applicationWindowCloseAt}
-                      className='flex items-center gap-1.5 text-xs font-medium text-zinc-200'
-                    />
-                  </dd>
-                </div>
-              )}
-              {overview.maxApplicants != null && (
-                <Row
-                  label='Max applicants'
-                  value={String(overview.maxApplicants)}
-                />
-              )}
-              {overview.shortlistSize != null && (
-                <Row
-                  label='Shortlist size'
-                  value={String(overview.shortlistSize)}
-                />
-              )}
-            </dl>
-          </div>
-        </div>
+        <BountyTimelineSettingsTab
+          organizationId={organizationId}
+          bountyId={bountyId}
+        />
       </TabsContent>
 
       {/* Close-out — cancel / refund + archive (moved from the dashboard). */}
@@ -245,34 +206,6 @@ function OnChainNotice() {
         These values are anchored on-chain in the escrow and cannot be changed
         after funding.
       </span>
-    </div>
-  );
-}
-
-function Row({
-  label,
-  value,
-  hint,
-  capitalize,
-}: {
-  label: string;
-  value: string;
-  hint?: string | null;
-  capitalize?: boolean;
-}) {
-  return (
-    <div className='flex items-start justify-between gap-4'>
-      <dt className='text-zinc-400'>{label}</dt>
-      <dd className='max-w-[60%] text-right'>
-        <span
-          className={`font-medium text-white ${capitalize ? 'capitalize' : ''}`}
-        >
-          {value}
-        </span>
-        {hint && (
-          <span className='mt-0.5 block text-xs text-zinc-500'>{hint}</span>
-        )}
-      </dd>
     </div>
   );
 }
