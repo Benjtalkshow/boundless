@@ -13,6 +13,7 @@ import {
 import { cn } from '@/lib/utils';
 import HackathonSidebar from '@/components/organization/hackathons/details/HackathonSidebar';
 import HackathonNavigationLoader from '@/components/organization/hackathons/details/HackathonNavigationLoader';
+import BountyManageSidebar from '@/components/organization/bounties/manage/BountyManageSidebar';
 
 export default function OrganizationsLayout({
   children,
@@ -29,6 +30,14 @@ export default function OrganizationsLayout({
   // under /hackathons/ except the list page itself.
   const showHackathonSidebar =
     pathname.includes('/hackathons/') && !pathname.endsWith('/hackathons');
+  // Management shell for a published bounty (dashboard + settings). Excludes the
+  // list, the create wizard (/new) and draft editing (/drafts), which keep the
+  // general org sidebar.
+  const showBountySidebar =
+    pathname.includes('/bounties/') &&
+    !pathname.endsWith('/bounties') &&
+    !pathname.includes('/bounties/new') &&
+    !pathname.includes('/bounties/drafts');
   const getOrgIdFromPath = () => {
     if (pathname.startsWith('/organizations/')) {
       const pathParts = pathname.split('/');
@@ -49,6 +58,7 @@ export default function OrganizationsLayout({
           showOrganizationSidebar={showOrganizationSidebar}
           showNewGrantSidebar={showNewGrantSidebar}
           showHackathonSidebar={showHackathonSidebar}
+          showBountySidebar={showBountySidebar}
           initialOrgId={initialOrgId}
         >
           {children}
@@ -63,12 +73,14 @@ function OrganizationsLayoutContent({
   showOrganizationSidebar,
   showNewGrantSidebar,
   showHackathonSidebar,
+  showBountySidebar,
   initialOrgId,
 }: {
   children: React.ReactNode;
   showOrganizationSidebar: boolean;
   showNewGrantSidebar: boolean;
   showHackathonSidebar: boolean;
+  showBountySidebar: boolean;
   initialOrgId: string | null;
 }) {
   const { isNavigating } = useNavigationLoading();
@@ -81,9 +93,13 @@ function OrganizationsLayoutContent({
         <div className='relative border-t border-t-zinc-800'>
           {showOrganizationSidebar &&
             !showNewGrantSidebar &&
-            !showHackathonSidebar && <OrganizationSidebar />}
+            !showHackathonSidebar &&
+            !showBountySidebar && <OrganizationSidebar />}
           {showHackathonSidebar && (
             <HackathonSidebar organizationId={initialOrgId || undefined} />
+          )}
+          {showBountySidebar && (
+            <BountyManageSidebar organizationId={initialOrgId || undefined} />
           )}
           {/* {showNewGrantSidebar && <NewGrantSidebar />} */}
 
