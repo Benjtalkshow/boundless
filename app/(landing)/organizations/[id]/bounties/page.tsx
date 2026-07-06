@@ -3,12 +3,14 @@
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
+import { useMutation } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import {
-  ArrowRight,
   Calendar,
   FileText,
   Plus,
   Search,
+  Settings,
   Target,
   Trash2,
 } from 'lucide-react';
@@ -26,7 +28,9 @@ import {
 import { AuthGuard } from '@/components/auth';
 import Loading from '@/components/Loading';
 import DeleteBountyDraftDialog from '@/components/organization/bounties/DeleteBountyDraftDialog';
+import RemoveBountyDialog from '@/components/organization/bounties/RemoveBountyDialog';
 import {
+  archiveBounty,
   useDeleteDraft,
   useDraftList,
   useOrganizationBounties,
@@ -76,26 +80,6 @@ function statusDisplay(status: string) {
   );
 }
 
-/**
- * Status-aware manage CTA: deep-links into the dashboard tab that matches where
- * the organizer's attention is needed next.
- */
-function manageCta(status: string): { label: string; tab: string } {
-  switch (status) {
-    case 'submitted':
-    case 'under_review':
-      return { label: 'Review submissions', tab: 'submissions' };
-    case 'in_progress':
-      return { label: 'Review & pay', tab: 'payout' };
-    case 'completed':
-      return { label: 'View results', tab: 'results' };
-    case 'cancelled':
-      return { label: 'View bounty', tab: 'overview' };
-    default:
-      return { label: 'Manage', tab: 'overview' };
-  }
-}
-
 const draftPrizePool = (draft: BountyDraft): number =>
   (draft.data?.reward?.prizeTiers ?? []).reduce(
     (sum, tier) => sum + (Number(tier.amount) || 0),
@@ -118,6 +102,23 @@ export default function OrganizationBountiesPage() {
     id: string;
     title: string;
   } | null>(null);
+
+  // Removing a published bounty: archive it (once closed out) or route to the
+  // cancel/refund flow (while it's still live). Confirmed in RemoveBountyDialog.
+  const [bountyToRemove, setBountyToRemove] =
+    useState<OrganizationBountyListItem | null>(null);
+  const archiveMutation = useMutation({
+    mutationFn: (bountyId: string) => archiveBounty(organizationId, bountyId),
+    onSuccess: () => {
+      toast.success('Bounty archived.');
+      setBountyToRemove(null);
+      void publishedQuery.refetch();
+    },
+    onError: err =>
+      toast.error(
+        err instanceof Error ? err.message : 'Failed to archive the bounty'
+      ),
+  });
 
   const allDrafts: BountyDraft[] = draftsQuery.data ?? [];
 
@@ -302,30 +303,44 @@ export default function OrganizationBountiesPage() {
                             <p className='text-[11px] text-zinc-500'>reward</p>
                           </div>
                         </div>
-                        <span className='flex items-center gap-1 text-xs text-zinc-400'>
+                        <span
+                          className='flex items-center gap-1 text-xs text-zinc-400'
+                          title='Submissions'
+                        >
                           <FileText className='h-4 w-4' />
-                          {bounty._count?.submissions ?? 0}
+                          {bounty._count?.submissions ?? 0} submissions
                         </span>
                       </div>
-                      {(() => {
-                        const cta = manageCta(bounty.status);
-                        return (
-                          <BoundlessButton
-                            variant='outline'
-                            size='sm'
-                            className='mt-4 w-full gap-1.5'
-                            onClick={e => {
-                              e.stopPropagation();
-                              router.push(
-                                `/organizations/${organizationId}/bounties/${bounty.id}?tab=${cta.tab}`
-                              );
-                            }}
-                          >
-                            {cta.label}
-                            <ArrowRight className='h-3.5 w-3.5' />
-                          </BoundlessButton>
-                        );
-                      })()}
+
+                      {/* Hover actions (mirrors the hackathon organizer card). */}
+                      <div className='absolute top-3 right-3 z-10 flex gap-2 opacity-0 transition-opacity group-hover:opacity-100'>
+                        <button
+                          type='button'
+                          onClick={e => {
+                            e.stopPropagation();
+                            router.push(
+                              `/organizations/${organizationId}/bounties/${bounty.id}/settings`
+                            );
+                          }}
+                          className='flex h-9 w-9 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-900/70 text-zinc-400 hover:border-zinc-700 hover:text-white'
+                          title='Settings'
+                          aria-label={`Bounty settings for ${bounty.title || 'Untitled bounty'}`}
+                        >
+                          <Settings className='h-4 w-4' />
+                        </button>
+                        <button
+                          type='button'
+                          onClick={e => {
+                            e.stopPropagation();
+                            setBountyToRemove(bounty);
+                          }}
+                          className='flex h-9 w-9 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-900/70 text-zinc-400 hover:border-red-600 hover:text-red-500'
+                          title='Remove bounty'
+                          aria-label={`Remove ${bounty.title || 'Untitled bounty'}`}
+                        >
+                          <Trash2 className='h-4 w-4' />
+                        </button>
+                      </div>
                     </div>
                   );
                 })}
@@ -427,6 +442,27 @@ export default function OrganizationBountiesPage() {
         isDeleting={deleteDraft.isPending}
         onConfirm={() => {
           if (draftToDelete) deleteDraft.mutate(draftToDelete.id);
+        }}
+      />
+
+      <RemoveBountyDialog
+        open={!!bountyToRemove}
+        onOpenChange={open => {
+          if (!open) setBountyToRemove(null);
+        }}
+        bountyTitle={bountyToRemove?.title ?? ''}
+        status={bountyToRemove?.status ?? ''}
+        isArchiving={archiveMutation.isPending}
+        onArchive={() => {
+          if (bountyToRemove) archiveMutation.mutate(bountyToRemove.id);
+        }}
+        onCancelRefund={() => {
+          if (!bountyToRemove) return;
+          const id = bountyToRemove.id;
+          setBountyToRemove(null);
+          router.push(
+            `/organizations/${organizationId}/bounties/${id}/settings?section=closeout`
+          );
         }}
       />
     </AuthGuard>

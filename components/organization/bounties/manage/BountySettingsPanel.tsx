@@ -143,7 +143,7 @@ export default function BountySettingsPanel({
             ) : (
               <BoundlessButton
                 variant='destructive'
-                className='mt-4'
+                className='mt-4 bg-red-500 text-white hover:bg-red-600'
                 onClick={() => {
                   setConfirmText('');
                   setConfirmOpen(true);
@@ -256,6 +256,7 @@ export default function BountySettingsPanel({
             </BoundlessButton>
             <BoundlessButton
               variant='destructive'
+              className='bg-red-500 text-white hover:bg-red-600 disabled:opacity-50'
               disabled={confirmText.trim() !== CONFIRM_PHRASE}
               onClick={() => {
                 setConfirmOpen(false);
