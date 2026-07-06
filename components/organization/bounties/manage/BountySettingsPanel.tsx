@@ -93,7 +93,7 @@ export default function BountySettingsPanel({
   const archiveBusy = archiveMutation.isPending || restoreMutation.isPending;
 
   return (
-    <div className='max-w-2xl space-y-6'>
+    <div className='space-y-6'>
       <div className='rounded-2xl border border-red-500/30 bg-red-500/[0.04] p-5'>
         <div className='flex items-start gap-3'>
           <AlertTriangle className='mt-0.5 h-5 w-5 shrink-0 text-red-400' />

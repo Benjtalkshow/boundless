@@ -2,9 +2,7 @@
 
 import { Suspense } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
-import Link from 'next/link';
 import {
-  ArrowLeft,
   CalendarClock,
   Info,
   Loader2,
@@ -64,15 +62,7 @@ function BountySettingsView() {
   return (
     <AuthGuard redirectTo='/auth?mode=signin' fallback={<Loading />}>
       <div className='bg-background min-h-screen'>
-        <div className='mx-auto max-w-7xl px-6 py-8'>
-          <Link
-            href={`/organizations/${organizationId}/bounties/${bountyId}`}
-            className='mb-6 inline-flex items-center gap-1.5 text-sm text-zinc-400 transition-colors hover:text-white'
-          >
-            <ArrowLeft className='h-4 w-4' />
-            Back to dashboard
-          </Link>
-
+        <div className='w-full px-6 py-8'>
           <div className='mb-6 flex items-center gap-3'>
             <Settings className='text-primary h-6 w-6' />
             <div>
@@ -153,7 +143,7 @@ function BountySettingsContent({
 
       {/* Rewards — on-chain, immutable once funded. */}
       <TabsContent value='rewards' className='mt-0'>
-        <div className='max-w-2xl space-y-4'>
+        <div className='space-y-4'>
           <OnChainNotice />
           <div className='rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5'>
             <h3 className='mb-3 text-sm font-semibold text-white'>
@@ -189,7 +179,7 @@ function BountySettingsContent({
 
       {/* Timeline — on-chain deadline, immutable once funded. */}
       <TabsContent value='timeline' className='mt-0'>
-        <div className='max-w-2xl space-y-4'>
+        <div className='space-y-4'>
           <OnChainNotice />
           <div className='rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5'>
             <h3 className='mb-3 text-sm font-semibold text-white'>Timeline</h3>

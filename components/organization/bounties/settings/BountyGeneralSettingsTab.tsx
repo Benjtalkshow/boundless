@@ -216,7 +216,7 @@ function GeneralForm({
     isApplication || (bounty.entryType === 'OPEN' && isCompetition);
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className='max-w-2xl space-y-8'>
+    <form onSubmit={handleSubmit(onSubmit)} className='space-y-8'>
       {/* ── Scope ── */}
       <Section
         title='Scope'
