@@ -27,6 +27,7 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
+    /** List my notifications (paginated) */
     get: operations['NotificationsController_getNotifications'];
     put?: never;
     post?: never;
@@ -43,6 +44,7 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
+    /** Get my unread notification count */
     get: operations['NotificationsController_getUnreadCount'];
     put?: never;
     post?: never;
@@ -60,6 +62,7 @@ export interface paths {
       cookie?: never;
     };
     get?: never;
+    /** Mark a notification as read */
     put: operations['NotificationsController_markAsRead'];
     post?: never;
     delete?: never;
@@ -76,6 +79,7 @@ export interface paths {
       cookie?: never;
     };
     get?: never;
+    /** Mark all my notifications as read */
     put: operations['NotificationsController_markAllAsRead'];
     post?: never;
     delete?: never;
@@ -94,6 +98,7 @@ export interface paths {
     get?: never;
     put?: never;
     post?: never;
+    /** Delete a notification */
     delete: operations['NotificationsController_deleteNotification'];
     options?: never;
     head?: never;
@@ -107,7 +112,9 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
+    /** Get my notification preferences */
     get: operations['NotificationsController_getPreferences'];
+    /** Update my notification preferences */
     put: operations['NotificationsController_updatePreferences'];
     post?: never;
     delete?: never;
@@ -125,6 +132,7 @@ export interface paths {
     };
     get?: never;
     put?: never;
+    /** Send a test notification to myself */
     post: operations['NotificationsController_sendTestNotification'];
     delete?: never;
     options?: never;
@@ -141,6 +149,7 @@ export interface paths {
     };
     get?: never;
     put?: never;
+    /** Manually trigger the daily marketing checks */
     post: operations['NotificationsController_triggerMarketingCron'];
     delete?: never;
     options?: never;
@@ -302,6 +311,23 @@ export interface paths {
     get: operations['ProfileController_getActivity'];
     put?: never;
     post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/users/profile/banner': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Upload profile banner */
+    post: operations['ProfileController_uploadBanner'];
     delete?: never;
     options?: never;
     head?: never;
@@ -1919,6 +1945,26 @@ export interface paths {
     };
     /** Total USD balance across the user wallet assets (nav chip) */
     get: operations['WalletController_getWalletSummary'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/wallet/transactions': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Paginated wallet transactions for the activity table
+     * @description Withdrawals (outgoing), top ups (incoming), or all, with an optional date filter.
+     */
+    get: operations['WalletController_getTransactions'];
     put?: never;
     post?: never;
     delete?: never;
@@ -5086,6 +5132,26 @@ export interface paths {
      * @description Returns public profile for the organization page: name, logo, description, and key stats. Resolve by organization ID or slug.
      */
     get: operations['OrganizationsController_getOrganizationProfile'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/organizations/profile/{idOrSlug}/funded': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Get projects the organization funded (public)
+     * @description Hackathons this organization co-funded as a partner (confirmed pledges), for the Funded Projects tab of the public profile.
+     */
+    get: operations['OrganizationsController_getOrganizationFundedProjects'];
     put?: never;
     post?: never;
     delete?: never;
@@ -16344,6 +16410,34 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
   schemas: {
+    AppNotification: {
+      /** Format: uuid */
+      id: string;
+      /** Format: uuid */
+      userId: string;
+      type: string;
+      title: string;
+      message: string;
+      read: boolean;
+      /** Format: date-time */
+      readAt: string | null;
+      /** @description Additional structured payload for the notification */
+      data?: Record<string, never> | null;
+      /** @description Delivery channels, e.g. ['email', 'push', 'in-app'] */
+      channels?: string[] | null;
+      /** Format: date-time */
+      createdAt: string;
+      /** Format: date-time */
+      updatedAt: string;
+    };
+    NotificationList: {
+      notifications: components['schemas']['AppNotification'][];
+      /** @description Total notifications matching the filter */
+      total: number;
+      limit: number;
+      /** @description Row offset the page was read from */
+      offset: number;
+    };
     NotificationPreferencesDto: Record<string, never>;
     UpdatePrivacySettingsDto: {
       /**
@@ -16376,6 +16470,21 @@ export interface components {
        * @example true
        */
       socialLinksVisibility: boolean;
+      /**
+       * @description Show total earnings on the public profile
+       * @example true
+       */
+      earningsVisibility: boolean;
+      /**
+       * @description Show submissions on the public profile
+       * @example true
+       */
+      submissionsVisibility: boolean;
+      /**
+       * @description Show the activity timeline on the public profile
+       * @example true
+       */
+      activityVisibility: boolean;
     };
     UpdateAppearanceSettingsDto: {
       /**
@@ -16520,6 +16629,8 @@ export interface components {
       socialLinks: {
         [key: string]: unknown;
       } | null;
+      /** @description Profile page banner image URL (Cloudinary). */
+      banner: string | null;
     };
     ProfileResponseDto: {
       id: string;
@@ -16851,6 +16962,277 @@ export interface components {
        */
       title: string;
     };
+    CampaignTeamMemberDto: {
+      name: string;
+      role: string;
+      email?: string;
+      linkedin?: string;
+      twitter?: string;
+    };
+    CampaignContactDto: {
+      primary: string;
+      backup?: string;
+    };
+    CampaignSocialLinkDto: {
+      /** @description Platform name, e.g. 'twitter' or 'github'. */
+      platform: string;
+      url: string;
+    };
+    ProjectCreatorPublicDto: {
+      id: string;
+      name: string | null;
+      username: string | null;
+      image: string | null;
+    };
+    CampaignProjectPublicDto: {
+      id: string;
+      title: string;
+      tagline: string | null;
+      description: string | null;
+      summary: string | null;
+      vision: string | null;
+      /** @description Markdown long-form details for crowdfunding campaigns. */
+      details: string | null;
+      category: string | null;
+      /** @enum {string} */
+      status:
+        | 'IDEA'
+        | 'REVIEWING'
+        | 'VOTING'
+        | 'VALIDATED'
+        | 'REJECTED'
+        | 'CAMPAIGNING'
+        | 'LIVE'
+        | 'COMPLETED'
+        | 'FAILED'
+        | 'CANCELLED';
+      creatorId: string;
+      organizationId: string | null;
+      slug: string | null;
+      /** @enum {string|null} */
+      originType:
+        | 'HACKATHON'
+        | 'GRANT'
+        | 'BOUNTY'
+        | 'CROWDFUNDING'
+        | 'MANUAL'
+        | null;
+      originReferenceId: string | null;
+      /** @enum {string} */
+      publicStatus: 'LIVE' | 'BETA' | 'IN_DEVELOPMENT' | 'ARCHIVED';
+      isFeatured: boolean;
+      /** Format: date-time */
+      launchDate: string | null;
+      liveUrl: string | null;
+      docsUrl: string | null;
+      screenshots: string[];
+      techStack: string[];
+      draftData: {
+        [key: string]: unknown;
+      } | null;
+      teamMembers: {
+        [key: string]: unknown;
+      }[];
+      banner: string | null;
+      logo: string | null;
+      thumbnail: string | null;
+      githubUrl: string | null;
+      gitlabUrl: string | null;
+      bitbucketUrl: string | null;
+      projectWebsite: string | null;
+      demoVideo: string | null;
+      whitepaperUrl: string | null;
+      pitchVideoUrl: string | null;
+      socialLinks: {
+        [key: string]: unknown;
+      } | null;
+      contact: {
+        [key: string]: unknown;
+      } | null;
+      whitepaper: {
+        [key: string]: unknown;
+      } | null;
+      pitchDeck: {
+        [key: string]: unknown;
+      } | null;
+      tags: string[];
+      approvedById: string | null;
+      /** Format: date-time */
+      approvedAt: string | null;
+      /** Format: date-time */
+      createdAt: string;
+      /** Format: date-time */
+      updatedAt: string;
+      creator: components['schemas']['ProjectCreatorPublicDto'];
+    };
+    CampaignMilestonePublicDto: {
+      id: string;
+      campaignId: string;
+      title: string;
+      description: string;
+      deliverable: string;
+      /** @description Percent of the funding goal (0-100). */
+      fundingPercentage: number;
+      amount: number;
+      /** Format: date-time */
+      expectedDeliveryDate: string;
+      successCriteria: string | null;
+      orderIndex: number;
+      /** Format: date-time */
+      submittedAt: string | null;
+      proofOfWorkFiles: string[];
+      proofOfWorkLinks: string[];
+      submissionNotes: string | null;
+      /** @enum {string} */
+      reviewStatus:
+        | 'PENDING'
+        | 'SUBMITTED'
+        | 'UNDER_REVIEW'
+        | 'APPROVED'
+        | 'REJECTED'
+        | 'RESUBMISSION_REQUIRED';
+      /** Format: date-time */
+      reviewedAt: string | null;
+      reviewedById: string | null;
+      reviewedByStaffEmail: string | null;
+      rejectionReason: string | null;
+      rejectionFeedback: string | null;
+      /** Format: date-time */
+      resubmissionDeadline: string | null;
+      /** Format: date-time */
+      completedAt: string | null;
+      releaseTransactionHash: string | null;
+      /** Format: date-time */
+      createdAt: string;
+      /** Format: date-time */
+      updatedAt: string;
+      /** @enum {string|null} */
+      escrowAnchorStatus: 'pending_confirm' | 'confirmed' | 'failed' | null;
+      escrowClaimOpId: string | null;
+      escrowClaimTxHash: string | null;
+      escrowClaimSettledLedger: number | null;
+      escrowFailureCode: string | null;
+      /** Format: date-time */
+      escrowFailedAt: string | null;
+      /** Format: date-time */
+      claimedAt: string | null;
+    };
+    CampaignReviewPublicDto: {
+      id: string;
+      campaignId: string;
+      reviewerId: string | null;
+      reviewerStaffEmail: string | null;
+      /** @description NOTE | REQUEST_REVISION | APPROVED | REJECTED */
+      action: string;
+      reason: string | null;
+      details: string | null;
+      /** Format: date-time */
+      createdAt: string;
+      /** Format: date-time */
+      updatedAt: string;
+    };
+    CampaignContributorPublicDto: {
+      /**
+       * Format: date-time
+       * @description confirmedAt, else createdAt.
+       */
+      date: string;
+      amount: number;
+      /** @description Empty string for anonymous backers. */
+      userId: string;
+      /** @description Empty string when not yet on-chain. */
+      transactionHash: string;
+      /** @description Empty string for anonymous backers. */
+      username: string;
+      /** @description Empty string for anonymous backers. */
+      name: string;
+      /** @description Empty string for anonymous backers. */
+      image: string;
+      message?: string;
+    };
+    CampaignPublicDetailDto: {
+      id: string;
+      slug: string;
+      projectId: string;
+      fundingGoal: number;
+      fundingRaised: number;
+      /** @example USDC */
+      fundingCurrency: string;
+      /** Format: date-time */
+      fundingEndDate: string | null;
+      voteGoal: number;
+      /** Format: date-time */
+      votingEndDate: string | null;
+      voteUpCount: number;
+      voteDownCount: number;
+      /** Format: date-time */
+      voteStartedAt: string | null;
+      /** Format: date-time */
+      voteResolvedAt: string | null;
+      team: components['schemas']['CampaignTeamMemberDto'][];
+      contact: components['schemas']['CampaignContactDto'];
+      socialLinks: components['schemas']['CampaignSocialLinkDto'][];
+      /** Format: date-time */
+      createdAt: string;
+      /** Format: date-time */
+      updatedAt: string;
+      assignedReviewerId: string | null;
+      assignedReviewerStaffId: string | null;
+      /**
+       * @description Campaign lifecycle status.
+       * @enum {string}
+       */
+      v2Status:
+        | 'DRAFT'
+        | 'SUBMITTED_FOR_REVIEW'
+        | 'REVIEW_REJECTED'
+        | 'REVIEW_APPROVED'
+        | 'VOTING'
+        | 'VOTE_FAILED'
+        | 'VOTE_PASSED'
+        | 'PUBLISHING'
+        | 'FUNDING'
+        | 'COMPLETED'
+        | 'CANCELLED'
+        | 'PAUSED';
+      builderAddress: string | null;
+      organizationId: string | null;
+      nMilestones: number | null;
+      /** Format: date-time */
+      pausedAt: string | null;
+      pausedReason: string | null;
+      previousStatus: string | null;
+      /** Format: date-time */
+      submittedForReviewAt: string | null;
+      /** Format: date-time */
+      reviewedAt: string | null;
+      /** Format: date-time */
+      cancelledAt: string | null;
+      /** Format: date-time */
+      completedAt: string | null;
+      escrowOpId: string | null;
+      /** @description On-chain event id (BigInt), stringified when present. */
+      escrowEventId: string | null;
+      escrowTxHash: string | null;
+      escrowSettledLedger: number | null;
+      escrowToken: string | null;
+      /** @description Decimal amount, stringified when present. */
+      escrowBudget: string | null;
+      escrowOwnerAddress: string | null;
+      escrowFailureCode: string | null;
+      /** Format: date-time */
+      escrowFailedAt: string | null;
+      escrowCancelOpId: string | null;
+      escrowCancelTxHash: string | null;
+      escrowCancelSettledLedger: number | null;
+      /** @description Decimal amount, stringified. */
+      totalDisbursed: string;
+      project: components['schemas']['CampaignProjectPublicDto'];
+      milestones: components['schemas']['CampaignMilestonePublicDto'][];
+      reviews: components['schemas']['CampaignReviewPublicDto'][];
+      /** @description Settled contributions only, newest first, capped at 50. */
+      contributors: components['schemas']['CampaignContributorPublicDto'][];
+    };
     UpdateCampaignDto: {
       /**
        * @description Title of the campaign
@@ -17146,11 +17528,11 @@ export interface components {
        */
       balance: string;
       /** @example 125 */
-      usdValue: Record<string, never> | null;
+      usdValue: number | null;
     };
     WalletSummaryDto: {
       /** @description Wallet G-address. */
-      address: Record<string, never> | null;
+      address: string | null;
       isActivated: boolean;
       /**
        * @description Total USD across all assets.
@@ -17158,6 +17540,37 @@ export interface components {
        */
       totalUsd: number;
       assets: components['schemas']['WalletSummaryAssetDto'][];
+    };
+    WalletTransactionDto: {
+      id: string;
+      /** @description DEPOSIT | WITHDRAWAL | PAYOUT | REFUND | FEE */
+      type: string;
+      /**
+       * @description in for incoming (top ups), out for withdrawals/fees
+       * @enum {string}
+       */
+      direction: 'in' | 'out';
+      /** @description Human destination label, e.g. "Stellar Wallet" */
+      destination: string;
+      /** @description Asset code, e.g. USDC or XLM */
+      asset: string;
+      /** @description Absolute amount as a string */
+      amount: string;
+      /** @description pending | completed | failed */
+      status: string;
+      /** @description Horizon tx hash once settled */
+      txHash: Record<string, never> | null;
+      /**
+       * Format: date-time
+       * @description When the transaction was created
+       */
+      createdAt: string;
+    };
+    WalletTransactionsResponseDto: {
+      items: components['schemas']['WalletTransactionDto'][];
+      total: number;
+      page: number;
+      limit: number;
     };
     ReclaimDormantDto: {
       /**
@@ -17389,21 +17802,277 @@ export interface components {
       };
       metadata: components['schemas']['JudgingResultsMetadataDto'];
     };
-    CreatorRelationDto: {
+    HackathonPublicOrganizationDto: {
       id: string;
       name: string;
+      logo: string | null;
+      slug: string | null;
+      /** @description Organization website from the org's metadata.links. */
+      websiteUrl: string | null;
+      /** @description Organization X (Twitter) URL from the org's metadata.links. */
+      twitterUrl: string | null;
+      /** @description Organization GitHub URL from the org's metadata.links. */
+      githubUrl: string | null;
+    };
+    HackathonPublicSubmissionSummaryDto: {
+      id: string;
+      /** @description Submission lifecycle status. */
+      status: string;
+      /** Format: date-time */
+      createdAt: string;
+    };
+    HackathonPublicFollowerDto: {
+      id: string;
+      name: string | null;
+      username: string | null;
+      image: string | null;
+    };
+    HackathonPublicCountsDto: {
+      submissions: number;
+      followers: number;
+      participants: number;
+    };
+    HackathonParticipantProfileDto: {
+      name?: string;
       username?: string;
       image?: string;
     };
-    OrganizationRelationDto: {
+    HackathonParticipantUserDto: {
+      id: string;
+      profile: components['schemas']['HackathonParticipantProfileDto'];
+      email?: string;
+    };
+    HackathonPublicParticipantDto: {
+      id: string;
+      userId: string;
+      hackathonId?: string;
+      organizationId?: string;
+      user: components['schemas']['HackathonParticipantUserDto'];
+      /** @description Social links keyed by platform; {} when the user has none. */
+      socialLinks: {
+        [key: string]: unknown;
+      };
+      /** @description Lowercased; 'individual' when unspecified. */
+      participationType: string;
+      teamId?: string | null;
+      teamName?: string | null;
+      teamMembers: {
+        [key: string]: unknown;
+      }[];
+      /** @description The participant's submission row, when one exists. */
+      submission?: {
+        [key: string]: unknown;
+      } | null;
+      /** Format: date-time */
+      registeredAt: string;
+      /** Format: date-time */
+      submittedAt?: string;
+    };
+    HackathonPublicPrizePlacementDto: {
+      id: string;
+      /** @description 1-indexed placement position. */
+      position: number;
+      label: string | null;
+      /** @description Decimal amount, stringified. */
+      amount: string;
+      currency: string;
+      passMark: number | null;
+    };
+    HackathonPublicPrizeDto: {
       id: string;
       name: string;
-      logo?: string;
-      slug?: string;
+      description: string | null;
+      displayOrder: number;
+      trackIds: string[];
+      placements: components['schemas']['HackathonPublicPrizePlacementDto'][];
     };
-    HackathonResponseDto: {
-      createdBy: components['schemas']['CreatorRelationDto'];
-      organization?: components['schemas']['OrganizationRelationDto'];
+    HackathonPublicDetailDto: {
+      id: string;
+      name: string;
+      slug: string | null;
+      /**
+       * @description Only live statuses are reachable through this endpoint.
+       * @enum {string}
+       */
+      status:
+        | 'DRAFT'
+        | 'DRAFT_AWAITING_FUNDING'
+        | 'UPCOMING'
+        | 'ACTIVE'
+        | 'JUDGING'
+        | 'COMPLETED'
+        | 'ARCHIVED'
+        | 'CANCELLED';
+      banner: string | null;
+      description: string | null;
+      categories: string[];
+      /** @enum {string|null} */
+      venueType: 'VIRTUAL' | 'PHYSICAL' | null;
+      tagline: string | null;
+      country: string | null;
+      state: string | null;
+      city: string | null;
+      venueName: string | null;
+      venueAddress: string | null;
+      /** Format: date-time */
+      startDate: string | null;
+      /** Format: date-time */
+      endDate: string | null;
+      /** Format: date-time */
+      registrationDeadline: string | null;
+      /** Format: date-time */
+      submissionDeadline: string | null;
+      /** Format: date-time */
+      submissionDeadlineOriginal: string | null;
+      /** Format: date-time */
+      submissionDeadlineExtendedAt: string | null;
+      /** Format: date-time */
+      judgingStart: string | null;
+      /** Format: date-time */
+      judgingEnd: string | null;
+      /** Format: date-time */
+      winnersAnnouncedAt: string | null;
+      timezone: string | null;
+      phases:
+        | {
+            [key: string]: unknown;
+          }[]
+        | null;
+      /** @enum {string|null} */
+      participantType: 'INDIVIDUAL' | 'TEAM' | 'TEAM_OR_INDIVIDUAL' | null;
+      teamMin: number | null;
+      teamMax: number | null;
+      /** @description Participant cap; null = unlimited. Not an attendance count. */
+      maxParticipants: number | null;
+      /** @enum {string|null} */
+      registrationDeadlinePolicy:
+        | 'BEFORE_START'
+        | 'BEFORE_SUBMISSION_DEADLINE'
+        | 'CUSTOM'
+        | null;
+      /** Format: date-time */
+      customRegistrationDeadline: string | null;
+      requireGithub: boolean;
+      requireDemoVideo: boolean;
+      requireOtherLinks: boolean;
+      enabledTabs: string[];
+      /** @enum {string} */
+      submissionVisibility: 'PUBLIC' | 'PARTICIPANTS_ONLY';
+      /** @enum {string} */
+      submissionStatusVisibility:
+        | 'ALL'
+        | 'ACCEPTED_SHORTLISTED'
+        | 'HIDDEN_UNTIL_RESULTS';
+      /**
+       * @description PRIVATE hackathons reach this full view only for org members or holders of a valid access token; everyone else receives the locked view.
+       * @enum {string}
+       */
+      visibility: 'PUBLIC' | 'PRIVATE';
+      /** @description Legacy prize tier shadow; display reads use `prizes`. */
+      prizeTiers:
+        | {
+            [key: string]: unknown;
+          }[]
+        | null;
+      winnerOverrides: {
+        [key: string]: unknown;
+      } | null;
+      withheldPlacementIds: string[];
+      /** @enum {string} */
+      prizeStructure: 'OVERALL_ONLY' | 'OVERALL_AND_TRACKS' | 'TRACKS_ONLY';
+      tracksMaxPerSubmission: number;
+      allowWinnerStacking: boolean;
+      resources:
+        | {
+            [key: string]: unknown;
+          }[]
+        | null;
+      judgingCriteria:
+        | {
+            [key: string]: unknown;
+          }[]
+        | null;
+      contactEmail: string | null;
+      telegram: string | null;
+      discord: string | null;
+      socialLinks: string[];
+      sponsorsPartners:
+        | {
+            [key: string]: unknown;
+          }[]
+        | null;
+      organizationId: string;
+      metadata: {
+        [key: string]: unknown;
+      } | null;
+      aiGenerationContext: {
+        [key: string]: unknown;
+      } | null;
+      /** Format: date-time */
+      createdAt: string;
+      /** Format: date-time */
+      updatedAt: string;
+      /** Format: date-time */
+      publishedAt: string | null;
+      resultsPublished: boolean;
+      /** Format: date-time */
+      resultsPublishedAt: string | null;
+      winnersAnnouncement: string | null;
+      /** Format: date-time */
+      lastSubmissionReminderSentAt: string | null;
+      /** Format: date-time */
+      lastRegistrationReminderSentAt: string | null;
+      isFeatured: boolean;
+      escrowOpId: string | null;
+      /** @description On-chain event id (BigInt), stringified when present. */
+      escrowEventId: string | null;
+      escrowTxHash: string | null;
+      escrowSettledLedger: number | null;
+      escrowToken: string | null;
+      /** @description Decimal amount, stringified when present. */
+      escrowBudget: string | null;
+      escrowOwnerAddress: string | null;
+      escrowFailureCode: string | null;
+      /** Format: date-time */
+      escrowFailedAt: string | null;
+      escrowCancelOpId: string | null;
+      escrowCancelTxHash: string | null;
+      escrowCancelSettledLedger: number | null;
+      /** Format: date-time */
+      cancelledAt: string | null;
+      /** Format: date-time */
+      publicAnnouncementSentAt: string | null;
+      organization: components['schemas']['HackathonPublicOrganizationDto'];
+      submissions: components['schemas']['HackathonPublicSubmissionSummaryDto'][];
+      followers: components['schemas']['HackathonPublicFollowerDto'][];
+      _count: components['schemas']['HackathonPublicCountsDto'];
+      participants: components['schemas']['HackathonPublicParticipantDto'][];
+      prizes: components['schemas']['HackathonPublicPrizeDto'][];
+      /** @description Whether the on-chain escrow event exists (publish settled). */
+      escrowReady: boolean;
+      /** @description Null when startDate or submissionDeadline is unset. */
+      isActive: boolean | null;
+      daysUntilStart: number | null;
+      daysUntilEnd: number | null;
+      registrationOpen: boolean;
+      isParticipant: boolean;
+      /** @enum {string} */
+      viewerRole: 'organizer' | 'judge' | 'participant' | 'guest';
+      canJoin: boolean;
+    };
+    HackathonLockedViewDto: {
+      id: string;
+      name: string;
+      slug: string | null;
+      banner: string | null;
+      tagline: string | null;
+      /** @enum {string} */
+      visibility: 'PUBLIC' | 'PRIVATE';
+      /**
+       * @description Discriminator: present (and true) only on the locked view; unlock via POST /hackathons/{idOrSlug}/access/verify.
+       * @enum {number}
+       */
+      locked: true;
     };
     VerifyHackathonAccessDto: {
       /** @description The access password for a private hackathon */
@@ -18877,6 +19546,22 @@ export interface components {
       information?: components['schemas']['PublishedInfoFormDataDto'];
       collaboration?: components['schemas']['PublishedCollaborationFormDataDto'];
     };
+    CreatorRelationDto: {
+      id: string;
+      name: string;
+      username?: string;
+      image?: string;
+    };
+    OrganizationRelationDto: {
+      id: string;
+      name: string;
+      logo?: string;
+      slug?: string;
+    };
+    HackathonResponseDto: {
+      createdBy: components['schemas']['CreatorRelationDto'];
+      organization?: components['schemas']['OrganizationRelationDto'];
+    };
     PublishedPhaseDto: {
       /** @example Building Phase */
       name: string;
@@ -19493,6 +20178,49 @@ export interface components {
        * @example 3
        */
       totalGrants: number;
+      /**
+       * @description Opportunities currently running (open/in-review bounties plus upcoming/active/judging hackathons)
+       * @example 8
+       */
+      activeProjects: number;
+      /**
+       * @description Opportunities that have completed (bounties + hackathons)
+       * @example 2
+       */
+      completedProjects: number;
+      /**
+       * @description Distinct contributors across the org hackathons and bounty submissions
+       * @example 132
+       */
+      totalParticipants: number;
+      /**
+       * @description Sum of rewards from completed bounties and prize placements of completed hackathons (USD-equivalent)
+       * @example 250000
+       */
+      prizePoolAwarded: number;
+    };
+    OrganizationProfileLinksDto: {
+      websiteUrl: string | null;
+      twitterUrl: string | null;
+      githubUrl: string | null;
+      discordUrl: string | null;
+      faqUrl: string | null;
+      supportUrl: string | null;
+    };
+    OrganizationPublicMemberDto: {
+      userId: string;
+      name: string | null;
+      username: string | null;
+      image: string | null;
+      /** @description owner | admin | member */
+      role: string;
+      /**
+       * Format: date-time
+       * @description When the member joined the organization
+       */
+      joinedAt: string;
+      /** @description Identity (KYC) verified member */
+      verified: boolean;
     };
     OrganizationProfileDto: {
       /**
@@ -19522,6 +20250,42 @@ export interface components {
       description: string;
       /** @description Key stats for the organization profile */
       stats: components['schemas']['OrganizationProfileStatsDto'];
+      /** @description Banner image URL */
+      banner: string | null;
+      tagline: string | null;
+      /** @description Full about text */
+      about: string | null;
+      location: string | null;
+      /** @description Category tag pills */
+      tags: string[];
+      /** @description Verified organization badge */
+      verified: boolean;
+      /**
+       * Format: date-time
+       * @description When the organization was created
+       */
+      joinedAt: string;
+      /** @description Follower count */
+      followers: number;
+      links: components['schemas']['OrganizationProfileLinksDto'];
+      /** @description Member preview (capped at 50) */
+      members: components['schemas']['OrganizationPublicMemberDto'][];
+      /** @description Total member count */
+      membersTotal: number;
+      /** @description Average first-response time in hours; null until response tracking lands (clients hide the row) */
+      averageResponseTimeHours: number | null;
+    };
+    OrganizationFundedProjectDto: {
+      id: string;
+      /** @description Funded hackathon name */
+      name: string;
+      slug: string | null;
+      banner: string | null;
+      status: string;
+      /** @description Amount this organization pledged */
+      amount: number;
+      currency: string;
+      organizerName: string | null;
     };
     UpdateOrganizationDto: Record<string, never>;
     UpdateMemberRoleDto: Record<string, never>;
@@ -21938,10 +22702,10 @@ export interface components {
     };
     CancelBountyEscrowDto: {
       /**
-       * @description Organizer's Stellar G-address that signs cancel_event. Must match the bounty's on-chain owner.
+       * @description Organizer's Stellar G-address that signs cancel_event. Optional: the backend resolves the on-chain event manager (the treasury/owner that published) and signs with it, so a personal wallet is not required. Supplied only as a fallback when the on-chain manager cannot be read.
        * @example GDVGP7DWODFVYQ5NHHLLD3WFVLUH5Y3HHELIKSNO4STEFCBETQAWDMKZ
        */
-      ownerAddress: string;
+      ownerAddress?: string;
       /**
        * @description Signing path. EXTERNAL (default) returns unsigned XDR; MANAGED signs server-side with the caller's platform-held wallet and submits.
        * @default EXTERNAL
@@ -21968,10 +22732,10 @@ export interface components {
     };
     SelectBountyWinnersDto: {
       /**
-       * @description Organizer's Stellar G-address that signs select_winners. Must match the bounty's on-chain owner.
+       * @description Organizer's Stellar G-address that signs select_winners. Optional: the backend resolves the on-chain event manager (the treasury/owner that published) and signs with it, so a personal wallet is not required. Supplied only as a fallback when the on-chain manager cannot be read.
        * @example GDVGP7DWODFVYQ5NHHLLD3WFVLUH5Y3HHELIKSNO4STEFCBETQAWDMKZ
        */
-      ownerAddress: string;
+      ownerAddress?: string;
       /** @description Winners to declare. Each entry must reference an applicant with an active submission. Positions must be unique within the array. */
       selections: components['schemas']['BountyWinnerSelectionDto'][];
       /**
@@ -22389,6 +23153,12 @@ export interface components {
       name: string;
       slug?: string | null;
       logo?: string | null;
+      /** @description Organization website from the org's metadata.links. */
+      websiteUrl: string | null;
+      /** @description Organization X (Twitter) URL from the org's metadata.links. */
+      twitterUrl: string | null;
+      /** @description Organization GitHub URL from the org's metadata.links. */
+      githubUrl: string | null;
     };
     BountySubmissionRequirementsDto: {
       documentation: boolean;
@@ -22615,6 +23385,12 @@ export interface components {
        * @example https://cdn.boundless.dev/orgs/boundless.png
        */
       organizationLogoUrl: string | null;
+      /** @description Organization website from the org's metadata.links. */
+      organizationWebsiteUrl: string | null;
+      /** @description Organization X (Twitter) URL from the org's metadata.links. */
+      organizationTwitterUrl: string | null;
+      /** @description Organization GitHub URL from the org's metadata.links. */
+      organizationGithubUrl: string | null;
       /**
        * @description Underlying project category, if any.
        * @example governance
@@ -23045,7 +23821,14 @@ export interface operations {
   };
   NotificationsController_getNotifications: {
     parameters: {
-      query?: never;
+      query?: {
+        /** @description Page number (1-based) */
+        page?: number;
+        /** @description Number of items per page */
+        limit?: number;
+        /** @description Only return unread notifications */
+        unreadOnly?: boolean;
+      };
       header?: never;
       path?: never;
       cookie?: never;
@@ -23056,7 +23839,9 @@ export interface operations {
         headers: {
           [name: string]: unknown;
         };
-        content?: never;
+        content: {
+          'application/json': components['schemas']['NotificationList'];
+        };
       };
     };
   };
@@ -23073,7 +23858,9 @@ export interface operations {
         headers: {
           [name: string]: unknown;
         };
-        content?: never;
+        content: {
+          'application/json': number;
+        };
       };
     };
   };
@@ -23082,6 +23869,7 @@ export interface operations {
       query?: never;
       header?: never;
       path: {
+        /** @description Notification ID */
         id: string;
       };
       cookie?: never;
@@ -23118,6 +23906,7 @@ export interface operations {
       query?: never;
       header?: never;
       path: {
+        /** @description Notification ID */
         id: string;
       };
       cookie?: never;
@@ -23510,6 +24299,48 @@ export interface operations {
     responses: {
       /** @description Activity retrieved successfully */
       200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Unauthorized */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  ProfileController_uploadBanner: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'multipart/form-data': {
+          /**
+           * Format: binary
+           * @description Banner image file
+           */
+          banner?: string;
+        };
+      };
+    };
+    responses: {
+      /** @description Banner uploaded successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Bad request */
+      400: {
         headers: {
           [name: string]: unknown;
         };
@@ -25324,7 +26155,9 @@ export interface operations {
         headers: {
           [name: string]: unknown;
         };
-        content?: never;
+        content: {
+          'application/json': components['schemas']['CampaignPublicDetailDto'];
+        };
       };
       /** @description Campaign not found */
       404: {
@@ -26206,6 +27039,34 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['WalletSummaryDto'];
+        };
+      };
+    };
+  };
+  WalletController_getTransactions: {
+    parameters: {
+      query?: {
+        /** @description Activity type: all, withdrawals (outgoing) or topups (incoming). */
+        type?: 'all' | 'withdrawals' | 'topups';
+        /** @description Only transactions on or after this ISO date (date filter). */
+        since?: string;
+        /** @description Page number (1-indexed). */
+        page?: number;
+        /** @description Items per page. */
+        limit?: number;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['WalletTransactionsResponseDto'];
         };
       };
     };
@@ -27146,8 +28007,9 @@ export interface operations {
   };
   HackathonsController_getHackathon: {
     parameters: {
-      query: {
-        accessToken: string;
+      query?: {
+        /** @description Access grant for PRIVATE hackathons (from POST .../access/verify). Omit for public hackathons; without a valid grant, private hackathons return the locked view. */
+        accessToken?: string;
       };
       header?: never;
       path: {
@@ -27158,13 +28020,15 @@ export interface operations {
     };
     requestBody?: never;
     responses: {
-      /** @description Hackathon retrieved successfully */
+      /** @description Hackathon retrieved successfully. Private hackathons the viewer has not unlocked return the locked view (discriminated by `locked: true`). */
       200: {
         headers: {
           [name: string]: unknown;
         };
         content: {
-          'application/json': components['schemas']['HackathonResponseDto'];
+          'application/json':
+            | components['schemas']['HackathonPublicDetailDto']
+            | components['schemas']['HackathonLockedViewDto'];
         };
       };
       /** @description Invalid request */
@@ -32550,6 +33414,36 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['OrganizationProfileDto'];
+        };
+      };
+      /** @description Organization not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  OrganizationsController_getOrganizationFundedProjects: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description Organization ID or slug */
+        idOrSlug: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Funded projects retrieved successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['OrganizationFundedProjectDto'][];
         };
       };
       /** @description Organization not found */
@@ -40645,6 +41539,8 @@ export interface operations {
         search?: string;
         /** @description Filter by the underlying project category. */
         category?: string;
+        /** @description Only grants whose project belongs to this organization (org profile's grants tab). */
+        organizationId?: string;
         /** @description Page number (1-indexed). */
         page?: number;
         /** @description Items per page. */
@@ -40674,6 +41570,8 @@ export interface operations {
         type?: 'all' | 'bounty' | 'hackathon' | 'grant' | 'crowdfunding';
         /** @description Pillar-specific status filter. Adapters match case-insensitively against their own enum and return [] when no value matches. */
         status?: string;
+        /** @description Only opportunities run by this organization (org profile tabs). */
+        organizationId?: string;
         /** @description Case-insensitive substring match against title and summary across adapters. */
         search?: string;
         /** @description Comma-separated tag list. Pillar-aware: bounty has no tag field and returns [] for any tags filter. */
