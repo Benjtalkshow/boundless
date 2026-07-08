@@ -114,7 +114,7 @@ export default function BountySubmissionsPanel({
           <Trophy className='text-primary h-4 w-4' />
           <span className='text-zinc-200'>{staged.size} staged for payout</span>
           <span className='text-xs text-zinc-500'>
-            (winner selection + signing lands in #633)
+            (assign them to prize tiers in the Payout tab)
           </span>
         </div>
       )}
