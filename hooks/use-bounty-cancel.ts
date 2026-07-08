@@ -86,12 +86,12 @@ export const useBountyCancel = ({
       return;
     }
 
-    // ownerAddress is optional on the backend (boundless-nestjs#392); until
-    // codegen picks that up the generated type marks it required, so cast.
-    const body = {
+    // ownerAddress is optional; the backend resolves and signs with the
+    // on-chain event manager. Send it only as a hint when we have it.
+    const body: CancelBountyEscrowRequest = {
       fundingMode,
       ...(ownerAddress ? { ownerAddress } : {}),
-    } as CancelBountyEscrowRequest;
+    };
 
     finalizedRef.current = false;
     toast.info('Submitting cancellation…');

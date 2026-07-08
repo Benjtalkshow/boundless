@@ -81,14 +81,13 @@ export const useBountyPayout = ({
       return;
     }
 
-    // ownerAddress is optional on the backend (it resolves the manager); until
-    // codegen picks that up (boundless-nestjs#392) the generated type still
-    // marks it required, so cast.
-    const body = {
+    // ownerAddress is optional; the backend resolves and signs with the
+    // on-chain event manager. Send it only as a hint when we have it.
+    const body: SelectBountyWinnersRequest = {
       selections,
       fundingMode,
       ...(ownerAddress ? { ownerAddress } : {}),
-    } as SelectBountyWinnersRequest;
+    };
 
     finalizedRef.current = false;
     toast.info('Submitting winner selection…');
