@@ -83,7 +83,9 @@ const claimOptions: Array<{
 
 const defaultValues: ModeFormData = {
   entryType: 'OPEN',
-  claimType: 'SINGLE_CLAIM',
+  // Open + single-claim (Quick Pick) isn't available yet, so an open bounty
+  // defaults to competition (Open Showdown).
+  claimType: 'COMPETITION',
   winnerCount: 1,
 };
 
@@ -154,7 +156,19 @@ export default function ModeTab({
                         <button
                           key={value}
                           type='button'
-                          onClick={() => field.onChange(value)}
+                          onClick={() => {
+                            field.onChange(value);
+                            // Open bounties can't be single-claim (Quick Pick
+                            // isn't available yet), so move to competition.
+                            if (
+                              value === 'OPEN' &&
+                              claimType === 'SINGLE_CLAIM'
+                            ) {
+                              form.setValue('claimType', 'COMPETITION', {
+                                shouldValidate: true,
+                              });
+                            }
+                          }}
                           className={cn(
                             'flex flex-col gap-2 rounded-lg border p-4 text-left transition-all',
                             isSelected
@@ -214,25 +228,38 @@ export default function ModeTab({
                   {claimOptions.map(
                     ({ value, label, description, icon: Icon }) => {
                       const isSelected = field.value === value;
+                      // Open + single-claim (Quick Pick) needs the anti-squat
+                      // guards that aren't built yet, so it's not selectable.
+                      const disabled =
+                        entryType === 'OPEN' && value === 'SINGLE_CLAIM';
                       return (
                         <button
                           key={value}
                           type='button'
+                          disabled={disabled}
+                          title={
+                            disabled
+                              ? 'Not available for open bounties. Use an application entry type for single claim.'
+                              : undefined
+                          }
                           onClick={() => {
+                            if (disabled) return;
                             field.onChange(value);
                             if (value === 'SINGLE_CLAIM') setWinnerCount(1);
                           }}
                           className={cn(
                             'flex flex-col gap-2 rounded-lg border p-4 text-left transition-all',
-                            isSelected
-                              ? 'border-primary/50 bg-primary/10 shadow-primary/10 shadow-sm'
-                              : 'border-zinc-800 bg-zinc-900/30 hover:border-zinc-700 hover:bg-zinc-900/50'
+                            disabled
+                              ? 'cursor-not-allowed border-zinc-800 bg-zinc-900/20 opacity-40'
+                              : isSelected
+                                ? 'border-primary/50 bg-primary/10 shadow-primary/10 shadow-sm'
+                                : 'border-zinc-800 bg-zinc-900/30 hover:border-zinc-700 hover:bg-zinc-900/50'
                           )}
                         >
                           <div
                             className={cn(
                               'flex h-10 w-10 items-center justify-center rounded-lg transition-all',
-                              isSelected
+                              isSelected && !disabled
                                 ? 'bg-primary/20 text-primary'
                                 : 'bg-zinc-800 text-zinc-500'
                             )}
@@ -242,13 +269,17 @@ export default function ModeTab({
                           <span
                             className={cn(
                               'text-sm font-medium',
-                              isSelected ? 'text-primary' : 'text-white'
+                              isSelected && !disabled
+                                ? 'text-primary'
+                                : 'text-white'
                             )}
                           >
                             {label}
                           </span>
                           <span className='text-xs text-zinc-500'>
-                            {description}
+                            {disabled
+                              ? 'Not available for open bounties.'
+                              : description}
                           </span>
                         </button>
                       );

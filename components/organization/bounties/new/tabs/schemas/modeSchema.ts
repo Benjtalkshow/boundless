@@ -145,6 +145,17 @@ export const modeSchema = z
     winnerCount: z.number().int().min(1).max(MAX_PRIZE_TIERS).default(1),
   })
   .superRefine((data, ctx) => {
+    // Open + single-claim (Quick Pick) needs anti-squat guards that aren't
+    // built yet: "anyone can start" and "one exclusive claimant" can't coexist
+    // without them, so the combination isn't allowed.
+    if (data.entryType === 'OPEN' && data.claimType === 'SINGLE_CLAIM') {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message:
+          'Open bounties run as a competition; single claim needs an application entry type',
+        path: ['claimType'],
+      });
+    }
     if (data.claimType === 'SINGLE_CLAIM' && data.winnerCount !== 1) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
