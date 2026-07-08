@@ -21,7 +21,7 @@ export type BountyClaimType = (typeof CLAIM_TYPES)[number];
 export type BountySubmissionVisibility =
   (typeof SUBMISSION_VISIBILITIES)[number];
 
-export const MAX_PRIZE_TIERS = 3;
+export const MAX_PRIZE_TIERS = 15;
 
 /** Whether a contributor applies before working. */
 export const isApplicationEntry = (entryType: BountyEntryType): boolean =>
@@ -140,7 +140,8 @@ export const modeSchema = z
   .object({
     entryType: z.enum(ENTRY_TYPES),
     claimType: z.enum(CLAIM_TYPES),
-    // Number of prize positions. 1 for single claim; 1-3 for a competition.
+    // Number of prize positions. 1 for single claim; 1..MAX_PRIZE_TIERS for a
+    // competition.
     winnerCount: z.number().int().min(1).max(MAX_PRIZE_TIERS).default(1),
   })
   .superRefine((data, ctx) => {
@@ -157,7 +158,7 @@ export const modeSchema = z
     ) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: 'A competition pays 1 to 3 winners',
+        message: `A competition pays 1 to ${MAX_PRIZE_TIERS} winners`,
         path: ['winnerCount'],
       });
     }
