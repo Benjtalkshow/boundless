@@ -45,7 +45,6 @@ const generalSchema = z.object({
   demoVideo: z.boolean(),
   media: z.boolean(),
   reputationMinimum: z.union([z.number().int().min(0), z.nan()]).optional(),
-  applicationWindowCloseAt: z.string().optional(),
   maxApplicants: z.union([z.number().int().min(1), z.nan()]).optional(),
   shortlistSize: z.union([z.number().int().min(1), z.nan()]).optional(),
 });
@@ -73,15 +72,6 @@ const REQUIREMENTS: Array<{
   },
   { name: 'media', label: 'Media', hint: 'At least one image is required.' },
 ];
-
-/** ISO date-time -> value for <input type="datetime-local"> (local time). */
-function toLocalInput(iso?: string | null): string {
-  if (!iso) return '';
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return '';
-  const pad = (n: number) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-}
 
 /** Empty / NaN number field -> null; otherwise the number. */
 function numOrNull(v: number | undefined): number | null {
@@ -161,7 +151,6 @@ function GeneralForm({
       demoVideo: bounty.submissionRequirements.demoVideo,
       media: bounty.submissionRequirements.media,
       reputationMinimum: bounty.reputationMinimum ?? undefined,
-      applicationWindowCloseAt: toLocalInput(bounty.applicationWindowCloseAt),
       maxApplicants: bounty.maxApplicants ?? undefined,
       shortlistSize: bounty.shortlistSize ?? undefined,
     },
@@ -184,10 +173,6 @@ function GeneralForm({
         reputationMinimum: isOpenSingle
           ? numOrNull(values.reputationMinimum)
           : undefined,
-        applicationWindowCloseAt:
-          isApplication && values.applicationWindowCloseAt
-            ? new Date(values.applicationWindowCloseAt).toISOString()
-            : undefined,
         maxApplicants:
           isApplication || (bounty.entryType === 'OPEN' && isCompetition)
             ? numOrNull(values.maxApplicants)
@@ -216,7 +201,7 @@ function GeneralForm({
     isApplication || (bounty.entryType === 'OPEN' && isCompetition);
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className='max-w-2xl space-y-8'>
+    <form onSubmit={handleSubmit(onSubmit)} className='space-y-8'>
       {/* ── Scope ── */}
       <Section
         title='Scope'
@@ -325,19 +310,6 @@ function GeneralForm({
               min={0}
               {...register('reputationMinimum', { valueAsNumber: true })}
               placeholder='0'
-              className={inputClassName}
-            />
-          </Field>
-        )}
-
-        {isApplication && (
-          <Field
-            label='Applications close'
-            error={errors.applicationWindowCloseAt?.message}
-          >
-            <Input
-              type='datetime-local'
-              {...register('applicationWindowCloseAt')}
               className={inputClassName}
             />
           </Field>
