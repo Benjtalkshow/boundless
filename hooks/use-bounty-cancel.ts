@@ -77,19 +77,21 @@ export const useBountyCancel = ({
 
   const cancel = async (): Promise<void> => {
     if (!organizationId || !bountyId) return;
-    if (!ownerAddress) {
-      toast.error(
-        isExternal
-          ? 'Connect a wallet to sign the cancellation.'
-          : 'Please connect your wallet first'
-      );
+    // EXTERNAL is signed by the connected wallet; MANAGED is signed server-side
+    // by the on-chain event manager (the treasury/owner that published), so no
+    // connected wallet is needed. ownerAddress is a hint the backend may use as
+    // a fallback.
+    if (isExternal && !ownerAddress) {
+      toast.error('Connect a wallet to sign the cancellation.');
       return;
     }
 
-    const body: CancelBountyEscrowRequest = {
-      ownerAddress,
+    // ownerAddress is optional on the backend (boundless-nestjs#392); until
+    // codegen picks that up the generated type marks it required, so cast.
+    const body = {
       fundingMode,
-    };
+      ...(ownerAddress ? { ownerAddress } : {}),
+    } as CancelBountyEscrowRequest;
 
     finalizedRef.current = false;
     toast.info('Submitting cancellation…');

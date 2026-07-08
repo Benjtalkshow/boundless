@@ -72,20 +72,23 @@ export const useBountyPayout = ({
     selections: BountyWinnerSelection[]
   ): Promise<void> => {
     if (!organizationId || !bountyId || selections.length === 0) return;
-    if (!ownerAddress) {
-      toast.error(
-        isExternal
-          ? 'Connect a wallet to sign the payout.'
-          : 'Please connect your wallet first'
-      );
+    // EXTERNAL is signed by the connected wallet, so it's required there.
+    // MANAGED is signed server-side by the on-chain event manager (the treasury
+    // / owner that published) — no connected wallet needed. ownerAddress is a
+    // hint only; the backend resolves and signs with the real manager.
+    if (isExternal && !ownerAddress) {
+      toast.error('Connect a wallet to sign the payout.');
       return;
     }
 
-    const body: SelectBountyWinnersRequest = {
-      ownerAddress,
+    // ownerAddress is optional on the backend (it resolves the manager); until
+    // codegen picks that up (boundless-nestjs#392) the generated type still
+    // marks it required, so cast.
+    const body = {
       selections,
       fundingMode,
-    };
+      ...(ownerAddress ? { ownerAddress } : {}),
+    } as SelectBountyWinnersRequest;
 
     finalizedRef.current = false;
     toast.info('Submitting winner selection…');
