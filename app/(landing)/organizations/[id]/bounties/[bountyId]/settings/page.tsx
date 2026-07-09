@@ -9,6 +9,7 @@ import {
   Lock,
   Settings,
   ShieldAlert,
+  SlidersHorizontal,
   Trophy,
 } from 'lucide-react';
 
@@ -17,6 +18,7 @@ import { AuthGuard } from '@/components/auth';
 import Loading from '@/components/Loading';
 import EmptyState from '@/components/EmptyState';
 import BountyGeneralSettingsTab from '@/components/organization/bounties/settings/BountyGeneralSettingsTab';
+import BountyConfigurationTab from '@/components/organization/bounties/settings/BountyConfigurationTab';
 import BountyTimelineSettingsTab from '@/components/organization/bounties/settings/BountyTimelineSettingsTab';
 import BountySettingsPanel from '@/components/organization/bounties/manage/BountySettingsPanel';
 import {
@@ -30,6 +32,7 @@ const tabTriggerClassName =
 
 const SETTINGS_SECTIONS = new Set([
   'general',
+  'configuration',
   'rewards',
   'timeline',
   'closeout',
@@ -118,6 +121,10 @@ function BountySettingsContent({
             <Info className='h-4 w-4' />
             General
           </TabsTrigger>
+          <TabsTrigger value='configuration' className={tabTriggerClassName}>
+            <SlidersHorizontal className='h-4 w-4' />
+            Configuration
+          </TabsTrigger>
           <TabsTrigger value='rewards' className={tabTriggerClassName}>
             <Trophy className='h-4 w-4' />
             Rewards
@@ -139,6 +146,11 @@ function BountySettingsContent({
           organizationId={organizationId}
           bountyId={bountyId}
         />
+      </TabsContent>
+
+      {/* Configuration — read-only mode + resources set at creation. */}
+      <TabsContent value='configuration' className='mt-0'>
+        <BountyConfigurationTab bountyId={bountyId} />
       </TabsContent>
 
       {/* Rewards — on-chain, immutable once funded. */}

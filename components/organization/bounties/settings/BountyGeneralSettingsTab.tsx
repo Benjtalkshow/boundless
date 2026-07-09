@@ -39,6 +39,13 @@ const generalSchema = z.object({
     .min(1, 'Description is required')
     .max(5000, 'Description must be 5000 characters or fewer'),
   category: z.enum(BOUNTY_CATEGORIES),
+  country: z.string().trim().max(100).optional(),
+  githubIssueUrl: z
+    .string()
+    .trim()
+    .url('Enter a valid URL')
+    .or(z.literal(''))
+    .optional(),
   submissionVisibility: z.enum(['ORGANIZER_ONLY', 'HIDDEN_UNTIL_DEADLINE']),
   documentation: z.boolean(),
   tweet: z.boolean(),
@@ -145,6 +152,8 @@ function GeneralForm({
       category: BOUNTY_CATEGORIES.includes(bounty.category as BountyCategory)
         ? (bounty.category as BountyCategory)
         : 'DEVELOPMENT',
+      country: bounty.country ?? '',
+      githubIssueUrl: bounty.githubIssueUrl ?? '',
       submissionVisibility: bounty.submissionVisibility,
       documentation: bounty.submissionRequirements.documentation,
       tweet: bounty.submissionRequirements.tweet,
@@ -163,6 +172,10 @@ function GeneralForm({
         title: values.title,
         description: values.description,
         category: values.category,
+        country: values.country?.trim() ? values.country.trim() : null,
+        githubIssueUrl: values.githubIssueUrl?.trim()
+          ? values.githubIssueUrl.trim()
+          : null,
         submissionVisibility: values.submissionVisibility,
         submissionRequirements: {
           documentation: values.documentation,
@@ -242,6 +255,22 @@ function GeneralForm({
                 </SelectContent>
               </Select>
             )}
+          />
+        </Field>
+
+        <Field label='GitHub issue URL' error={errors.githubIssueUrl?.message}>
+          <Input
+            {...register('githubIssueUrl')}
+            placeholder='https://github.com/org/repo/issues/1'
+            className={inputClassName}
+          />
+        </Field>
+
+        <Field label='Country / region' error={errors.country?.message}>
+          <Input
+            {...register('country')}
+            placeholder='e.g. Nigeria (leave blank for global)'
+            className={inputClassName}
           />
         </Field>
       </Section>
