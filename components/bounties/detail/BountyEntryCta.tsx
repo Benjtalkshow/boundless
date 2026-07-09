@@ -64,12 +64,18 @@ export function BountyEntryCta({
     bounty.entryType === 'APPLICATION_FULL';
   const isCompetition =
     bounty.entryType === 'OPEN' && bounty.claimType === 'COMPETITION';
+  // open single claim: there is no separate claim step. The CTA sends the
+  // builder straight to the entry form, where submitting locks them in.
+  const isOpenSingle =
+    bounty.entryType === 'OPEN' && bounty.claimType === 'SINGLE_CLAIM';
 
   const primaryLabel = isApplication
     ? 'Apply'
     : isCompetition
       ? 'Join competition'
-      : 'Claim this bounty';
+      : isOpenSingle
+        ? 'Submit entry'
+        : 'Claim this bounty';
 
   const deadlinePassed =
     !!bounty.applicationWindowCloseAt &&
@@ -239,17 +245,26 @@ export function BountyEntryCta({
         </div>
       ) : (
         <>
-          <BoundlessButton
-            size='lg'
-            className='w-full'
-            disabled={!accepting || deadlinePassed}
-            onClick={() => {
-              setEditing(false);
-              setDialogOpen(true);
-            }}
-          >
-            {primaryLabel}
-          </BoundlessButton>
+          {isOpenSingle && accepting && !deadlinePassed ? (
+            // Straight to the entry form: submitting is the claim.
+            <Link href={`/bounties/${bounty.id}/submit`} className='block'>
+              <BoundlessButton size='lg' className='w-full'>
+                {primaryLabel}
+              </BoundlessButton>
+            </Link>
+          ) : (
+            <BoundlessButton
+              size='lg'
+              className='w-full'
+              disabled={!accepting || deadlinePassed}
+              onClick={() => {
+                setEditing(false);
+                setDialogOpen(true);
+              }}
+            >
+              {primaryLabel}
+            </BoundlessButton>
+          )}
           <p className='mt-2 flex items-center justify-center gap-1.5 text-center text-xs text-zinc-500'>
             {!accepting ? (
               <>
@@ -262,7 +277,9 @@ export function BountyEntryCta({
                 Applications have closed.
               </>
             ) : withdrawn ? (
-              'You withdrew earlier — you can enter again.'
+              'You withdrew earlier, you can enter again.'
+            ) : isOpenSingle ? (
+              'The first valid entry locks in this bounty. Funds are paid on-chain.'
             ) : (
               'Funds are held in escrow and paid on-chain to winners.'
             )}

@@ -7,7 +7,9 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { toast } from 'sonner';
+import { useQueryClient } from '@tanstack/react-query';
 import {
+  AlertTriangle,
   FileText,
   Github,
   Loader2,
@@ -23,6 +25,9 @@ import { Input } from '@/components/ui/input';
 import { uploadService } from '@/lib/api/upload';
 import { useWalletContext } from '@/components/providers/wallet-provider';
 import {
+  bountyKeys,
+  useApplyToBountyEscrow,
+  useMyBountyApplication,
   useSubmitBounty,
   ESCROW_PHASE_LABEL,
   type BountyPublic,
@@ -32,6 +37,15 @@ const PHASE_LABEL = {
   ...ESCROW_PHASE_LABEL,
   starting: 'Preparing submission…',
   polling: 'Anchoring on-chain…',
+};
+
+/** The submit-work payload, minus the wallet address which is added at run. */
+type EntryPayload = {
+  contentUri: string;
+  documentationUrl?: string;
+  tweetUrl?: string;
+  demoVideoUrl?: string;
+  mediaUrls?: string[];
 };
 
 type Requirements = BountyPublic['submissionRequirements'];
@@ -87,13 +101,27 @@ function LinkField({
 
 export default function BountySubmitForm({ bounty }: { bounty: BountyPublic }) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { walletAddress } = useWalletContext();
   const submit = useSubmitBounty(bounty.id);
+  const claim = useApplyToBountyEscrow(bounty.id);
+  const { data: myApplication } = useMyBountyApplication(bounty.id);
   const req = bounty.submissionRequirements;
+
+  // open single claim: submitting an entry IS the claim. The first eligible
+  // entrant is locked in. If the caller is not yet the active claimant, the
+  // "Submit entry" action first runs the on-chain apply, then the submit.
+  const isOpenSingle =
+    bounty.entryType === 'OPEN' && bounty.claimType === 'SINGLE_CLAIM';
+  const alreadyClaimed = myApplication?.status === 'active';
+  const needsClaim = isOpenSingle && !alreadyClaimed;
 
   const [mediaUrls, setMediaUrls] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
   const [mediaError, setMediaError] = useState<string | null>(null);
+  // Set when a claim must land before the submit fires (the apply -> submit
+  // chain). Cleared once the submit is dispatched or the claim fails.
+  const [pendingEntry, setPendingEntry] = useState<EntryPayload | null>(null);
 
   const {
     register,
@@ -118,6 +146,36 @@ export default function BountySubmitForm({ bounty }: { bounty: BountyPublic }) {
       toast.error(submit.error || 'Submission failed.');
     }
   }, [submit.isCompleted, submit.isFailed, submit.error, bounty.id, router]);
+
+  // Second half of the apply -> submit chain: once the on-chain claim lands,
+  // refresh the application state and fire the queued submit. If the claim
+  // fails (e.g. someone else got in first), surface it and drop the queue.
+  useEffect(() => {
+    if (!pendingEntry) return;
+    if (claim.isCompleted) {
+      void queryClient.invalidateQueries({
+        queryKey: bountyKeys.myApplication(bounty.id),
+      });
+      if (walletAddress) {
+        void submit.run({ applicantAddress: walletAddress, ...pendingEntry });
+      }
+      setPendingEntry(null);
+    } else if (claim.isFailed) {
+      toast.error(claim.error || 'Could not lock in your entry.');
+      setPendingEntry(null);
+    }
+    // submit is intentionally omitted: run() is stable and we only want this to
+    // fire on a claim state transition, not on submit's own updates.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    claim.isCompleted,
+    claim.isFailed,
+    claim.error,
+    pendingEntry,
+    walletAddress,
+    bounty.id,
+    queryClient,
+  ]);
 
   const handleFiles = async (files: FileList | null) => {
     if (!files?.length) return;
@@ -155,17 +213,28 @@ export default function BountySubmitForm({ bounty }: { bounty: BountyPublic }) {
       setMediaError('At least one image is required.');
       return;
     }
-    void submit.run({
-      applicantAddress: walletAddress,
+    const entry: EntryPayload = {
       contentUri: data.contentUri.trim(),
       documentationUrl: data.documentationUrl.trim() || undefined,
       tweetUrl: data.tweetUrl.trim() || undefined,
       demoVideoUrl: data.demoVideoUrl.trim() || undefined,
       mediaUrls: mediaUrls.length ? mediaUrls : undefined,
-    });
+    };
+    // open single claim first-entry: lock in the claim on-chain, then submit
+    // (the queued effect above fires the submit when the claim completes).
+    if (needsClaim) {
+      setPendingEntry(entry);
+      void claim.run({ applicantAddress: walletAddress });
+      return;
+    }
+    void submit.run({ applicantAddress: walletAddress, ...entry });
   };
 
-  const running = submit.isRunning;
+  const claiming = claim.isRunning || !!pendingEntry;
+  const running = claiming || submit.isRunning;
+  const phaseLabel = claiming
+    ? 'Locking in your entry…'
+    : PHASE_LABEL[submit.phase] || 'Working…';
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className='w-full space-y-10'>
@@ -180,6 +249,33 @@ export default function BountySubmitForm({ bounty }: { bounty: BountyPublic }) {
           primary submission.
         </p>
       </header>
+
+      {/* open single claim: submitting locks you in as the sole worker. */}
+      {needsClaim && (
+        <div className='space-y-3'>
+          <div className='border-primary/30 bg-primary/5 flex items-start gap-2.5 rounded-xl border p-3.5 text-sm text-zinc-300'>
+            <AlertTriangle className='text-primary mt-0.5 h-4 w-4 shrink-0' />
+            <span>
+              Submitting locks this bounty to you as the sole worker. The first
+              valid entry wins, so make sure your work is ready before you
+              submit.
+            </span>
+          </div>
+          {bounty.reputationMinimum != null && bounty.reputationMinimum > 0 && (
+            <div className='flex items-start gap-2.5 rounded-xl border border-zinc-800 bg-zinc-900/50 p-3.5 text-xs text-zinc-400'>
+              <AlertTriangle className='mt-0.5 h-4 w-4 shrink-0 text-amber-500' />
+              <span>
+                This bounty requires a minimum of{' '}
+                <span className='font-medium text-white'>
+                  {bounty.reputationMinimum}
+                </span>{' '}
+                completed bounties. Your entry is rejected if you don&apos;t
+                meet it.
+              </span>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Primary submission */}
       <section className='space-y-2'>
@@ -321,7 +417,7 @@ export default function BountySubmitForm({ bounty }: { bounty: BountyPublic }) {
         ) : running ? (
           <div className='flex items-center gap-2 rounded-lg border border-zinc-800 bg-zinc-900/50 p-3 text-sm text-zinc-300'>
             <Loader2 className='text-primary h-4 w-4 animate-spin' />
-            {PHASE_LABEL[submit.phase] || 'Working…'}
+            {phaseLabel}
           </div>
         ) : (
           <div className='flex items-center gap-3'>

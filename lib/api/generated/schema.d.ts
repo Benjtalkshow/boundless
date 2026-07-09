@@ -23200,6 +23200,12 @@ export interface components {
       escrowTxHash?: string | null;
       /** @description Bounty discipline (DESIGN, DEVELOPMENT, CONTENT, GROWTH, COMMUNITY). */
       category?: string | null;
+      /** @description GitHub issue URL (required for development bounties). */
+      githubIssueUrl?: string | null;
+      /** @description Country/region the bounty targets, if any. */
+      country?: string | null;
+      /** @description Organizer-supplied resources (links and files) shared with contributors. */
+      resources?: components['schemas']['BountyResourceItemDto'][] | null;
       /**
        * Format: date-time
        * @description Work/submission deadline (set at publish); null while in draft.

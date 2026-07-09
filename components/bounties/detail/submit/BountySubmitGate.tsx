@@ -17,6 +17,16 @@ function canSubmit(
   bounty: BountyPublic,
   app: MyBountyApplication | null
 ): boolean {
+  // open single claim: submitting an entry IS the claim, so the first eligible
+  // entrant can reach the form without a prior claim. Allow whenever nobody
+  // else already holds the bounty (or the caller is the active claimant).
+  const isOpenSingle =
+    bounty.entryType === 'OPEN' && bounty.claimType === 'SINGLE_CLAIM';
+  if (isOpenSingle) {
+    if (app?.status === 'active') return true;
+    return !bounty.claimedBy;
+  }
+
   if (!app) return false;
   const withdrawn =
     app.applicationStatus === 'WITHDRAWN' || app.status === 'withdrawn';
